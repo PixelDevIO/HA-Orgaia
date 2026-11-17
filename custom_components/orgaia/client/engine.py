@@ -61,6 +61,8 @@ class GroupEngine:
         self.plan: dict[str, Any] | None = data.get("plan")
         self.state: State = data.get("state") or empty_state()
         self.status: str = data.get("status") or STATUS_OK
+        # When the group was last read from the service (ms since 1970).
+        self.synced_at: int | None = data.get("syncedAt")
         self._now = now
         self.clock = Clock(self.node, now)
         for table in self.state.values():
@@ -90,6 +92,7 @@ class GroupEngine:
             "plan": self.plan,
             "state": self.state,
             "status": self.status,
+            "syncedAt": self.synced_at,
         }
 
     @staticmethod
@@ -107,6 +110,11 @@ class GroupEngine:
         self._version += 1
         for fn in list(self._listeners):
             fn()
+
+    @property
+    def version(self) -> int:
+        """Goes up with every change of the group."""
+        return self._version
 
     def view(self) -> SpaceView:
         if self._view is None or self._view[0] != self._version:
@@ -247,6 +255,7 @@ class GroupEngine:
                 self.status = STATUS_OFFLINE
                 raise
             self.status = STATUS_OK
+            self.synced_at = self._now()
             if changed:
                 self._changed()
             return changed

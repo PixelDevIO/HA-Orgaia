@@ -17,9 +17,11 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .client.api import ApiError
-from .client.engine import STATUS_NEEDS_PLUS, STATUS_REMOVED, STATUS_UPDATE, GroupEngine
+from .client.engine import STATUS_NEEDS_PLUS, STATUS_OFFLINE, STATUS_REMOVED, STATUS_UPDATE, GroupEngine
 from .const import DOMAIN
+from .protocol.plans import labels_for, with_plan_items
 from .protocol.view import SpaceView
+from .util import today
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -45,10 +47,34 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
         )
         self.engine = engine
         self.store = store
+        self._view_key: tuple[int, str, str] | None = None
+        self._view: SpaceView | None = None
 
     @property
     def status(self) -> str:
         return self.engine.status
+
+    def build_view(self) -> SpaceView:
+        """The group as the app shows it today: with what its timetables and rosters stand for."""
+        day = today()
+        language = self.hass.config.language
+        key = (self.engine.version, day, language)
+        if self._view is None or self._view_key != key:
+            self._view = with_plan_items(self.engine.view(), labels_for(language), day)
+            self._view_key = key
+        return self._view
+
+    def _keep_showing(self, err: Exception) -> SpaceView:
+        """The service or the internet is gone: the group stays on screen as it was, the status says offline.
+
+        Only on the very first start without anything read yet is there nothing to show.
+        """
+        self.engine.status = STATUS_OFFLINE
+        if not self.engine.cursor and not self.engine.state.get("item"):
+            raise UpdateFailed(f"Orgaia not reachable: {err}") from err
+        if self.last_update_success:
+            _LOGGER.warning("Orgaia not reachable, showing the last state: %s", err)
+        return self.build_view()
 
     async def _async_update_data(self) -> SpaceView:
         try:
@@ -57,15 +83,17 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
             self._update_issues()
             if self.engine.status == STATUS_REMOVED:
                 raise ConfigEntryAuthFailed("removed from the group") from err
+            if err.status >= 500 or err.status == 429:
+                return self._keep_showing(err)
             raise UpdateFailed(f"Orgaia: {err.code}") from err
         except (aiohttp.ClientError, TimeoutError) as err:
-            raise UpdateFailed(f"Orgaia not reachable: {err}") from err
+            return self._keep_showing(err)
         if self.engine.status == STATUS_REMOVED:
             self._update_issues()
             raise ConfigEntryAuthFailed("removed from the group")
         self._update_issues()
         self.store.async_delay_save(self.engine.to_dict, SAVE_DELAY)
-        return self.engine.view()
+        return self.build_view()
 
     def _update_issues(self) -> None:
         """Repair hints for what only the person can fix: Plus ended, or the integration is too old."""

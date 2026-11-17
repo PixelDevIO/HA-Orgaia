@@ -4,7 +4,7 @@ from __future__ import annotations
 
 DOMAIN = "orgaia"
 NAME = "Orgaia"
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 
 CONF_LINK = "link"
 CONF_NAME = "name"

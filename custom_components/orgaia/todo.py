@@ -7,11 +7,12 @@ from __future__ import annotations
 
 from homeassistant.components.todo import TodoItem, TodoItemStatus, TodoListEntity
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import COMPLETED_DAYS
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator
-from .entity import OrgaiaEntity, active_person_ids, track_dynamic
+from .entity import OrgaiaEntity, active_person_ids, space_key, track_dynamic
 from .summary import TodoEntry, todo_entries, todo_lists
 from .util import from_ms, to_date, to_datetime, today
 
@@ -20,6 +21,13 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: OrgaiaConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback
 ) -> None:
     coordinator = entry.runtime_data
+    # Rosters were shown as (empty) to-do lists before 0.3; their entities go.
+    prefix = f"{space_key(entry)}_list_"
+    lists = {prefix + lst["id"] for lst in todo_lists(coordinator.data)}
+    registry = er.async_get(hass)
+    for reg in er.async_entries_for_config_entry(registry, entry.entry_id):
+        if reg.domain == "todo" and reg.unique_id.startswith(prefix) and reg.unique_id not in lists:
+            registry.async_remove(reg.entity_id)
     track_dynamic(
         hass,
         entry,

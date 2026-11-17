@@ -18,7 +18,7 @@ from .const import MAX_TITLES
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator
 from .entity import OrgaiaEntity, active_person_ids, person_entity, track_dynamic
 from .summary import Counts, counts
-from .util import local_now, minute_of_day, to_date, to_datetime
+from .util import from_ms, local_now, minute_of_day, to_date, to_datetime
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -154,6 +154,7 @@ class OrgaiaConnectionSensor(OrgaiaEntity, SensorEntity):
     _attr_device_class = SensorDeviceClass.ENUM
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_options = [STATUS_OK, STATUS_OFFLINE, STATUS_NEEDS_PLUS, STATUS_UPDATE, STATUS_REMOVED]
+    _unrecorded_attributes = frozenset({"last_sync"})
 
     def __init__(self, coordinator: OrgaiaCoordinator) -> None:
         super().__init__(coordinator, "connection")
@@ -168,3 +169,9 @@ class OrgaiaConnectionSensor(OrgaiaEntity, SensorEntity):
         if status == STATUS_OK and not self.coordinator.last_update_success:
             return STATUS_OFFLINE
         return status if status in self._attr_options else STATUS_OFFLINE
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """When the group was last read: what a wall display shows while offline is as of then."""
+        synced = from_ms(self.coordinator.engine.synced_at)
+        return {"last_sync": synced.isoformat() if synced else None}

@@ -3348,5 +3348,1282 @@
     }
    }
   }
+ ],
+ "deadlines": {
+  "from": "2026-11-10",
+  "to": "2026-11-30",
+  "expect": [
+   {
+    "itemId": "r1",
+    "title": "Spülmaschine",
+    "date": "2026-11-10",
+    "time": null,
+    "occDate": "2026-11-10",
+    "done": false
+   },
+   {
+    "itemId": "i2",
+    "title": "Steuer",
+    "date": "2026-11-10",
+    "time": null,
+    "occDate": null,
+    "done": false
+   },
+   {
+    "itemId": "r1",
+    "title": "Spülmaschine",
+    "date": "2026-11-11",
+    "time": null,
+    "occDate": "2026-11-11",
+    "done": false
+   },
+   {
+    "itemId": "r1",
+    "title": "Spülmaschine",
+    "date": "2026-11-12",
+    "time": null,
+    "occDate": "2026-11-12",
+    "done": false
+   },
+   {
+    "itemId": "r1",
+    "title": "Spülmaschine",
+    "date": "2026-11-13",
+    "time": null,
+    "occDate": "2026-11-13",
+    "done": false
+   },
+   {
+    "itemId": "r1",
+    "title": "Spülmaschine",
+    "date": "2026-11-14",
+    "time": null,
+    "occDate": "2026-11-14",
+    "done": false
+   },
+   {
+    "itemId": "r1",
+    "title": "Spülmaschine",
+    "date": "2026-11-15",
+    "time": null,
+    "occDate": "2026-11-15",
+    "done": false
+   },
+   {
+    "itemId": "r1",
+    "title": "Spülmaschine",
+    "date": "2026-11-16",
+    "time": null,
+    "occDate": "2026-11-16",
+    "done": true
+   },
+   {
+    "itemId": "i1",
+    "title": "Müll (gelb)",
+    "date": "2026-11-17",
+    "time": "07:00",
+    "occDate": null,
+    "done": false
+   },
+   {
+    "itemId": "r1",
+    "title": "Spülmaschine",
+    "date": "2026-11-17",
+    "time": null,
+    "occDate": "2026-11-17",
+    "done": false
+   },
+   {
+    "itemId": "r4",
+    "title": "Kurs",
+    "date": "2026-11-17",
+    "time": null,
+    "occDate": "2026-11-17",
+    "done": false
+   },
+   {
+    "itemId": "i7",
+    "title": "Alle",
+    "date": "2026-11-17",
+    "time": null,
+    "occDate": null,
+    "done": false
+   },
+   {
+    "itemId": "r1",
+    "title": "Spülmaschine",
+    "date": "2026-11-18",
+    "time": null,
+    "occDate": "2026-11-18",
+    "done": false
+   },
+   {
+    "itemId": "r1",
+    "title": "Spülmaschine",
+    "date": "2026-11-19",
+    "time": null,
+    "occDate": "2026-11-19",
+    "done": false
+   },
+   {
+    "itemId": "i12",
+    "title": "Eigenes",
+    "date": "2026-11-20",
+    "time": null,
+    "occDate": null,
+    "done": false
+   },
+   {
+    "itemId": "r1",
+    "title": "Spülmaschine",
+    "date": "2026-11-20",
+    "time": null,
+    "occDate": "2026-11-20",
+    "done": false
+   },
+   {
+    "itemId": "r1",
+    "title": "Spülmaschine",
+    "date": "2026-11-21",
+    "time": null,
+    "occDate": "2026-11-21",
+    "done": false
+   },
+   {
+    "itemId": "r1",
+    "title": "Spülmaschine",
+    "date": "2026-11-22",
+    "time": null,
+    "occDate": "2026-11-22",
+    "done": false
+   },
+   {
+    "itemId": "r1",
+    "title": "Spülmaschine",
+    "date": "2026-11-23",
+    "time": null,
+    "occDate": "2026-11-23",
+    "done": false
+   },
+   {
+    "itemId": "r1",
+    "title": "Spülmaschine",
+    "date": "2026-11-24",
+    "time": null,
+    "occDate": "2026-11-24",
+    "done": false
+   },
+   {
+    "itemId": "r1",
+    "title": "Spülmaschine",
+    "date": "2026-11-25",
+    "time": null,
+    "occDate": "2026-11-25",
+    "done": false
+   },
+   {
+    "itemId": "i6",
+    "title": "Später",
+    "date": "2026-11-25",
+    "time": null,
+    "occDate": null,
+    "done": false
+   },
+   {
+    "itemId": "r1",
+    "title": "Spülmaschine",
+    "date": "2026-11-26",
+    "time": null,
+    "occDate": "2026-11-26",
+    "done": false
+   },
+   {
+    "itemId": "r1",
+    "title": "Spülmaschine",
+    "date": "2026-11-27",
+    "time": null,
+    "occDate": "2026-11-27",
+    "done": false
+   },
+   {
+    "itemId": "r1",
+    "title": "Spülmaschine",
+    "date": "2026-11-28",
+    "time": null,
+    "occDate": "2026-11-28",
+    "done": false
+   },
+   {
+    "itemId": "r1",
+    "title": "Spülmaschine",
+    "date": "2026-11-29",
+    "time": null,
+    "occDate": "2026-11-29",
+    "done": false
+   },
+   {
+    "itemId": "i11",
+    "title": "Kartons",
+    "date": "2026-11-30",
+    "time": null,
+    "occDate": null,
+    "done": false
+   },
+   {
+    "itemId": "r1",
+    "title": "Spülmaschine",
+    "date": "2026-11-30",
+    "time": null,
+    "occDate": "2026-11-30",
+    "done": false
+   },
+   {
+    "itemId": "r3",
+    "title": "Miete",
+    "date": "2026-11-30",
+    "time": null,
+    "occDate": "2026-11-30",
+    "done": false
+   }
+  ]
+ },
+ "plans": [
+  {
+   "today": "2026-11-17",
+   "labels": {
+    "pack": "{thing} einpacken",
+    "school": "Schule",
+    "work": "Arbeit"
+   },
+   "state": {
+    "meta": {
+     "space": {
+      "name": {
+       "ts": "0mubbs7i8000vecnode1",
+       "v": "Familie"
+      },
+      "schoolOff": {
+       "ts": "0mubbs7i8000vecnode1",
+       "v": [
+        {
+         "id": "o1",
+         "name": "Herbstferien",
+         "from": "2026-11-23",
+         "to": "2026-11-27"
+        },
+        {
+         "id": "bad",
+         "from": "x",
+         "to": "y"
+        }
+       ]
+      }
+     }
+    },
+    "person": {
+     "pA": {
+      "color": {
+       "ts": "0mubbs8a0000vecnode1",
+       "v": 0
+      },
+      "name": {
+       "ts": "0mubbs8a0000vecnode1",
+       "v": "Anna"
+      },
+      "order": {
+       "ts": "0mubbs8a0000vecnode1",
+       "v": 0
+      },
+      "pub": {
+       "ts": "0mubbs8a0000vecnode1",
+       "v": "pubA"
+      },
+      "role": {
+       "ts": "0mubbs8a0000vecnode1",
+       "v": "admin"
+      }
+     },
+     "pC": {
+      "child": {
+       "ts": "0mubbs91s000vecnode1",
+       "v": true
+      },
+      "color": {
+       "ts": "0mubbs91s000vecnode1",
+       "v": 2
+      },
+      "name": {
+       "ts": "0mubbs91s000vecnode1",
+       "v": "Cleo"
+      },
+      "order": {
+       "ts": "0mubbs91s000vecnode1",
+       "v": 2
+      },
+      "role": {
+       "ts": "0mubbs91s000vecnode1",
+       "v": "member"
+      }
+     }
+    },
+    "list": {
+     "lBusy": {
+      "busyOnly": {
+       "ts": "0mubbscwo000vecnode1",
+       "v": true
+      },
+      "color": {
+       "ts": "0mubbscwo000vecnode1",
+       "v": 7
+      },
+      "d.2026-11-17": {
+       "ts": "0mubbscwo000vecnode1",
+       "v": "f"
+      },
+      "mode": {
+       "ts": "0mubbscwo000vecnode1",
+       "v": "shifts"
+      },
+      "name": {
+       "ts": "0mubbscwo000vecnode1",
+       "v": "Nur belegt"
+      },
+      "order": {
+       "ts": "0mubbscwo000vecnode1",
+       "v": 5
+      },
+      "rsFor": {
+       "ts": "0mubbscwo000vecnode1",
+       "v": "pC"
+      },
+      "shift.f": {
+       "ts": "0mubbscwo000vecnode1",
+       "v": {
+        "name": "Früh",
+        "code": "F",
+        "start": "06:00",
+        "end": "14:00"
+       }
+      },
+      "type": {
+       "ts": "0mubbscwo000vecnode1",
+       "v": "roster"
+      }
+     },
+     "lOff": {
+      "color": {
+       "ts": "0mubbsdog000vecnode1",
+       "v": 8
+      },
+      "mode": {
+       "ts": "0mubbsdog000vecnode1",
+       "v": "week"
+      },
+      "name": {
+       "ts": "0mubbsdog000vecnode1",
+       "v": "Kein Kalender"
+      },
+      "noCal": {
+       "ts": "0mubbsdog000vecnode1",
+       "v": true
+      },
+      "order": {
+       "ts": "0mubbsdog000vecnode1",
+       "v": 6
+      },
+      "type": {
+       "ts": "0mubbsdog000vecnode1",
+       "v": "roster"
+      },
+      "wk.1": {
+       "ts": "0mubbsdog000vecnode1",
+       "v": [
+        {
+         "start": "08:00",
+         "end": "16:00"
+        }
+       ]
+      }
+     },
+     "lShift": {
+      "color": {
+       "ts": "0mubbsc4w000vecnode1",
+       "v": 6
+      },
+      "d.2025-01-01": {
+       "ts": "0mubbsc4w000vecnode1",
+       "v": "f"
+      },
+      "d.2026-11-17": {
+       "ts": "0mubbsc4w000vecnode1",
+       "v": "f"
+      },
+      "d.2026-11-18": {
+       "ts": "0mubbsc4w000vecnode1",
+       "v": "n"
+      },
+      "d.2026-11-19": {
+       "ts": "0mubbsc4w000vecnode1",
+       "v": "u"
+      },
+      "d.2026-11-20": {
+       "ts": "0mubbsc4w000vecnode1",
+       "v": "gone"
+      },
+      "d.2026-11-21": {
+       "ts": "0mubbsc4w000vecnode1",
+       "v": "09:00-12:00"
+      },
+      "mode": {
+       "ts": "0mubbsc4w000vecnode1",
+       "v": "shifts"
+      },
+      "name": {
+       "ts": "0mubbsc4w000vecnode1",
+       "v": "Dienste Anna"
+      },
+      "order": {
+       "ts": "0mubbsc4w000vecnode1",
+       "v": 4
+      },
+      "rsFor": {
+       "ts": "0mubbsc4w000vecnode1",
+       "v": "pA"
+      },
+      "shift.f": {
+       "ts": "0mubbsc4w000vecnode1",
+       "v": {
+        "name": "Früh",
+        "code": "F",
+        "start": "06:00",
+        "end": "14:00"
+       }
+      },
+      "shift.n": {
+       "ts": "0mubbsc4w000vecnode1",
+       "v": {
+        "name": "Nacht",
+        "code": "n",
+        "start": "22:00",
+        "end": "06:00"
+       }
+      },
+      "shift.u": {
+       "ts": "0mubbsc4w000vecnode1",
+       "v": {
+        "name": "Urlaub",
+        "code": "U"
+       }
+      },
+      "type": {
+       "ts": "0mubbsc4w000vecnode1",
+       "v": "roster"
+      }
+     },
+     "lTT": {
+      "abStart": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": "2026-11-16"
+      },
+      "color": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": 3
+      },
+      "day.5": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": [
+        "Trinkflasche",
+        "sportzeug"
+       ]
+      },
+      "les.1.1": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": "s2"
+      },
+      "les.1.2": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": "s1"
+      },
+      "les.2.1": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": "s2"
+      },
+      "les.3.3": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": "s4"
+      },
+      "les.4.5.A": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": "s3"
+      },
+      "les.4.5.B": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": "s1"
+      },
+      "les.5.1": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": "s2"
+      },
+      "les.5.2": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": ""
+      },
+      "name": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": "Stundenplan Cleo"
+      },
+      "order": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": 1
+      },
+      "packMon": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": "fri"
+      },
+      "packTime": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": "19:00"
+      },
+      "periods": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": [
+        {
+         "start": "08:00",
+         "end": "08:45"
+        },
+        {
+         "start": "08:50",
+         "end": "09:35"
+        },
+        {
+         "start": "09:55",
+         "end": "10:40"
+        },
+        {
+         "start": "10:45",
+         "end": "11:30"
+        },
+        {
+         "start": "11:45",
+         "end": "12:30"
+        }
+       ]
+      },
+      "subj.s1": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": {
+        "name": "Sport",
+        "things": [
+         "Sportzeug",
+         " turnschuhe ",
+         "Sportzeug"
+        ]
+       }
+      },
+      "subj.s2": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": {
+        "name": "Mathe",
+        "things": [
+         "Taschenrechner"
+        ],
+        "room": "204"
+       }
+      },
+      "subj.s3": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": {
+        "name": "Kunst",
+        "things": [
+         "Malkasten"
+        ]
+       }
+      },
+      "subj.s4": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": {
+        "name": "Weg",
+        "things": [
+         "Nichts"
+        ],
+        "deleted": true
+       }
+      },
+      "ttFor": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": "pC"
+      },
+      "type": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": "timetable"
+      }
+     },
+     "lTT2": {
+      "color": {
+       "ts": "0mubbsalc000vecnode1",
+       "v": 4
+      },
+      "les.3.1": {
+       "ts": "0mubbsalc000vecnode1",
+       "v": "x"
+      },
+      "name": {
+       "ts": "0mubbsalc000vecnode1",
+       "v": "Ohne Kalender"
+      },
+      "noCal": {
+       "ts": "0mubbsalc000vecnode1",
+       "v": true
+      },
+      "order": {
+       "ts": "0mubbsalc000vecnode1",
+       "v": 2
+      },
+      "subj.x": {
+       "ts": "0mubbsalc000vecnode1",
+       "v": {
+        "name": "Musik",
+        "things": [
+         "Flöte"
+        ]
+       }
+      },
+      "type": {
+       "ts": "0mubbsalc000vecnode1",
+       "v": "timetable"
+      }
+     },
+     "lWeek": {
+      "color": {
+       "ts": "0mubbsbd4000vecnode1",
+       "v": 5
+      },
+      "d.2026-11-18": {
+       "ts": "0mubbsbd4000vecnode1",
+       "v": "10:00-14:00"
+      },
+      "d.2026-11-19": {
+       "ts": "0mubbsbd4000vecnode1",
+       "v": ""
+      },
+      "mode": {
+       "ts": "0mubbsbd4000vecnode1",
+       "v": "week"
+      },
+      "name": {
+       "ts": "0mubbsbd4000vecnode1",
+       "v": "Arbeit Anna"
+      },
+      "off.u1": {
+       "ts": "0mubbsbd4000vecnode1",
+       "v": {
+        "name": "Urlaub",
+        "from": "2026-11-25",
+        "to": "2026-11-26"
+       }
+      },
+      "order": {
+       "ts": "0mubbsbd4000vecnode1",
+       "v": 3
+      },
+      "rsFor": {
+       "ts": "0mubbsbd4000vecnode1",
+       "v": "pA"
+      },
+      "type": {
+       "ts": "0mubbsbd4000vecnode1",
+       "v": "roster"
+      },
+      "wk.1": {
+       "ts": "0mubbsbd4000vecnode1",
+       "v": [
+        {
+         "start": "08:00",
+         "end": "16:30"
+        }
+       ]
+      },
+      "wk.2": {
+       "ts": "0mubbsbd4000vecnode1",
+       "v": [
+        {
+         "start": "08:00",
+         "end": "12:00"
+        },
+        {
+         "start": "13:00",
+         "end": "17:00"
+        }
+       ]
+      },
+      "wk.3": {
+       "ts": "0mubbsbd4000vecnode1",
+       "v": [
+        {
+         "start": "08:00",
+         "end": "16:30"
+        }
+       ]
+      },
+      "wk.5": {
+       "ts": "0mubbsbd4000vecnode1",
+       "v": [
+        {
+         "start": "22:00",
+         "end": "06:00"
+        }
+       ]
+      }
+     }
+    },
+    "item": {},
+    "sub": {},
+    "occ": {
+     "tt~lTT~s08000935|2026-11-30": {
+      "note": {
+       "ts": "0mubbseg8000vecnode1",
+       "v": "nur ein Feld"
+      }
+     }
+    },
+    "tpl": {},
+    "inv": {}
+   },
+   "lists": [
+    {
+     "id": "lTT",
+     "type": "timetable"
+    },
+    {
+     "id": "lTT2",
+     "type": "timetable"
+    },
+    {
+     "id": "lWeek",
+     "type": "roster"
+    },
+    {
+     "id": "lShift",
+     "type": "roster"
+    },
+    {
+     "id": "lBusy",
+     "type": "roster"
+    },
+    {
+     "id": "lOff",
+     "type": "roster"
+    }
+   ],
+   "items": [
+    {
+     "id": "tt~lTT~pt3rg82~B",
+     "listId": "lTT",
+     "kind": "task",
+     "title": "Taschenrechner einpacken",
+     "assignees": [
+      "pC"
+     ],
+     "dueDate": "2023-12-25",
+     "dueTime": "19:00",
+     "remind": 0,
+     "repeat": {
+      "freq": "week",
+      "interval": 2,
+      "days": [
+       1,
+       4,
+       5
+      ]
+     },
+     "fromTimetable": "lTT",
+     "forLessons": [
+      "Mathe"
+     ]
+    },
+    {
+     "id": "tt~lTT~p4wf44o~B",
+     "listId": "lTT",
+     "kind": "task",
+     "title": "Sportzeug einpacken",
+     "assignees": [
+      "pC"
+     ],
+     "dueDate": "2023-12-25",
+     "dueTime": "19:00",
+     "remind": 0,
+     "repeat": {
+      "freq": "week",
+      "interval": 2,
+      "days": [
+       3,
+       4,
+       5
+      ]
+     },
+     "fromTimetable": "lTT",
+     "forLessons": [
+      "Sport"
+     ]
+    },
+    {
+     "id": "tt~lTT~p77vd9s~B",
+     "listId": "lTT",
+     "kind": "task",
+     "title": "turnschuhe einpacken",
+     "assignees": [
+      "pC"
+     ],
+     "dueDate": "2023-12-25",
+     "dueTime": "19:00",
+     "remind": 0,
+     "repeat": {
+      "freq": "week",
+      "interval": 2,
+      "days": [
+       3,
+       5
+      ]
+     },
+     "fromTimetable": "lTT",
+     "forLessons": [
+      "Sport"
+     ]
+    },
+    {
+     "id": "tt~lTT~pt3rg82~A",
+     "listId": "lTT",
+     "kind": "task",
+     "title": "Taschenrechner einpacken",
+     "assignees": [
+      "pC"
+     ],
+     "dueDate": "2024-01-01",
+     "dueTime": "19:00",
+     "remind": 0,
+     "repeat": {
+      "freq": "week",
+      "interval": 2,
+      "days": [
+       1,
+       4,
+       5
+      ]
+     },
+     "fromTimetable": "lTT",
+     "forLessons": [
+      "Mathe"
+     ]
+    },
+    {
+     "id": "tt~lTT~p76r9n9~A",
+     "listId": "lTT",
+     "kind": "task",
+     "title": "Malkasten einpacken",
+     "assignees": [
+      "pC"
+     ],
+     "dueDate": "2024-01-01",
+     "dueTime": "19:00",
+     "remind": 0,
+     "repeat": {
+      "freq": "week",
+      "interval": 2,
+      "days": [
+       3
+      ]
+     },
+     "fromTimetable": "lTT",
+     "forLessons": [
+      "Kunst"
+     ]
+    },
+    {
+     "id": "tt~lTT~p1o011kr~A",
+     "listId": "lTT",
+     "kind": "task",
+     "title": "Trinkflasche einpacken",
+     "assignees": [
+      "pC"
+     ],
+     "dueDate": "2024-01-01",
+     "dueTime": "19:00",
+     "remind": 0,
+     "repeat": {
+      "freq": "week",
+      "interval": 2,
+      "days": [
+       4
+      ]
+     },
+     "fromTimetable": "lTT",
+     "forLessons": []
+    },
+    {
+     "id": "tt~lTT~p4wf44o~A",
+     "listId": "lTT",
+     "kind": "task",
+     "title": "sportzeug einpacken",
+     "assignees": [
+      "pC"
+     ],
+     "dueDate": "2024-01-01",
+     "dueTime": "19:00",
+     "remind": 0,
+     "repeat": {
+      "freq": "week",
+      "interval": 2,
+      "days": [
+       4,
+       5
+      ]
+     },
+     "fromTimetable": "lTT",
+     "forLessons": [
+      "Sport"
+     ]
+    },
+    {
+     "id": "tt~lTT~p77vd9s~A",
+     "listId": "lTT",
+     "kind": "task",
+     "title": "turnschuhe einpacken",
+     "assignees": [
+      "pC"
+     ],
+     "dueDate": "2024-01-01",
+     "dueTime": "19:00",
+     "remind": 0,
+     "repeat": {
+      "freq": "week",
+      "interval": 2,
+      "days": [
+       5
+      ]
+     },
+     "fromTimetable": "lTT",
+     "forLessons": [
+      "Sport"
+     ]
+    },
+    {
+     "id": "tt~lTT~p1o011kr~B",
+     "listId": "lTT",
+     "kind": "task",
+     "title": "Trinkflasche einpacken",
+     "assignees": [
+      "pC"
+     ],
+     "dueDate": "2023-12-25",
+     "dueTime": "19:00",
+     "remind": 0,
+     "repeat": {
+      "freq": "week",
+      "interval": 2,
+      "days": [
+       4
+      ]
+     },
+     "fromTimetable": "lTT",
+     "forLessons": []
+    },
+    {
+     "id": "tt~lTT~s08000935~A",
+     "listId": "lTT",
+     "kind": "event",
+     "title": "Schule",
+     "assignees": [
+      "pC"
+     ],
+     "start": "2024-01-01T08:00",
+     "end": "2024-01-01T09:35",
+     "repeat": {
+      "freq": "week",
+      "interval": 2,
+      "days": [
+       1
+      ]
+     },
+     "fromTimetable": "lTT"
+    },
+    {
+     "id": "tt~lTT~s08000845~A",
+     "listId": "lTT",
+     "kind": "event",
+     "title": "Schule",
+     "assignees": [
+      "pC"
+     ],
+     "start": "2024-01-01T08:00",
+     "end": "2024-01-01T08:45",
+     "repeat": {
+      "freq": "week",
+      "interval": 2,
+      "days": [
+       2,
+       5
+      ]
+     },
+     "fromTimetable": "lTT"
+    },
+    {
+     "id": "tt~lTT~s11451230~A",
+     "listId": "lTT",
+     "kind": "event",
+     "title": "Schule",
+     "assignees": [
+      "pC"
+     ],
+     "start": "2024-01-01T11:45",
+     "end": "2024-01-01T12:30",
+     "repeat": {
+      "freq": "week",
+      "interval": 2,
+      "days": [
+       4
+      ]
+     },
+     "fromTimetable": "lTT"
+    },
+    {
+     "id": "tt~lTT~s08000935~B",
+     "listId": "lTT",
+     "kind": "event",
+     "title": "Schule",
+     "assignees": [
+      "pC"
+     ],
+     "start": "2023-12-25T08:00",
+     "end": "2023-12-25T09:35",
+     "repeat": {
+      "freq": "week",
+      "interval": 2,
+      "days": [
+       1
+      ]
+     },
+     "fromTimetable": "lTT"
+    },
+    {
+     "id": "tt~lTT~s08000845~B",
+     "listId": "lTT",
+     "kind": "event",
+     "title": "Schule",
+     "assignees": [
+      "pC"
+     ],
+     "start": "2023-12-25T08:00",
+     "end": "2023-12-25T08:45",
+     "repeat": {
+      "freq": "week",
+      "interval": 2,
+      "days": [
+       2,
+       5
+      ]
+     },
+     "fromTimetable": "lTT"
+    },
+    {
+     "id": "tt~lTT~s11451230~B",
+     "listId": "lTT",
+     "kind": "event",
+     "title": "Schule",
+     "assignees": [
+      "pC"
+     ],
+     "start": "2023-12-25T11:45",
+     "end": "2023-12-25T12:30",
+     "repeat": {
+      "freq": "week",
+      "interval": 2,
+      "days": [
+       4
+      ]
+     },
+     "fromTimetable": "lTT"
+    },
+    {
+     "id": "tt~lTT2~p1v5wa2w",
+     "listId": "lTT2",
+     "kind": "task",
+     "title": "Flöte einpacken",
+     "assignees": [],
+     "dueDate": "2024-01-01",
+     "repeat": {
+      "freq": "week",
+      "interval": 1,
+      "days": [
+       2
+      ]
+     },
+     "fromTimetable": "lTT2",
+     "forLessons": [
+      "Musik"
+     ]
+    },
+    {
+     "listId": "lWeek",
+     "kind": "event",
+     "assignees": [
+      "pA"
+     ],
+     "fromRoster": "lWeek",
+     "id": "rs~lWeek~w08001630",
+     "title": "Arbeit",
+     "start": "2024-01-01T08:00",
+     "end": "2024-01-01T16:30",
+     "repeat": {
+      "freq": "week",
+      "interval": 1,
+      "days": [
+       1,
+       3
+      ]
+     }
+    },
+    {
+     "listId": "lWeek",
+     "kind": "event",
+     "assignees": [
+      "pA"
+     ],
+     "fromRoster": "lWeek",
+     "id": "rs~lWeek~w08001200",
+     "title": "Arbeit",
+     "start": "2024-01-01T08:00",
+     "end": "2024-01-01T12:00",
+     "repeat": {
+      "freq": "week",
+      "interval": 1,
+      "days": [
+       2
+      ]
+     }
+    },
+    {
+     "listId": "lWeek",
+     "kind": "event",
+     "assignees": [
+      "pA"
+     ],
+     "fromRoster": "lWeek",
+     "id": "rs~lWeek~w13001700",
+     "title": "Arbeit",
+     "start": "2024-01-01T13:00",
+     "end": "2024-01-01T17:00",
+     "repeat": {
+      "freq": "week",
+      "interval": 1,
+      "days": [
+       2
+      ]
+     }
+    },
+    {
+     "listId": "lWeek",
+     "kind": "event",
+     "assignees": [
+      "pA"
+     ],
+     "fromRoster": "lWeek",
+     "id": "rs~lWeek~w22000600",
+     "title": "Arbeit",
+     "start": "2024-01-01T22:00",
+     "end": "2024-01-02T06:00",
+     "repeat": {
+      "freq": "week",
+      "interval": 1,
+      "days": [
+       5
+      ]
+     }
+    },
+    {
+     "listId": "lWeek",
+     "kind": "event",
+     "assignees": [
+      "pA"
+     ],
+     "fromRoster": "lWeek",
+     "id": "rs~lWeek~d2026-11-18",
+     "title": "Arbeit",
+     "start": "2026-11-18T10:00",
+     "end": "2026-11-18T14:00"
+    },
+    {
+     "listId": "lShift",
+     "kind": "event",
+     "assignees": [
+      "pA"
+     ],
+     "fromRoster": "lShift",
+     "id": "rs~lShift~d2026-11-17",
+     "title": "Früh",
+     "shiftCode": "F",
+     "start": "2026-11-17T06:00",
+     "end": "2026-11-17T14:00"
+    },
+    {
+     "listId": "lShift",
+     "kind": "event",
+     "assignees": [
+      "pA"
+     ],
+     "fromRoster": "lShift",
+     "id": "rs~lShift~d2026-11-18",
+     "title": "Nacht",
+     "shiftCode": "n",
+     "start": "2026-11-18T22:00",
+     "end": "2026-11-19T06:00"
+    },
+    {
+     "listId": "lShift",
+     "kind": "event",
+     "assignees": [
+      "pA"
+     ],
+     "fromRoster": "lShift",
+     "id": "rs~lShift~d2026-11-21",
+     "title": "Arbeit",
+     "start": "2026-11-21T09:00",
+     "end": "2026-11-21T12:00"
+    },
+    {
+     "listId": "lBusy",
+     "kind": "event",
+     "assignees": [
+      "pC"
+     ],
+     "fromRoster": "lBusy",
+     "id": "rs~lBusy~d2026-11-17",
+     "title": "Arbeit",
+     "start": "2026-11-17T06:00",
+     "end": "2026-11-17T14:00"
+    }
+   ],
+   "skips": [
+    "rs~lWeek~w08001630|2026-11-18",
+    "rs~lWeek~w08001630|2026-11-25",
+    "tt~lTT2~p1v5wa2w|2026-11-24",
+    "tt~lTT~p1o011kr~B|2026-11-26",
+    "tt~lTT~p4wf44o~A|2026-11-20",
+    "tt~lTT~p4wf44o~B|2026-11-25",
+    "tt~lTT~p4wf44o~B|2026-11-26",
+    "tt~lTT~p77vd9s~A|2026-11-20",
+    "tt~lTT~p77vd9s~B|2026-11-25",
+    "tt~lTT~pt3rg82~A|2026-11-20",
+    "tt~lTT~pt3rg82~B|2026-11-23",
+    "tt~lTT~pt3rg82~B|2026-11-26",
+    "tt~lTT~s08000845~A|2026-11-24",
+    "tt~lTT~s08000845~A|2026-11-27",
+    "tt~lTT~s08000845~B|2026-11-24",
+    "tt~lTT~s08000845~B|2026-11-27",
+    "tt~lTT~s08000935~A|2026-11-23",
+    "tt~lTT~s08000935~B|2026-11-23",
+    "tt~lTT~s11451230~A|2026-11-26",
+    "tt~lTT~s11451230~B|2026-11-26"
+   ]
+  }
  ]
 }

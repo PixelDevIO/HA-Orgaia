@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from custom_components.orgaia.protocol.agenda import current_occurrence, is_overdue, open_counts
+from custom_components.orgaia.protocol.agenda import current_occurrence, deadlines, is_overdue, open_counts
 from custom_components.orgaia.protocol.b64 import from_b64
 from custom_components.orgaia.protocol.crypto import (
     CryptoError,
@@ -23,7 +23,8 @@ from custom_components.orgaia.protocol.crypto import (
     verify_box_key,
 )
 from custom_components.orgaia.protocol.invite import parse_invite
-from custom_components.orgaia.protocol.model import apply_op, empty_state, to_app_state
+from custom_components.orgaia.protocol.model import apply_op, empty_state, merge_state, to_app_state
+from custom_components.orgaia.protocol.plans import PlanLabels, is_plan_item, with_plan_items
 from custom_components.orgaia.protocol.recur import occurrence_dates, rotation_assignee
 from custom_components.orgaia.protocol.view import build_view, occ_id
 
@@ -175,3 +176,39 @@ def test_view(case: dict) -> None:
     for mine, theirs in zip(got, expect["items"], strict=True):
         assert mine == theirs, mine["id"]
     assert dict(sorted(open_counts(view, today).items())) == expect["openCounts"]
+
+
+def test_deadlines() -> None:
+    """Deadlines of tasks, repeating ones without a time slot included."""
+    case = VECTORS["deadlines"]
+    state = empty_state()
+    for op in VECTORS["views"][0]["ops"]:
+        apply_op(state, op)
+    view = build_view("gVectors", "group", state)
+    got = [
+        {
+            "itemId": d.item["id"],
+            "title": d.item["title"],
+            "date": d.date,
+            "time": d.time,
+            "occDate": d.occ_date,
+            "done": d.done,
+        }
+        for d in deadlines(view, case["from"], case["to"])
+    ]
+    assert got == case["expect"]
+
+
+@pytest.mark.parametrize("case", VECTORS["plans"])
+def test_plans(case: dict) -> None:
+    """Packing tasks, school days and working time come out exactly as in the app."""
+    state = empty_state()
+    merge_state(state, case["state"])
+    view = build_view("gPlans", "group", state)
+    assert [{"id": lst["id"], "type": lst["type"]} for lst in view.lists] == case["lists"]
+    labels = PlanLabels(case["labels"]["pack"], case["labels"]["school"], case["labels"]["work"])
+    full = with_plan_items(view, labels, case["today"])
+    derived = [{k: v for k, v in i.items() if k != "done"} for i in full.items if is_plan_item(i)]
+    for mine, theirs in zip(derived, case["items"], strict=True):
+        assert mine == theirs, theirs["id"]
+    assert sorted(oid for oid, o in full.occs.items() if o.get("skip")) == case["skips"]
