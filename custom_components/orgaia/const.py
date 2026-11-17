@@ -4,7 +4,7 @@ from __future__ import annotations
 
 DOMAIN = "orgaia"
 NAME = "Orgaia"
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 
 CONF_LINK = "link"
 CONF_NAME = "name"
@@ -26,3 +26,9 @@ JOIN_POLL_SECONDS = 2
 COMPLETED_DAYS = 14
 # Attributes list at most this many titles.
 MAX_TITLES = 20
+
+# Options: Orgaia person id -> Home Assistant person entity.
+CONF_PERSONS = "persons"
+
+# Fired on the event bus for automations; also offered as device triggers on the group's device.
+EVENT_ORGAIA = "orgaia_event"

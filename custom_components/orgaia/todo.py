@@ -1,15 +1,17 @@
-"""Each task and shopping list of the group as a to-do list. Read only for now: changes are made in the app."""
+"""To-do lists: one per task and shopping list of the group, and one per person with everything assigned to them.
+
+Read only for now: changes are made in the app.
+"""
 
 from __future__ import annotations
 
 from homeassistant.components.todo import TodoItem, TodoItemStatus, TodoListEntity
-from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import entity_registry as er
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import COMPLETED_DAYS, DOMAIN
+from .const import COMPLETED_DAYS
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator
-from .entity import OrgaiaEntity
+from .entity import OrgaiaEntity, active_person_ids, track_dynamic
 from .summary import TodoEntry, todo_entries, todo_lists
 from .util import from_ms, to_date, to_datetime, today
 
@@ -18,35 +20,46 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: OrgaiaConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback
 ) -> None:
     coordinator = entry.runtime_data
-    known: dict[str, OrgaiaTodoList] = {}
-
-    @callback
-    def _sync_lists() -> None:
-        current = {lst["id"] for lst in todo_lists(coordinator.data)}
-        new = [OrgaiaTodoList(coordinator, list_id) for list_id in current if list_id not in known]
-        for entity in new:
-            known[entity.list_id] = entity
-        if new:
-            async_add_entities(new)
-        registry = er.async_get(hass)
-        for list_id in [i for i in known if i not in current]:
-            entity = known.pop(list_id)
-            if entity_id := registry.async_get_entity_id("todo", DOMAIN, entity.unique_id or ""):
-                registry.async_remove(entity_id)
-
-    _sync_lists()
-    entry.async_on_unload(coordinator.async_add_listener(_sync_lists))
+    track_dynamic(
+        hass,
+        entry,
+        lambda view: [lst["id"] for lst in todo_lists(view)],
+        lambda list_id: [OrgaiaTodoList(coordinator, list_id)],
+        async_add_entities,
+        "todo",
+    )
+    track_dynamic(
+        hass,
+        entry,
+        active_person_ids,
+        lambda person_id: [OrgaiaPersonTodo(coordinator, person_id)],
+        async_add_entities,
+        "todo",
+    )
 
 
-def _description(e: TodoEntry) -> str | None:
+def _description(e: TodoEntry, with_persons: bool = True, list_name: str | None = None) -> str | None:
     parts = []
-    if e.persons:
+    if list_name:
+        parts.append("📋 " + list_name)
+    if with_persons and e.persons:
         parts.append("👤 " + ", ".join(e.persons))
     if e.note:
         parts.append(e.note)
     if e.subtasks:
         parts.append("\n".join(("☑ " if done else "☐ ") + title for title, done in e.subtasks))
     return "\n\n".join(parts) or None
+
+
+def _item(e: TodoEntry, description: str | None) -> TodoItem:
+    return TodoItem(
+        summary=e.title,
+        uid=e.uid,
+        status=TodoItemStatus.COMPLETED if e.done else TodoItemStatus.NEEDS_ACTION,
+        due=(to_datetime(e.due) if len(e.due) > 10 else to_date(e.due)) if e.due else None,
+        description=description,
+        completed=from_ms(e.done_at) if e.done else None,
+    )
 
 
 class OrgaiaTodoList(OrgaiaEntity, TodoListEntity):
@@ -72,15 +85,24 @@ class OrgaiaTodoList(OrgaiaEntity, TodoListEntity):
 
     @property
     def todo_items(self) -> list[TodoItem]:
-        entries = todo_entries(self.coordinator.data, self.list_id, today(), COMPLETED_DAYS)
+        entries = todo_entries(self.coordinator.data, today(), COMPLETED_DAYS, list_id=self.list_id)
+        return [_item(e, _description(e)) for e in entries]
+
+
+class OrgaiaPersonTodo(OrgaiaEntity, TodoListEntity):
+    """Everything assigned to one person, from all task lists of the group."""
+
+    _attr_translation_key = "person_tasks"
+    _attr_icon = "mdi:account-check-outline"
+
+    def __init__(self, coordinator: OrgaiaCoordinator, person_id: str) -> None:
+        super().__init__(coordinator, "tasks", person_id)
+
+    @property
+    def todo_items(self) -> list[TodoItem]:
+        view = self.coordinator.data
+        entries = todo_entries(view, today(), COMPLETED_DAYS, person=self.person_id)
         return [
-            TodoItem(
-                summary=e.title,
-                uid=e.uid,
-                status=TodoItemStatus.COMPLETED if e.done else TodoItemStatus.NEEDS_ACTION,
-                due=(to_datetime(e.due) if len(e.due) > 10 else to_date(e.due)) if e.due else None,
-                description=_description(e),
-                completed=from_ms(e.done_at) if e.done else None,
-            )
+            _item(e, _description(e, with_persons=False, list_name=(view.list_by_id.get(e.list_id) or {}).get("name")))
             for e in entries
         ]

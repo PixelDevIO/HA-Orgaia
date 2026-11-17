@@ -9,8 +9,10 @@ import time
 from typing import Any
 
 import aiohttp
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
+from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.selector import EntitySelector, EntitySelectorConfig
 from homeassistant.helpers.storage import Store
 import voluptuous as vol
 
@@ -22,6 +24,7 @@ from .const import (
     CONF_LINK,
     CONF_NAME,
     CONF_NODE,
+    CONF_PERSONS,
     CONF_SEED,
     CONF_SERVER,
     CONF_SPACE,
@@ -46,6 +49,11 @@ class OrgaiaConfigFlow(ConfigFlow, domain=DOMAIN):
     """One entry per group. Every entry has its own key, so groups never learn of each other."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
+        return OrgaiaOptionsFlow()
 
     def __init__(self) -> None:
         self._engine: GroupEngine | None = None
@@ -174,3 +182,40 @@ class OrgaiaConfigFlow(ConfigFlow, domain=DOMAIN):
             await engine.leave()
         except (ApiError, aiohttp.ClientError, TimeoutError) as err:
             _LOGGER.debug("Leaving again failed: %s", err)
+
+
+class OrgaiaOptionsFlow(OptionsFlow):
+    """Which Home Assistant person each person of the group is. Same names are suggested."""
+
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        entry = self.config_entry
+        view = entry.runtime_data.data if getattr(entry, "runtime_data", None) else None
+        if view is None:
+            return self.async_abort(reason="not_loaded")
+        # The form shows a field per person, labelled with the name (made unique if two share it).
+        labels: dict[str, str] = {}
+        for p in view.active_persons():
+            label, n = p["name"], 2
+            while label in labels:
+                label, n = f"{p['name']} ({n})", n + 1
+            labels[label] = p["id"]
+        if not labels:
+            return self.async_abort(reason="no_persons")
+        if user_input is not None:
+            mapping = {pid: user_input[label] for label, pid in labels.items() if user_input.get(label)}
+            return self.async_create_entry(data={**entry.options, CONF_PERSONS: mapping})
+        current = entry.options.get(CONF_PERSONS) or {}
+        by_name = {
+            (s.attributes.get("friendly_name") or s.name or "").strip().casefold(): s.entity_id
+            for s in self.hass.states.async_all("person")
+        }
+        selector = EntitySelector(EntitySelectorConfig(domain="person"))
+        schema: dict[Any, Any] = {}
+        for label, pid in labels.items():
+            name = view.person_by_id[pid]["name"]
+            suggested = current.get(pid) or by_name.get(name.strip().casefold())
+            schema[vol.Optional(label, description={"suggested_value": suggested} if suggested else None)] = selector
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(schema),
+        )
