@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
+from unittest.mock import patch
 
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
@@ -122,3 +123,17 @@ async def test_timetable_and_roster(hass: HomeAssistant, service: FakeService, f
     await hass.async_block_till_done()
     late = [e for e in events if e.data["type"] == "task_overdue"]
     assert [e.data["title"] for e in late].count("Sportzeug einpacken") == 1
+
+
+async def test_saves_only_changes(hass: HomeAssistant, service: FakeService, freezer) -> None:
+    """The group file is written when the group changed, not on every look at the service."""
+    entry = await setup_group(hass, service, freezer)
+    coordinator = entry.runtime_data
+    with patch.object(coordinator.store, "async_delay_save") as save:
+        await coordinator.async_refresh()
+        await coordinator.async_refresh()
+        assert save.call_count == 0
+        service.write("item", "n1", {"title": "Neu", "listId": "todo"})
+        await coordinator.async_refresh()
+        await coordinator.async_refresh()
+        assert save.call_count == 1

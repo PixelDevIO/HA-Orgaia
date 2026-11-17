@@ -27,7 +27,9 @@ _LOGGER = logging.getLogger(__name__)
 
 # Without the live connection (or when it misses something) the group is read again this often.
 FALLBACK_INTERVAL = timedelta(minutes=15)
-SAVE_DELAY = 10
+# The whole group is one file: write it at most once a minute, and only when the group changed.
+# Home Assistant writes what is still pending when it stops.
+SAVE_DELAY = 60
 
 type OrgaiaConfigEntry = ConfigEntry[OrgaiaCoordinator]
 
@@ -49,6 +51,7 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
         self.store = store
         self._view_key: tuple[int, str, str] | None = None
         self._view: SpaceView | None = None
+        self._saved: tuple[Any, ...] | None = None
 
     @property
     def status(self) -> str:
@@ -92,8 +95,16 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
             self._update_issues()
             raise ConfigEntryAuthFailed("removed from the group")
         self._update_issues()
-        self.store.async_delay_save(self.engine.to_dict, SAVE_DELAY)
+        self._save()
         return self.build_view()
+
+    def _save(self) -> None:
+        """Writes the group to disk when anything in it changed since the last time."""
+        e = self.engine
+        mark = (e.version, e.cursor, e.epoch, e.status, len(e.keys), json.dumps([e.members, e.plan], sort_keys=True))
+        if mark != self._saved:
+            self._saved = mark
+            self.store.async_delay_save(e.to_dict, SAVE_DELAY)
 
     def _update_issues(self) -> None:
         """Repair hints for what only the person can fix: Plus ended, or the integration is too old."""
