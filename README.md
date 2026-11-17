@@ -60,6 +60,10 @@ This version **reads only**. Changes are made in the Orgaia app; ticking off fro
 - **Removing the integration** leaves the group, so the admins see Home Assistant is gone.
 - **Privacy**: titles and names are decrypted on your Home Assistant and may end up in its history and logbook. Private lists in Orgaia never reach Home Assistant. Diagnostics hold only counts, no content and no keys.
 
+## License
+
+The integration is licensed under the [Apache License 2.0](LICENSE). The license does not cover the name and logo "Orgaia", and the Orgaia app and sync service are not part of it.
+
 ---
 
 ## Deutsch
@@ -77,3 +81,5 @@ Alles bleibt Ende-zu-Ende-verschlüsselt: Home Assistant tritt der Gruppe mit ei
 3. Ein Admin bestätigt in der App. Die Sicherheitsnummer in Home Assistant und in der App muss gleich sein.
 
 Home Assistant zählt nicht als Person; pro Gruppe gehen bis zu 3 Integrationen. Diese Version liest nur, abhaken aus Home Assistant kommt später. Home Assistant sollte auf die Zeitzone eingestellt sein, in der ihr lebt.
+
+**Lizenz:** Apache 2.0 (siehe [LICENSE](LICENSE)). Name und Logo „Orgaia“ sowie App und Dienst sind davon nicht umfasst.
