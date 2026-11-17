@@ -6,7 +6,7 @@ nothing fires for what was already there when Home Assistant started.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timedelta
 import json
 import logging
@@ -64,6 +64,12 @@ def _appointment(item: dict[str, Any]) -> str:
     return json.dumps({k: item.get(k) for k in keys}, sort_keys=True, default=str)
 
 
+def _round(item: dict[str, Any]) -> tuple[Any, Any] | None:
+    """When and by whom a task that comes back was last done."""
+    mark = item.get("lastDone")
+    return (mark.get("at"), mark.get("by")) if isinstance(mark, dict) else None
+
+
 class EventTracker:
     """Remembers the last view and fires an event for every difference that matters to automations."""
 
@@ -76,6 +82,8 @@ class EventTracker:
         self._items: set[str] = set()
         self._appointments: dict[str, str] = {}
         self._overdue: set[str] = set()
+        # Tasks that come back never stay done: each round leaves only `lastDone` behind.
+        self._rounds: dict[str, Any] = {}
         self._persons: set[str] = set()
         self._day = ""
         self._last_tick = local_now()
@@ -102,6 +110,7 @@ class EventTracker:
         self._entries = {e.uid: e for e in entries}
         self._tasks = {e.uid: _Task(e.item_id, e.done, tuple(e.assignees)) for e in entries}
         self._items = {i["id"] for i in view.items}
+        self._rounds = {i["id"]: _round(i) for i in view.items if i.get("again") and i["kind"] == "task"}
         self._appointments = {i["id"]: _appointment(i) for i in view.items if i["kind"] == "event"}
         self._persons = {p["id"] for p in view.active_persons()}
 
@@ -116,13 +125,16 @@ class EventTracker:
         if not self.coordinator.last_update_success:
             return
         view = self.coordinator.data
-        old_tasks, old_items, old_appointments, old_persons = (
+        old_tasks, old_entries, old_items, old_appointments, old_persons, old_rounds = (
             self._tasks,
+            self._entries,
             self._items,
             self._appointments,
             self._persons,
+            self._rounds,
         )
         self._remember(view)
+        self._check_rounds(view, old_rounds, old_entries)
         for uid, task in self._tasks.items():
             entry = self._entries[uid]
             before = old_tasks.get(uid)
@@ -153,6 +165,25 @@ class EventTracker:
             elif old_appointments.get(item_id) not in (None, fingerprint):
                 self._fire_appointment(view, EVENT_CHANGED, item)
         self._check_overdue(view)
+
+    def _check_rounds(self, view: SpaceView, old_rounds: dict[str, Any], old_entries: dict[str, TodoEntry]) -> None:
+        """A task that comes back was done (a new `lastDone`) or that was taken back (an older one)."""
+        for item_id, mark in self._rounds.items():
+            if item_id not in old_rounds or old_rounds[item_id] == mark:
+                continue
+            item = view.item_by_id[item_id]
+            before = old_entries.get(item_id)
+            if mark and (not old_rounds[item_id] or mark[0] > old_rounds[item_id][0]):
+                # Describe the round that was finished: its due date and who had it, not the next one.
+                base = before or next((e for e in self._entries.values() if e.item_id == item_id), None)
+                if base is None:
+                    continue
+                entry = replace(base, done=True, done_at=mark[0], done_by=mark[1])
+                self._fire_task(view, TASK_COMPLETED, entry)
+            else:
+                entry = self._entries.get(item_id) or before
+                if entry is not None and not item.get("done"):
+                    self._fire_task(view, TASK_REOPENED, entry)
 
     # --- Time passing ------------------------------------------------------------------------
 

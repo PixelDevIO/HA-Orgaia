@@ -170,7 +170,8 @@ def current_occurrence(view: SpaceView, item: dict[str, Any], today: str) -> dic
 
 
 def open_counts(view: SpaceView, today: str) -> dict[str, int]:
-    """Open tasks per person: unfinished one-off tasks plus today's unfinished repeating ones with a slot."""
+    """Open tasks per person: unfinished one-off tasks plus today's unfinished repeating ones, with a slot
+    or with only a due date, as the app's ``openCounts``."""
     counts: dict[str, int] = {}
 
     def add(ids: list[str]) -> None:
@@ -186,6 +187,9 @@ def open_counts(view: SpaceView, today: str) -> dict[str, int]:
     for b in blocks_for_day(view, today):
         if b.kind == "task" and b.occ_date and not b.done:
             add(b.persons)
+    for d in deadlines(view, today, today):
+        if d.occ_date and not d.done and not d.item.get("start"):
+            add(d.item.get("assignees") or [])
     return counts
 
 
@@ -235,7 +239,12 @@ def deadlines(view: SpaceView, start: str, end: str) -> list[Deadline]:
                 if occ and occ.get("skip"):
                     continue
                 done = bool((occ or {}).get("done"))
-                out.append(Deadline(with_overrides(item, occ), d, item.get("dueTime"), d, done))
+                # Whose turn it is on that day, as in the calendar: a rotation, or someone set for that day only.
+                turn = rotation_assignee(item, d)
+                who = (occ or {}).get("assignees")
+                if not isinstance(who, list):
+                    who = [turn] if turn else item.get("assignees") or []
+                out.append(Deadline({**with_overrides(item, occ), "assignees": who}, d, item.get("dueTime"), d, done))
         elif not item.get("repeat") and start <= item["dueDate"] <= end:
             out.append(Deadline(item, item["dueDate"], item.get("dueTime"), None, bool(item.get("done"))))
     out.sort(key=lambda d: (d.date, d.time or "99"))

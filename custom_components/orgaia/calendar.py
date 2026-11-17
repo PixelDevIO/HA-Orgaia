@@ -15,12 +15,18 @@ from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator
 from .entity import OrgaiaEntity, active_person_ids, track_dynamic
 from .protocol.agenda import DEFAULT_DURATION, Occurrence
 from .protocol.recur import add_days, date_of
-from .protocol.view import SpaceView
+from .protocol.view import SpaceView, occ_id
 from .summary import calendar_occurrences
 from .util import local_now, to_date, to_datetime
 
 # How far ahead the calendar looks for the next appointment.
 LOOKAHEAD_DAYS = 60
+
+# The drives an appointment needs, as the app names them: who drives there and back, or nobody yet.
+DRIVE_LABELS = {
+    "de": ("Hinfahrt", "Rückfahrt", "noch offen"),
+    "en": ("Drive there", "Drive back", "nobody yet"),
+}
 
 
 async def async_setup_entry(
@@ -38,12 +44,31 @@ async def async_setup_entry(
     )
 
 
-def to_event(view: SpaceView, occ: Occurrence) -> CalendarEvent:
+def drives(view: SpaceView, occ: Occurrence, language: str | None = None) -> str | None:
+    """The line about drives, for appointments that need one there or back."""
+    item = occ.item
+    if item["kind"] != "event" or not (item.get("needTo") or item.get("needFrom")):
+        return None
+    there, back, nobody = DRIVE_LABELS.get((language or "de").split("-")[0].lower(), DRIVE_LABELS["en"])
+    raw = view.occs.get(occ_id(item["id"], occ.occ_date)) if occ.occ_date else None
+    out = []
+    for need, field, label in (("needTo", "driveTo", there), ("needFrom", "driveFrom", back)):
+        if not item.get(need):
+            continue
+        who = raw[field] if raw and field in raw else item.get(field)
+        name = view.names([who]) if isinstance(who, str) else []
+        out.append(f"{label}: {name[0] if name else nobody}")
+    return "🚗 " + " · ".join(out)
+
+
+def to_event(view: SpaceView, occ: Occurrence, language: str | None = None) -> CalendarEvent:
     item = occ.item
     uid = f"{item['id']}|{occ.occ_date}" if occ.occ_date else item["id"]
     parts = []
     if occ.assignees:
         parts.append("👤 " + ", ".join(view.names(occ.assignees)))
+    if line := drives(view, occ, language):
+        parts.append(line)
     if item.get("note"):
         parts.append(item["note"])
     description = "\n\n".join(parts) or None
@@ -68,11 +93,13 @@ def to_event(view: SpaceView, occ: Occurrence) -> CalendarEvent:
     )
 
 
-def events_between(view: SpaceView, start: datetime, end: datetime, person: str | None = None) -> list[CalendarEvent]:
+def events_between(
+    view: SpaceView, start: datetime, end: datetime, person: str | None = None, language: str | None = None
+) -> list[CalendarEvent]:
     first, last = start.date().isoformat(), end.date().isoformat()
     out = []
     for occ in calendar_occurrences(view, add_days(first, -1), last, person):
-        ev = to_event(view, occ)
+        ev = to_event(view, occ, language)
         if ev.end_datetime_local > start and ev.start_datetime_local < end:
             out.append(ev)
     return out
@@ -95,12 +122,18 @@ class OrgaiaCalendar(OrgaiaEntity, CalendarEntity):
         self._update_next()
         super()._handle_coordinator_update()
 
+    def _language(self) -> str | None:
+        # Not yet known while the entity is being made.
+        return self.hass.config.language if self.hass else None
+
     def _update_next(self) -> None:
         now = local_now()
-        events = events_between(self.coordinator.data, now, now + timedelta(days=LOOKAHEAD_DAYS), self.person_id)
+        events = events_between(
+            self.coordinator.data, now, now + timedelta(days=LOOKAHEAD_DAYS), self.person_id, self._language()
+        )
         self._event = events[0] if events else None
 
     async def async_get_events(
         self, hass: HomeAssistant, start_date: datetime, end_date: datetime
     ) -> list[CalendarEvent]:
-        return events_between(self.coordinator.data, start_date, end_date, self.person_id)
+        return events_between(self.coordinator.data, start_date, end_date, self.person_id, hass.config.language)

@@ -3344,7 +3344,7 @@
     "openCounts": {
      "pA": 5,
      "pB": 5,
-     "pC": 2
+     "pC": 3
     }
    }
   }
@@ -3359,7 +3359,10 @@
     "date": "2026-11-10",
     "time": null,
     "occDate": "2026-11-10",
-    "done": false
+    "done": false,
+    "assignees": [
+     "pB"
+    ]
    },
    {
     "itemId": "i2",
@@ -3367,7 +3370,10 @@
     "date": "2026-11-10",
     "time": null,
     "occDate": null,
-    "done": false
+    "done": false,
+    "assignees": [
+     "pB"
+    ]
    },
    {
     "itemId": "r1",
@@ -3375,7 +3381,10 @@
     "date": "2026-11-11",
     "time": null,
     "occDate": "2026-11-11",
-    "done": false
+    "done": false,
+    "assignees": [
+     "pA"
+    ]
    },
    {
     "itemId": "r1",
@@ -3383,7 +3392,10 @@
     "date": "2026-11-12",
     "time": null,
     "occDate": "2026-11-12",
-    "done": false
+    "done": false,
+    "assignees": [
+     "pB"
+    ]
    },
    {
     "itemId": "r1",
@@ -3391,7 +3403,10 @@
     "date": "2026-11-13",
     "time": null,
     "occDate": "2026-11-13",
-    "done": false
+    "done": false,
+    "assignees": [
+     "pA"
+    ]
    },
    {
     "itemId": "r1",
@@ -3399,7 +3414,10 @@
     "date": "2026-11-14",
     "time": null,
     "occDate": "2026-11-14",
-    "done": false
+    "done": false,
+    "assignees": [
+     "pB"
+    ]
    },
    {
     "itemId": "r1",
@@ -3407,7 +3425,10 @@
     "date": "2026-11-15",
     "time": null,
     "occDate": "2026-11-15",
-    "done": false
+    "done": false,
+    "assignees": [
+     "pA"
+    ]
    },
    {
     "itemId": "r1",
@@ -3415,7 +3436,10 @@
     "date": "2026-11-16",
     "time": null,
     "occDate": "2026-11-16",
-    "done": true
+    "done": true,
+    "assignees": [
+     "pB"
+    ]
    },
    {
     "itemId": "i1",
@@ -3423,7 +3447,10 @@
     "date": "2026-11-17",
     "time": "07:00",
     "occDate": null,
-    "done": false
+    "done": false,
+    "assignees": [
+     "pA"
+    ]
    },
    {
     "itemId": "r1",
@@ -3431,7 +3458,10 @@
     "date": "2026-11-17",
     "time": null,
     "occDate": "2026-11-17",
-    "done": false
+    "done": false,
+    "assignees": [
+     "pC"
+    ]
    },
    {
     "itemId": "r4",
@@ -3439,7 +3469,8 @@
     "date": "2026-11-17",
     "time": null,
     "occDate": "2026-11-17",
-    "done": false
+    "done": false,
+    "assignees": []
    },
    {
     "itemId": "i7",
@@ -3447,7 +3478,12 @@
     "date": "2026-11-17",
     "time": null,
     "occDate": null,
-    "done": false
+    "done": false,
+    "assignees": [
+     "pA",
+     "pB",
+     "pC"
+    ]
    },
    {
     "itemId": "r1",
@@ -3455,7 +3491,10 @@
     "date": "2026-11-18",
     "time": null,
     "occDate": "2026-11-18",
-    "done": false
+    "done": false,
+    "assignees": [
+     "pB"
+    ]
    },
    {
     "itemId": "r1",
@@ -3463,7 +3502,10 @@
     "date": "2026-11-19",
     "time": null,
     "occDate": "2026-11-19",
-    "done": false
+    "done": false,
+    "assignees": [
+     "pA"
+    ]
    },
    {
     "itemId": "i12",
@@ -3471,7 +3513,10 @@
     "date": "2026-11-20",
     "time": null,
     "occDate": null,
-    "done": false
+    "done": false,
+    "assignees": [
+     "pB"
+    ]
    },
    {
     "itemId": "r1",
@@ -3479,7 +3524,10 @@
     "date": "2026-11-20",
     "time": null,
     "occDate": "2026-11-20",
-    "done": false
+    "done": false,
+    "assignees": [
+     "pB"
+    ]
    },
    {
     "itemId": "r1",
@@ -3487,7 +3535,10 @@
     "date": "2026-11-21",
     "time": null,
     "occDate": "2026-11-21",
-    "done": false
+    "done": false,
+    "assignees": [
+     "pA"
+    ]
    },
    {
     "itemId": "r1",
@@ -3495,7 +3546,10 @@
     "date": "2026-11-22",
     "time": null,
     "occDate": "2026-11-22",
-    "done": false
+    "done": false,
+    "assignees": [
+     "pB"
+    ]
    },
    {
     "itemId": "r1",
@@ -3503,7 +3557,10 @@
     "date": "2026-11-23",
     "time": null,
     "occDate": "2026-11-23",
-    "done": false
+    "done": false,
+    "assignees": [
+     "pA"
+    ]
    },
    {
     "itemId": "r1",
@@ -3511,7 +3568,10 @@
     "date": "2026-11-24",
     "time": null,
     "occDate": "2026-11-24",
-    "done": false
+    "done": false,
+    "assignees": [
+     "pB"
+    ]
    },
    {
     "itemId": "r1",
@@ -3519,7 +3579,10 @@
     "date": "2026-11-25",
     "time": null,
     "occDate": "2026-11-25",
-    "done": false
+    "done": false,
+    "assignees": [
+     "pA"
+    ]
    },
    {
     "itemId": "i6",
@@ -3527,7 +3590,8 @@
     "date": "2026-11-25",
     "time": null,
     "occDate": null,
-    "done": false
+    "done": false,
+    "assignees": []
    },
    {
     "itemId": "r1",
@@ -3535,7 +3599,10 @@
     "date": "2026-11-26",
     "time": null,
     "occDate": "2026-11-26",
-    "done": false
+    "done": false,
+    "assignees": [
+     "pB"
+    ]
    },
    {
     "itemId": "r1",
@@ -3543,7 +3610,10 @@
     "date": "2026-11-27",
     "time": null,
     "occDate": "2026-11-27",
-    "done": false
+    "done": false,
+    "assignees": [
+     "pA"
+    ]
    },
    {
     "itemId": "r1",
@@ -3551,7 +3621,10 @@
     "date": "2026-11-28",
     "time": null,
     "occDate": "2026-11-28",
-    "done": false
+    "done": false,
+    "assignees": [
+     "pB"
+    ]
    },
    {
     "itemId": "r1",
@@ -3559,7 +3632,10 @@
     "date": "2026-11-29",
     "time": null,
     "occDate": "2026-11-29",
-    "done": false
+    "done": false,
+    "assignees": [
+     "pA"
+    ]
    },
    {
     "itemId": "i11",
@@ -3567,7 +3643,10 @@
     "date": "2026-11-30",
     "time": null,
     "occDate": null,
-    "done": false
+    "done": false,
+    "assignees": [
+     "pA"
+    ]
    },
    {
     "itemId": "r1",
@@ -3575,7 +3654,10 @@
     "date": "2026-11-30",
     "time": null,
     "occDate": "2026-11-30",
-    "done": false
+    "done": false,
+    "assignees": [
+     "pB"
+    ]
    },
    {
     "itemId": "r3",
@@ -3583,7 +3665,10 @@
     "date": "2026-11-30",
     "time": null,
     "occDate": "2026-11-30",
-    "done": false
+    "done": false,
+    "assignees": [
+     "pA"
+    ]
    }
   ]
  },
