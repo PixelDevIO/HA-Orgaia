@@ -1,0 +1,136 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Orgaia-Gruppe verbinden",
+        "description": "Öffne in der Orgaia-App die Gruppe, gehe zu **Verwalten › Home Assistant** und erstelle einen Link. Füge ihn hier ein. Ein Admin der Gruppe bestätigt Home Assistant danach in der App.\n\nAlles bleibt Ende-zu-Ende-verschlüsselt: Home Assistant bekommt einen eigenen Schlüssel und liest die Gruppe wie ein Mitglied. Es zählt nicht als Person.",
+        "data": {
+          "link": "Einladungslink",
+          "name": "Name in der Gruppe"
+        },
+        "data_description": {
+          "link": "Der Link aus der App, beginnt mit https://…/join# oder orgaia://join?",
+          "name": "So sehen die Admins der Gruppe Home Assistant."
+        }
+      },
+      "reauth_confirm": {
+        "title": "{group} neu verbinden",
+        "description": "Home Assistant ist nicht mehr Mitglied von {group}. Erstelle in der App einen neuen Link für Home Assistant und füge ihn hier ein.",
+        "data": {
+          "link": "Einladungslink",
+          "name": "Name in der Gruppe"
+        },
+        "data_description": {
+          "link": "Der Link aus der App, beginnt mit https://…/join# oder orgaia://join?",
+          "name": "So sehen die Admins der Gruppe Home Assistant."
+        }
+      },
+      "wait": {
+        "title": "Warte auf Bestätigung"
+      }
+    },
+    "progress": {
+      "wait_for_admin": "Die Anfrage ist raus. Ein Admin von **{group}** bestätigt Home Assistant jetzt in der Orgaia-App. Dieses Fenster wartet bis zu 10 Minuten. Vergleiche die Sicherheitsnummer mit der in der App: **{code}**"
+    },
+    "error": {
+      "invalid_link": "Das ist kein Orgaia-Einladungslink.",
+      "cannot_connect": "Der Orgaia-Dienst ist nicht erreichbar.",
+      "needs_plus": "Home Assistant kann nur Gruppen mit Orgaia Plus beitreten.",
+      "too_many": "Mit dieser Gruppe sind schon so viele Integrationen verbunden wie erlaubt.",
+      "invite_invalid": "Der Link ist abgelaufen oder wurde schon benutzt. Erstelle in der App einen neuen.",
+      "already_member": "Home Assistant ist schon Mitglied dieser Gruppe.",
+      "update_required": "Diese Version der Integration ist für den Orgaia-Dienst zu alt. Bitte in HACS aktualisieren.",
+      "unknown": "Etwas ist schiefgelaufen. Bitte versuche es noch einmal."
+    },
+    "abort": {
+      "already_configured": "Diese Gruppe ist schon verbunden.",
+      "rejected": "Der Admin hat die Anfrage abgelehnt.",
+      "timeout": "Niemand hat die Anfrage rechtzeitig bestätigt. Erstelle einen neuen Link und versuche es noch einmal.",
+      "wrong_group": "Der Link gehört zu einer anderen Gruppe.",
+      "reauth_successful": "Die Gruppe ist wieder verbunden."
+    }
+  },
+  "entity": {
+    "calendar": {
+      "calendar": {
+        "name": "Kalender"
+      }
+    },
+    "todo": {
+      "list": {
+        "name": "Liste"
+      }
+    },
+    "sensor": {
+      "open_tasks": {
+        "name": "Offene Aufgaben",
+        "state_attributes": {
+          "titles": {
+            "name": "Titel"
+          }
+        }
+      },
+      "due_today": {
+        "name": "Heute fällig",
+        "state_attributes": {
+          "titles": {
+            "name": "Titel"
+          }
+        }
+      },
+      "overdue": {
+        "name": "Überfällig",
+        "state_attributes": {
+          "titles": {
+            "name": "Titel"
+          }
+        }
+      },
+      "shopping": {
+        "name": "Einkaufsliste",
+        "state_attributes": {
+          "titles": {
+            "name": "Titel"
+          }
+        }
+      },
+      "next_event": {
+        "name": "Nächster Termin",
+        "state_attributes": {
+          "title": {
+            "name": "Titel"
+          },
+          "location": {
+            "name": "Ort"
+          },
+          "all_day": {
+            "name": "Ganztägig"
+          },
+          "end": {
+            "name": "Ende"
+          }
+        }
+      },
+      "connection": {
+        "name": "Verbindung",
+        "state": {
+          "ok": "Verbunden",
+          "offline": "Offline",
+          "needs_plus": "Plus nötig",
+          "update_required": "Update nötig",
+          "removed": "Aus der Gruppe entfernt"
+        }
+      }
+    }
+  },
+  "issues": {
+    "needs_plus": {
+      "title": "Orgaia Plus für {group} ist abgelaufen",
+      "description": "Home Assistant kann **{group}** nur lesen, solange die Gruppe Orgaia Plus hat. Verlängere Plus in der App; Home Assistant macht dann von selbst weiter."
+    },
+    "update_required": {
+      "title": "Orgaia-Integration aktualisieren",
+      "description": "Der Orgaia-Dienst nimmt diese Version der Integration nicht mehr an, deshalb wird **{group}** nicht aktualisiert. Installiere in HACS die neueste Version und starte Home Assistant neu."
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "domain": "orgaia",
+  "name": "Orgaia",
+  "codeowners": [
+    "@PixelDevIO"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/PixelDevIO/HA-Orgaia",
+  "integration_type": "service",
+  "iot_class": "cloud_push",
+  "issue_tracker": "https://github.com/PixelDevIO/HA-Orgaia/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}
