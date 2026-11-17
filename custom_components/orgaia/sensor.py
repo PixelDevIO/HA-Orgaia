@@ -1,4 +1,4 @@
-"""Counts for dashboards and automations, the next appointment, and how the connection to Orgaia is doing."""
+"""Counts for dashboards and automations, per group and per person, the next appointment, and the connection."""
 
 from __future__ import annotations
 
@@ -16,9 +16,9 @@ from .calendar import LOOKAHEAD_DAYS, events_between
 from .client.engine import STATUS_NEEDS_PLUS, STATUS_OFFLINE, STATUS_OK, STATUS_REMOVED, STATUS_UPDATE
 from .const import MAX_TITLES
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator
-from .entity import OrgaiaEntity
+from .entity import OrgaiaEntity, active_person_ids, person_entity, track_dynamic
 from .summary import Counts, counts
-from .util import local_now, minute_of_day
+from .util import local_now, minute_of_day, to_date, to_datetime
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -45,19 +45,33 @@ async def async_setup_entry(
     entities: list[SensorEntity] = [OrgaiaCountSensor(coordinator, d) for d in COUNTS]
     entities += [OrgaiaNextEventSensor(coordinator), OrgaiaConnectionSensor(coordinator)]
     async_add_entities(entities)
+    track_dynamic(
+        hass,
+        entry,
+        active_person_ids,
+        lambda person_id: [
+            *(OrgaiaCountSensor(coordinator, d, person_id) for d in COUNTS if d.key != "shopping"),
+            OrgaiaNextTaskSensor(coordinator, person_id),
+        ],
+        async_add_entities,
+        "sensor",
+    )
 
 
 class OrgaiaCountSensor(OrgaiaEntity, SensorEntity):
     entity_description: CountDescription
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, coordinator: OrgaiaCoordinator, description: CountDescription) -> None:
-        super().__init__(coordinator, description.key)
+    def __init__(
+        self, coordinator: OrgaiaCoordinator, description: CountDescription, person_id: str | None = None
+    ) -> None:
+        super().__init__(coordinator, description.key, person_id)
         self.entity_description = description
 
     def _titles(self) -> list[str]:
         now = local_now()
-        return self.entity_description.pick(counts(self.coordinator.data, now.date().isoformat(), minute_of_day(now)))
+        c = counts(self.coordinator.data, now.date().isoformat(), minute_of_day(now), self.person_id)
+        return self.entity_description.pick(c)
 
     @property
     def native_value(self) -> int:
@@ -65,7 +79,37 @@ class OrgaiaCountSensor(OrgaiaEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        return {"titles": self._titles()[:MAX_TITLES]}
+        attrs: dict[str, Any] = {"titles": self._titles()[:MAX_TITLES]}
+        if self.person_id is not None:
+            attrs["person_entity"] = person_entity(self.coordinator.config_entry, self.person_id)
+        return attrs
+
+
+class OrgaiaNextTaskSensor(OrgaiaEntity, SensorEntity):
+    """The open task of a person that is due next; tasks without a due date or time slot are left out."""
+
+    _attr_translation_key = "next_task"
+    _attr_icon = "mdi:clipboard-text-clock-outline"
+
+    def __init__(self, coordinator: OrgaiaCoordinator, person_id: str) -> None:
+        super().__init__(coordinator, "next_task", person_id)
+
+    def _next(self) -> tuple[str, str] | None:
+        now = local_now()
+        return counts(self.coordinator.data, now.date().isoformat(), minute_of_day(now), self.person_id).next
+
+    @property
+    def native_value(self) -> str | None:
+        nxt = self._next()
+        return nxt[1][:255] if nxt else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        nxt = self._next()
+        due = None
+        if nxt:
+            due = (to_datetime(nxt[0]) if len(nxt[0]) > 10 else to_date(nxt[0])).isoformat()
+        return {"due": due, "person_entity": person_entity(self.coordinator.config_entry, self.person_id or "")}
 
 
 class OrgaiaNextEventSensor(OrgaiaEntity, SensorEntity):

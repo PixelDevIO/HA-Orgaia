@@ -59,6 +59,9 @@
     "todo": {
       "list": {
         "name": "Liste"
+      },
+      "person_tasks": {
+        "name": "Aufgaben"
       }
     },
     "sensor": {
@@ -67,6 +70,9 @@
         "state_attributes": {
           "titles": {
             "name": "Titel"
+          },
+          "person_entity": {
+            "name": "Person"
           }
         }
       },
@@ -75,6 +81,9 @@
         "state_attributes": {
           "titles": {
             "name": "Titel"
+          },
+          "person_entity": {
+            "name": "Person"
           }
         }
       },
@@ -83,6 +92,9 @@
         "state_attributes": {
           "titles": {
             "name": "Titel"
+          },
+          "person_entity": {
+            "name": "Person"
           }
         }
       },
@@ -120,6 +132,17 @@
           "update_required": "Update nötig",
           "removed": "Aus der Gruppe entfernt"
         }
+      },
+      "next_task": {
+        "name": "Nächste Aufgabe",
+        "state_attributes": {
+          "due": {
+            "name": "Fällig"
+          },
+          "person_entity": {
+            "name": "Person"
+          }
+        }
       }
     }
   },
@@ -131,6 +154,30 @@
     "update_required": {
       "title": "Orgaia-Integration aktualisieren",
       "description": "Der Orgaia-Dienst nimmt diese Version der Integration nicht mehr an, deshalb wird **{group}** nicht aktualisiert. Installiere in HACS die neueste Version und starte Home Assistant neu."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Personen der Gruppe",
+        "description": "Wähle, welche Person in Home Assistant jede Person der Gruppe ist. Ereignisse und Personen-Sensoren nennen dann auch die Personen-Entität, zum Beispiel für Benachrichtigungen. Personen mit gleichem Namen werden vorgeschlagen."
+      }
+    },
+    "abort": {
+      "not_loaded": "Die Gruppe ist gerade nicht geladen. Versuche es erneut, sobald sie verbunden ist.",
+      "no_persons": "Die Gruppe hat noch keine Personen."
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "task_created": "Eine Aufgabe wurde angelegt",
+      "task_assigned": "Eine Aufgabe wurde jemandem zugewiesen",
+      "task_completed": "Eine Aufgabe wurde erledigt",
+      "task_reopened": "Eine erledigte Aufgabe wurde wieder geöffnet",
+      "task_overdue": "Eine Aufgabe ist überfällig geworden",
+      "event_created": "Ein Termin wurde angelegt",
+      "event_changed": "Ein Termin wurde geändert",
+      "event_starting": "Ein Termin beginnt"
     }
   }
 }

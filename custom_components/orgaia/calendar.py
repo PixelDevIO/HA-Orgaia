@@ -1,4 +1,7 @@
-"""The group's calendar: appointments and tasks with a time slot, repetitions and exceptions included."""
+"""Calendars: the group's, and one per person with what they take part in.
+
+Appointments and tasks with a time slot, repetitions and exceptions included.
+"""
 
 from __future__ import annotations
 
@@ -9,7 +12,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator
-from .entity import OrgaiaEntity
+from .entity import OrgaiaEntity, active_person_ids, track_dynamic
 from .protocol.agenda import DEFAULT_DURATION, Occurrence
 from .protocol.recur import add_days, date_of
 from .protocol.view import SpaceView
@@ -23,7 +26,16 @@ LOOKAHEAD_DAYS = 60
 async def async_setup_entry(
     hass: HomeAssistant, entry: OrgaiaConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback
 ) -> None:
-    async_add_entities([OrgaiaCalendar(entry.runtime_data)])
+    coordinator = entry.runtime_data
+    async_add_entities([OrgaiaCalendar(coordinator)])
+    track_dynamic(
+        hass,
+        entry,
+        active_person_ids,
+        lambda person_id: [OrgaiaCalendar(coordinator, person_id)],
+        async_add_entities,
+        "calendar",
+    )
 
 
 def to_event(view: SpaceView, occ: Occurrence) -> CalendarEvent:
@@ -56,10 +68,10 @@ def to_event(view: SpaceView, occ: Occurrence) -> CalendarEvent:
     )
 
 
-def events_between(view: SpaceView, start: datetime, end: datetime) -> list[CalendarEvent]:
+def events_between(view: SpaceView, start: datetime, end: datetime, person: str | None = None) -> list[CalendarEvent]:
     first, last = start.date().isoformat(), end.date().isoformat()
     out = []
-    for occ in calendar_occurrences(view, add_days(first, -1), last):
+    for occ in calendar_occurrences(view, add_days(first, -1), last, person):
         ev = to_event(view, occ)
         if ev.end_datetime_local > start and ev.start_datetime_local < end:
             out.append(ev)
@@ -69,8 +81,8 @@ def events_between(view: SpaceView, start: datetime, end: datetime) -> list[Cale
 class OrgaiaCalendar(OrgaiaEntity, CalendarEntity):
     _attr_translation_key = "calendar"
 
-    def __init__(self, coordinator: OrgaiaCoordinator) -> None:
-        super().__init__(coordinator, "calendar")
+    def __init__(self, coordinator: OrgaiaCoordinator, person_id: str | None = None) -> None:
+        super().__init__(coordinator, "calendar", person_id)
         self._event: CalendarEvent | None = None
         self._update_next()
 
@@ -85,10 +97,10 @@ class OrgaiaCalendar(OrgaiaEntity, CalendarEntity):
 
     def _update_next(self) -> None:
         now = local_now()
-        events = events_between(self.coordinator.data, now, now + timedelta(days=LOOKAHEAD_DAYS))
+        events = events_between(self.coordinator.data, now, now + timedelta(days=LOOKAHEAD_DAYS), self.person_id)
         self._event = events[0] if events else None
 
     async def async_get_events(
         self, hass: HomeAssistant, start_date: datetime, end_date: datetime
     ) -> list[CalendarEvent]:
-        return events_between(self.coordinator.data, start_date, end_date)
+        return events_between(self.coordinator.data, start_date, end_date, self.person_id)

@@ -43,12 +43,95 @@ Per group (device named after the group):
 | `calendar.<group>_calendar` | Appointments and tasks with a time slot, including repetitions and their exceptions. |
 | `sensor.<group>_open_tasks` | Open tasks, including today's repeating ones. Attribute `titles`. |
 | `sensor.<group>_due_today` | Tasks due today. |
-| `sensor.<group>_overdue` | Tasks past their due date. |
+| `sensor.<group>_overdue` | Tasks past their due date, and today's repeating tasks past their time. |
 | `sensor.<group>_shopping_list` | Items still to buy. |
 | `sensor.<group>_next_appointment` | Start of the next appointment, with title and location. |
 | `sensor.<group>_connection` | Diagnostic: `ok`, `offline`, `needs_plus`, `update_required` or `removed`. |
 
-New lists appear by themselves; deleted lists disappear.
+Per person of the group (device named "<person> (<group>)"):
+
+| Entity | Description |
+|---|---|
+| `todo.<person>_<group>_tasks` | Everything assigned to the person, from all task lists. |
+| `calendar.<person>_<group>_calendar` | Appointments and planned tasks the person takes part in. |
+| `sensor.<person>_<group>_open_tasks`, `_due_today`, `_overdue` | The counts above, for this person. |
+| `sensor.<person>_<group>_next_task` | Title of the person's open task due next; attribute `due`. |
+
+New lists and people appear by themselves; deleted lists and people who left disappear.
+
+### People in Home Assistant
+
+Under **Settings → Devices & services → Orgaia → Configure**, choose which Home Assistant person (`person.*`) each person of the group is. People with the same name are suggested. Events and person sensors then carry the person entity too (`assignee_entities`, `completed_by_entity`, `person_entity`), so a notification can go to the right phone.
+
+## Automations
+
+Every change that matters fires the event `orgaia_event`. The same events are offered as **device triggers** on the group's device (Automation → Add trigger → Device → your group).
+
+| `type` | When |
+|---|---|
+| `task_created` | A task or shopping item was added. |
+| `task_assigned` | Somebody was assigned to an open task (`assigned`, `assigned_entities`). |
+| `task_completed` | A task was ticked off (`completed_by`, `completed_by_entity`). |
+| `task_reopened` | A ticked task was opened again. |
+| `task_overdue` | A task passed its due date or time. |
+| `event_created` | An appointment was added. |
+| `event_changed` | Time, place, title, repetition or participants of an appointment changed. |
+| `event_starting` | An appointment begins. For a reminder ahead of time, use the calendar trigger with an offset. |
+
+Every event carries `group`, `device_id`, `item_id`, `title`, `list`, `assignees` (names) and `assignee_entities`; tasks also `list_type`, `due` and `date` (the occurrence of a repeating task), appointments `start`, `end`, `all_day` and `location`.
+
+Nothing fires for what was already there when Home Assistant started, and every change fires once.
+
+**Examples**
+
+Tell whoever is responsible when the bin chore is late:
+
+```yaml
+triggers:
+  - trigger: event
+    event_type: orgaia_event
+    event_data:
+      type: task_overdue
+conditions:
+  - condition: template
+    value_template: "{{ trigger.event.data.assignee_entities | count > 0 }}"
+actions:
+  - action: notify.notify
+    data:
+      title: "Still open: {{ trigger.event.data.title }}"
+      message: "For {{ trigger.event.data.assignees | join(', ') }}"
+```
+
+Flash the hallway light when the shopping is done:
+
+```yaml
+triggers:
+  - trigger: event
+    event_type: orgaia_event
+    event_data:
+      type: task_completed
+      list_type: shopping
+actions:
+  - action: light.turn_on
+    target:
+      entity_id: light.hallway
+    data:
+      flash: short
+```
+
+Remind 30 minutes before an appointment:
+
+```yaml
+triggers:
+  - trigger: calendar
+    event: start
+    entity_id: calendar.familie_calendar
+    offset: "-0:30:0"
+actions:
+  - action: notify.notify
+    data:
+      message: "{{ trigger.calendar_event.summary }} at {{ trigger.calendar_event.location }}"
+```
 
 This version **reads only**. Changes are made in the Orgaia app; ticking off from Home Assistant comes in a later version.
 
@@ -80,6 +163,6 @@ Alles bleibt Ende-zu-Ende-verschlüsselt: Home Assistant tritt der Gruppe mit ei
 2. In Home Assistant: **Einstellungen → Geräte & Dienste → Integration hinzufügen → Orgaia**, Link einfügen.
 3. Ein Admin bestätigt in der App. Die Sicherheitsnummer in Home Assistant und in der App muss gleich sein.
 
-Home Assistant zählt nicht als Person; pro Gruppe gehen bis zu 3 Integrationen. Diese Version liest nur, abhaken aus Home Assistant kommt später. Home Assistant sollte auf die Zeitzone eingestellt sein, in der ihr lebt.
+Home Assistant zählt nicht als Person; pro Gruppe gehen bis zu 3 Integrationen. Für jede Person der Gruppe gibt es eine eigene To-do-Liste, einen Kalender und Sensoren; unter **Konfigurieren** ordnest du ihr eine Person in Home Assistant zu. Für Automationen gibt es das Ereignis `orgaia_event` (auch als Geräte-Auslöser), zum Beispiel wenn eine Aufgabe erledigt oder überfällig ist oder ein Termin beginnt. Diese Version liest nur, abhaken aus Home Assistant kommt später. Home Assistant sollte auf die Zeitzone eingestellt sein, in der ihr lebt.
 
 **Lizenz:** Apache 2.0 (siehe [LICENSE](LICENSE)). Name und Logo „Orgaia“ sowie App und Dienst sind davon nicht umfasst.

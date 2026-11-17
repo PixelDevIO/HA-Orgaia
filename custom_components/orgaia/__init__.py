@@ -5,8 +5,8 @@ from __future__ import annotations
 import logging
 
 from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers import config_validation as cv
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import config_validation as cv, device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
@@ -14,6 +14,8 @@ from homeassistant.helpers.typing import ConfigType
 from .client.engine import GroupEngine
 from .const import CONF_SPACE, DOMAIN, STORAGE_VERSION
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator, storage_key
+from .entity import active_person_ids, person_device_key
+from .events import EventTracker
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -43,7 +45,37 @@ async def async_setup_entry(hass: HomeAssistant, entry: OrgaiaConfigEntry) -> bo
     entry.runtime_data = coordinator
     entry.async_create_background_task(hass, coordinator.run_live(), f"{DOMAIN} live {entry.entry_id}")
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    entry.async_on_unload(EventTracker(hass, entry).start())
+    entry.async_on_unload(coordinator.async_add_listener(lambda: _remove_gone_persons(hass, entry)))
+    entry.async_on_unload(entry.add_update_listener(_options_changed))
     return True
+
+
+async def _options_changed(hass: HomeAssistant, entry: OrgaiaConfigEntry) -> None:
+    await hass.config_entries.async_reload(entry.entry_id)
+
+
+@callback
+def _remove_gone_persons(hass: HomeAssistant, entry: OrgaiaConfigEntry) -> None:
+    """A person who left the group takes their device (and so their entities) along."""
+    active = {person_device_key(entry, p) for p in active_person_ids(entry.runtime_data.data)}
+    registry = dr.async_get(hass)
+    for device in dr.async_entries_for_config_entry(registry, entry.entry_id):
+        if device.model != "Person":
+            continue
+        keys = {ident for domain, ident in device.identifiers if domain == DOMAIN}
+        if not keys & active:
+            registry.async_update_device(device.id, remove_config_entry_id=entry.entry_id)
+
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant, entry: OrgaiaConfigEntry, device: dr.DeviceEntry
+) -> bool:
+    """A person's device can be deleted by hand once the person is no longer in the group."""
+    if device.model != "Person":
+        return False
+    active = {person_device_key(entry, p) for p in active_person_ids(entry.runtime_data.data)}
+    return not any(ident in active for domain, ident in device.identifiers if domain == DOMAIN)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: OrgaiaConfigEntry) -> bool:

@@ -3,26 +3,31 @@
 from __future__ import annotations
 
 import calendar
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from .protocol.agenda import Occurrence, current_occurrence, is_overdue, occurrences_between, resolve_occurrence
-from .protocol.recur import add_days, date_of, parse_ymd
-from .protocol.view import SpaceView
+from .protocol.recur import add_days, date_of, parse_ymd, to_min
+from .protocol.view import SpaceView, occ_id
 
 
 @dataclass
 class TodoEntry:
-    """One line of a to-do list."""
+    """One line of a to-do list: a one-off task, or the current occurrence of a repeating one."""
 
     uid: str
+    item_id: str
+    list_id: str
+    occ_date: str | None
     title: str
     done: bool
     done_at: Any
+    done_by: str | None
     due: str | None
     note: str | None
+    assignees: list[str]
     persons: list[str]
-    subtasks: list[tuple[str, bool]]
+    subtasks: list[tuple[str, bool]] = field(default_factory=list)
 
 
 def todo_lists(view: SpaceView) -> list[dict[str, Any]]:
@@ -36,55 +41,81 @@ def _due(item: dict[str, Any]) -> str | None:
     return item.get("start") or None
 
 
-def todo_entries(view: SpaceView, list_id: str, today: str, keep_done_days: int) -> list[TodoEntry]:
-    """The tasks of one list. Repeating ones show their current occurrence; old ticks drop out."""
-    oldest_ms = None
+def _done_mark(view: SpaceView, item: dict[str, Any], occ_date: str | None) -> dict[str, Any] | None:
+    mark = (view.occs.get(occ_id(item["id"], occ_date)) or {}).get("done") if occ_date else item.get("done")
+    return mark if isinstance(mark, dict) else None
+
+
+def _entry(view: SpaceView, item: dict[str, Any], today: str) -> TodoEntry | None:
+    subs = [(s["title"], s["done"]) for s in view.subs_by_item.get(item["id"], [])]
+    if item.get("repeat"):
+        cur = current_occurrence(view, item, today)
+        if cur is None:
+            return None
+        r = resolve_occurrence(view, item, cur["date"])
+        mark = _done_mark(view, item, cur["date"])
+        return TodoEntry(
+            uid=f"{item['id']}|{cur['date']}",
+            item_id=item["id"],
+            list_id=item["listId"],
+            occ_date=cur["date"],
+            title=r.item["title"],
+            done=r.done,
+            done_at=(mark or {}).get("at"),
+            done_by=(mark or {}).get("by"),
+            due=r.start if item.get("start") else cur["date"],
+            note=r.item.get("note"),
+            assignees=list(r.assignees),
+            persons=view.names(r.assignees),
+            subtasks=subs,
+        )
+    mark = _done_mark(view, item, None)
+    return TodoEntry(
+        uid=item["id"],
+        item_id=item["id"],
+        list_id=item["listId"],
+        occ_date=None,
+        title=item["title"],
+        done=bool(item.get("done")),
+        done_at=(mark or {}).get("at"),
+        done_by=(mark or {}).get("by"),
+        due=_due(item),
+        note=item.get("note"),
+        assignees=list(item["assignees"]),
+        persons=view.names(item["assignees"]),
+        subtasks=subs,
+    )
+
+
+def todo_entries(
+    view: SpaceView,
+    today: str,
+    keep_done_days: int,
+    list_id: str | None = None,
+    person: str | None = None,
+) -> list[TodoEntry]:
+    """Tasks of one list, or of one person across all task lists. Old ticks drop out."""
+    oldest_ms = _days_ago_ms(today, keep_done_days)
     out: list[TodoEntry] = []
     for item in view.items:
-        if item["listId"] != list_id or item["kind"] != "task":
+        if item["kind"] != "task":
             continue
-        subs = [(s["title"], s["done"]) for s in view.subs_by_item.get(item["id"], [])]
-        if item.get("repeat"):
-            cur = current_occurrence(view, item, today)
-            if cur is None:
-                continue
-            r = resolve_occurrence(view, item, cur["date"])
-            done = r.done
-            due = r.start if item.get("start") else cur["date"]
-            out.append(
-                TodoEntry(
-                    f"{item['id']}|{cur['date']}",
-                    r.item["title"],
-                    done,
-                    None,
-                    due,
-                    r.item.get("note"),
-                    view.names(r.assignees),
-                    subs,
-                )
-            )
+        if list_id is not None and item["listId"] != list_id:
             continue
-        done_mark = item.get("done")
-        if done_mark:
-            at = done_mark.get("at") if isinstance(done_mark, dict) else None
-            if oldest_ms is None:
-                oldest_ms = _days_ago_ms(today, keep_done_days)
-            if isinstance(at, (int, float)) and at < oldest_ms:
-                continue
-        else:
-            at = None
-        out.append(
-            TodoEntry(
-                item["id"],
-                item["title"],
-                bool(done_mark),
-                at,
-                _due(item),
-                item.get("note"),
-                view.names(item["assignees"]),
-                subs,
-            )
-        )
+        ltype = view.list_by_id.get(item["listId"], {}).get("type")
+        if ltype not in ("tasks", "shopping") or (person is not None and ltype != "tasks"):
+            continue
+        entry = _entry(view, item, today)
+        if entry is None or (person is not None and person not in entry.assignees):
+            continue
+        if (
+            entry.done
+            and entry.occ_date is None
+            and isinstance(entry.done_at, (int, float))
+            and entry.done_at < oldest_ms
+        ):
+            continue
+        out.append(entry)
     return out
 
 
@@ -92,8 +123,8 @@ def _days_ago_ms(today: str, days: int) -> float:
     return calendar.timegm(parse_ymd(add_days(today, -days)).timetuple()) * 1000.0
 
 
-def calendar_occurrences(view: SpaceView, start: str, end: str) -> list[Occurrence]:
-    """Appointments and planned tasks between two dates (inclusive), sorted by start."""
+def calendar_occurrences(view: SpaceView, start: str, end: str, person: str | None = None) -> list[Occurrence]:
+    """Appointments and planned tasks between two dates (inclusive), sorted by start. Optionally of one person."""
     out: list[Occurrence] = []
     for item in view.items:
         if not item.get("start"):
@@ -101,6 +132,8 @@ def calendar_occurrences(view: SpaceView, start: str, end: str) -> list[Occurren
         if view.list_by_id.get(item["listId"], {}).get("type") == "shopping":
             continue
         for occ in occurrences_between(view, item, start, end):
+            if person is not None and person not in occ.assignees:
+                continue
             last = date_of(occ.end) if occ.end else date_of(occ.start)
             if date_of(occ.start) <= end and last >= start:
                 out.append(occ)
@@ -114,11 +147,22 @@ class Counts:
     due_today: list[str]
     overdue: list[str]
     shopping: list[str]
+    # The open task due next: (due, title), due as YYYY-MM-DD or YYYY-MM-DDTHH:mm.
+    next: tuple[str, str] | None = None
 
 
-def counts(view: SpaceView, today: str, minute: int) -> Counts:
-    """Open tasks (with today's repeating ones), what is due today, what is late, and the shopping still to buy."""
+def _repeat_overdue(occ: Occurrence, today: str, minute: int) -> bool:
+    """A repeating task's occurrence of today with a time that has passed and is not done."""
+    return date_of(occ.start) == today and len(occ.start) > 10 and to_min(occ.start[11:16]) < minute
+
+
+def counts(view: SpaceView, today: str, minute: int, person: str | None = None) -> Counts:
+    """Open tasks (with today's repeating ones), what is due today, what is late, and the shopping still to buy.
+
+    With a person, only their tasks count, and shopping is left out.
+    """
     c = Counts([], [], [], [])
+    upcoming: list[tuple[str, str]] = []
     for item in view.items:
         if item["kind"] != "task":
             continue
@@ -127,19 +171,54 @@ def counts(view: SpaceView, today: str, minute: int) -> Counts:
             if ltype == "shopping":
                 continue
             for occ in occurrences_between(view, item, today, today) if item.get("start") else []:
-                if not occ.done and date_of(occ.start) == today:
-                    c.open.append(occ.item["title"])
-                    c.due_today.append(occ.item["title"])
+                if occ.done or date_of(occ.start) != today:
+                    continue
+                if person is not None and person not in occ.assignees:
+                    continue
+                c.open.append(occ.item["title"])
+                c.due_today.append(occ.item["title"])
+                if _repeat_overdue(occ, today, minute):
+                    c.overdue.append(occ.item["title"])
+                upcoming.append((occ.start, occ.item["title"]))
             continue
         if item.get("done"):
             continue
         if ltype == "shopping":
-            c.shopping.append(item["title"])
+            if person is None:
+                c.shopping.append(item["title"])
+            continue
+        if person is not None and person not in item["assignees"]:
             continue
         c.open.append(item["title"])
         due = _due(item)
+        if due:
+            upcoming.append((due, item["title"]))
         if due and date_of(due) == today:
             c.due_today.append(item["title"])
         if is_overdue(item, today, minute):
             c.overdue.append(item["title"])
+    if upcoming:
+        c.next = min(upcoming)
     return c
+
+
+def overdue_entries(view: SpaceView, today: str, minute: int) -> list[TodoEntry]:
+    """Tasks that are late right now: one-off tasks past due, and today's repeating ones past their time."""
+    out: list[TodoEntry] = []
+    for item in view.items:
+        if item["kind"] != "task" or view.list_by_id.get(item["listId"], {}).get("type") != "tasks":
+            continue
+        if item.get("repeat"):
+            if not item.get("start"):
+                continue
+            for occ in occurrences_between(view, item, today, today):
+                if not occ.done and _repeat_overdue(occ, today, minute):
+                    entry = _entry(view, item, today)
+                    if entry is not None:
+                        out.append(entry)
+            continue
+        if is_overdue(item, today, minute):
+            entry = _entry(view, item, today)
+            if entry is not None:
+                out.append(entry)
+    return out

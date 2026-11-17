@@ -18,9 +18,12 @@ from custom_components.orgaia.protocol.invite import parse_invite
 
 from .fake_service import SERVER, SPACE, FakeService, fill_group
 
+NOON = "2026-11-17T12:00:00+01:00"
 
-async def setup_group(hass: HomeAssistant, service: FakeService) -> MockConfigEntry:
+
+async def setup_group(hass: HomeAssistant, service: FakeService, freezer) -> MockConfigEntry:
     await hass.config.async_set_time_zone("Europe/Berlin")
+    freezer.move_to(NOON)
     fill_group(service, dt_util.now().date().isoformat())
     engine = GroupEngine(MagicMock(), GroupEngine.new_data(SERVER))
     await engine.request_join(parse_invite(service.link()), "Home Assistant")
@@ -34,8 +37,8 @@ async def setup_group(hass: HomeAssistant, service: FakeService) -> MockConfigEn
     return entry
 
 
-async def test_entities(hass: HomeAssistant, service: FakeService) -> None:
-    entry = await setup_group(hass, service)
+async def test_entities(hass: HomeAssistant, service: FakeService, freezer) -> None:
+    entry = await setup_group(hass, service, freezer)
     assert entry.state is ConfigEntryState.LOADED
 
     haushalt = hass.states.get("todo.familie_haushalt")
@@ -79,8 +82,8 @@ async def test_entities(hass: HomeAssistant, service: FakeService) -> None:
     assert "Familie" not in str(diag)
 
 
-async def test_new_list_appears_and_gone_list_goes(hass: HomeAssistant, service: FakeService) -> None:
-    entry = await setup_group(hass, service)
+async def test_new_list_appears_and_gone_list_goes(hass: HomeAssistant, service: FakeService, freezer) -> None:
+    entry = await setup_group(hass, service, freezer)
     service.write("list", "garten", {"name": "Garten", "type": "tasks", "order": 3})
     await entry.runtime_data.async_refresh()
     await hass.async_block_till_done()
@@ -91,8 +94,8 @@ async def test_new_list_appears_and_gone_list_goes(hass: HomeAssistant, service:
     assert hass.states.get("todo.familie_garten") is None
 
 
-async def test_plus_ended_shows_a_repair(hass: HomeAssistant, service: FakeService) -> None:
-    entry = await setup_group(hass, service)
+async def test_plus_ended_shows_a_repair(hass: HomeAssistant, service: FakeService, freezer) -> None:
+    entry = await setup_group(hass, service, freezer)
     service.block = (402, "integration-needs-plan")
     await entry.runtime_data.async_refresh()
     await hass.async_block_till_done()
@@ -107,8 +110,8 @@ async def test_plus_ended_shows_a_repair(hass: HomeAssistant, service: FakeServi
     assert hass.states.get("sensor.familie_open_tasks").state == "3"
 
 
-async def test_removed_asks_for_a_new_link(hass: HomeAssistant, service: FakeService) -> None:
-    entry = await setup_group(hass, service)
+async def test_removed_asks_for_a_new_link(hass: HomeAssistant, service: FakeService, freezer) -> None:
+    entry = await setup_group(hass, service, freezer)
     service.removed = True
     await entry.runtime_data.async_refresh()
     await hass.async_block_till_done()
@@ -116,8 +119,8 @@ async def test_removed_asks_for_a_new_link(hass: HomeAssistant, service: FakeSer
     assert any(f["context"]["source"] == "reauth" for f in flows)
 
 
-async def test_remove_leaves_the_group(hass: HomeAssistant, service: FakeService) -> None:
-    entry = await setup_group(hass, service)
+async def test_remove_leaves_the_group(hass: HomeAssistant, service: FakeService, freezer) -> None:
+    entry = await setup_group(hass, service, freezer)
     await hass.config_entries.async_remove(entry.entry_id)
     await hass.async_block_till_done()
     assert service.left

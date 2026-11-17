@@ -59,6 +59,9 @@
     "todo": {
       "list": {
         "name": "List"
+      },
+      "person_tasks": {
+        "name": "Tasks"
       }
     },
     "sensor": {
@@ -67,6 +70,9 @@
         "state_attributes": {
           "titles": {
             "name": "Titles"
+          },
+          "person_entity": {
+            "name": "Person"
           }
         }
       },
@@ -75,6 +81,9 @@
         "state_attributes": {
           "titles": {
             "name": "Titles"
+          },
+          "person_entity": {
+            "name": "Person"
           }
         }
       },
@@ -83,6 +92,9 @@
         "state_attributes": {
           "titles": {
             "name": "Titles"
+          },
+          "person_entity": {
+            "name": "Person"
           }
         }
       },
@@ -120,6 +132,17 @@
           "update_required": "Update required",
           "removed": "Removed from group"
         }
+      },
+      "next_task": {
+        "name": "Next task",
+        "state_attributes": {
+          "due": {
+            "name": "Due"
+          },
+          "person_entity": {
+            "name": "Person"
+          }
+        }
       }
     }
   },
@@ -131,6 +154,30 @@
     "update_required": {
       "title": "Update the Orgaia integration",
       "description": "The Orgaia service no longer accepts this version of the integration, so **{group}** is not updated. Install the latest version in HACS and restart Home Assistant."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "People of the group",
+        "description": "Choose which Home Assistant person each person of the group is. Events and person sensors then also name the person entity, e.g. for notifications. People with the same name are suggested."
+      }
+    },
+    "abort": {
+      "not_loaded": "The group is not loaded right now. Try again once it is connected.",
+      "no_persons": "The group has no people yet."
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "task_created": "A task was added",
+      "task_assigned": "A task was assigned to someone",
+      "task_completed": "A task was completed",
+      "task_reopened": "A completed task was reopened",
+      "task_overdue": "A task became overdue",
+      "event_created": "An appointment was added",
+      "event_changed": "An appointment was changed",
+      "event_starting": "An appointment starts"
     }
   }
 }
