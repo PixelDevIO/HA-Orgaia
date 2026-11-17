@@ -43,7 +43,7 @@ Per group (device named after the group):
 | `calendar.<group>_calendar` | Appointments and tasks with a time slot, including repetitions and their exceptions. |
 | `sensor.<group>_open_tasks` | Open tasks, including today's repeating ones. Attribute `titles`. |
 | `sensor.<group>_due_today` | Tasks due today. |
-| `sensor.<group>_overdue` | Tasks past their due date, and today's repeating tasks past their time. |
+| `sensor.<group>_overdue` | Everything that should be done by now: one-off tasks past their due date, today's repeating and packing tasks past their time, and planned task slots that ended unticked. The app lists the last two apart, as "missed"; here they count as overdue, so one automation can remind of all of it. |
 | `sensor.<group>_shopping_list` | Items still to buy. |
 | `sensor.<group>_next_appointment` | Start of the next appointment, with title and location. |
 | `sensor.<group>_connection` | Diagnostic: `ok`, `offline`, `needs_plus`, `update_required` or `removed`. Attribute `last_sync`: when the group was last read. |
@@ -68,6 +68,10 @@ They show as in the app, worked out on your Home Assistant:
 
 Titles follow Home Assistant's language (German or English).
 
+### Subscribed calendars
+
+A calendar the family subscribed to in Orgaia (school, club, waste collection) shows in the group's calendar and in the calendars of the people it is for. Like every phone, Home Assistant fetches it itself, straight from its address, every 6 hours; the entries never go through the Orgaia service and are kept in their own storage file. When a fetch fails, the entries of the last good one stay. They fire `event_starting`, but never `event_created` or `event_changed`.
+
 ### People in Home Assistant
 
 Under **Settings → Devices & services → Orgaia → Configure**, choose which Home Assistant person (`person.*`) each person of the group is. People with the same name are suggested. Events and person sensors then carry the person entity too (`assignee_entities`, `completed_by_entity`, `person_entity`), so a notification can go to the right phone.
@@ -80,7 +84,7 @@ Every change that matters fires the event `orgaia_event`. The same events are of
 |---|---|
 | `task_created` | A task or shopping item was added. |
 | `task_assigned` | Somebody was assigned to an open task (`assigned`, `assigned_entities`). |
-| `task_completed` | A task was ticked off (`completed_by`, `completed_by_entity`). |
+| `task_completed` | A task was ticked off (`completed_by`, `completed_by_entity`). A task that comes back fires it too, for the round just finished. |
 | `task_reopened` | A ticked task was opened again. |
 | `task_overdue` | A task passed its due date or time. |
 | `event_created` | An appointment was added. |
@@ -89,7 +93,7 @@ Every change that matters fires the event `orgaia_event`. The same events are of
 
 Every event carries `group`, `device_id`, `item_id`, `title`, `list`, `assignees` (names) and `assignee_entities`; tasks also `list_type`, `due` and `date` (the occurrence of a repeating task), appointments `start`, `end`, `all_day` and `location`.
 
-Nothing fires for what was already there when Home Assistant started, and every change fires once.
+Nothing fires for what was already there when Home Assistant started, and every change fires once. After a restart of up to 15 minutes (an update, for example), what changed meanwhile and appointments that began meanwhile still fire once Home Assistant is running, with `late: true` in the event data. After a longer break nothing is caught up, so automations do not act on old news.
 
 **Examples**
 
@@ -173,6 +177,6 @@ Alles bleibt Ende-zu-Ende-verschlüsselt: Home Assistant tritt der Gruppe mit ei
 2. In Home Assistant: **Einstellungen → Geräte & Dienste → Integration hinzufügen → Orgaia**, Link einfügen.
 3. Ein Admin bestätigt in der App. Die Sicherheitsnummer in Home Assistant und in der App muss gleich sein.
 
-Home Assistant zählt nicht als Person; pro Gruppe gehen bis zu 3 Integrationen. Für jede Person der Gruppe gibt es eine eigene To-do-Liste, einen Kalender und Sensoren; unter **Konfigurieren** ordnest du ihr eine Person in Home Assistant zu. Für Automationen gibt es das Ereignis `orgaia_event` (auch als Geräte-Auslöser), zum Beispiel wenn eine Aufgabe erledigt oder überfällig ist oder ein Termin beginnt. Stundenpläne erscheinen als To-do-Liste mit den Pack-Aufgaben von heute, Schulzeit und Arbeitszeit aus Dienstplänen stehen im Kalender der Person. Ist der Orgaia-Dienst nicht erreichbar, bleibt der letzte Stand sichtbar und der Sensor „Verbindung“ zeigt `offline`. Diese Version liest nur, abhaken aus Home Assistant kommt später. Home Assistant sollte auf die Zeitzone eingestellt sein, in der ihr lebt.
+Home Assistant zählt nicht als Person; pro Gruppe gehen bis zu 3 Integrationen. Für jede Person der Gruppe gibt es eine eigene To-do-Liste, einen Kalender und Sensoren; unter **Konfigurieren** ordnest du ihr eine Person in Home Assistant zu. Für Automationen gibt es das Ereignis `orgaia_event` (auch als Geräte-Auslöser), zum Beispiel wenn eine Aufgabe erledigt oder überfällig ist oder ein Termin beginnt. Stundenpläne erscheinen als To-do-Liste mit den Pack-Aufgaben von heute, Schulzeit und Arbeitszeit aus Dienstplänen stehen im Kalender der Person. Abonnierte Kalender (Schule, Verein, Müllabfuhr) holt Home Assistant selbst alle 6 Stunden und zeigt sie bei den Personen, für die sie gelten. Ist der Orgaia-Dienst nicht erreichbar, bleibt der letzte Stand sichtbar und der Sensor „Verbindung“ zeigt `offline`. Nach einem Neustart von höchstens 15 Minuten kommen die Ereignisse von zwischendurch nach, mit `late: true`. „Überfällig“ umfasst auch Serien- und Pack-Aufgaben nach ihrer Uhrzeit und verpasste Zeitfenster. Diese Version liest nur, abhaken aus Home Assistant kommt später. Home Assistant sollte auf die Zeitzone eingestellt sein, in der ihr lebt.
 
 **Lizenz:** Apache 2.0 (siehe [LICENSE](LICENSE)). Name und Logo „Orgaia“ sowie App und Dienst sind davon nicht umfasst.

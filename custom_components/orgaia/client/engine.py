@@ -63,6 +63,8 @@ class GroupEngine:
         self.status: str = data.get("status") or STATUS_OK
         # When the group was last read from the service (ms since 1970).
         self.synced_at: int | None = data.get("syncedAt")
+        # When Home Assistant last stopped with this group, in ms; set only on a clean stop.
+        self.stopped_at: int | None = data.get("stoppedAt")
         self._now = now
         self.clock = Clock(self.node, now)
         for table in self.state.values():
@@ -93,6 +95,7 @@ class GroupEngine:
             "state": self.state,
             "status": self.status,
             "syncedAt": self.synced_at,
+            "stoppedAt": self.stopped_at,
         }
 
     @staticmethod

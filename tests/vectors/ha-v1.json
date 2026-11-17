@@ -4710,5 +4710,228 @@
     "tt~lTT~s11451230~B|2026-11-26"
    ]
   }
- ]
+ ],
+ "feeds": {
+  "zone": "Europe/Berlin",
+  "cases": [
+   {
+    "text": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Test//DE\r\nBEGIN:VEVENT\r\nUID:ferien-1\r\nSUMMARY:Herbstferien\r\nDTSTART;VALUE=DATE:20261102\r\nDTEND;VALUE=DATE:20261107\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:eltern\r\nSUMMARY:Elternabend 3b\r\nLOCATION:Raum 12\\, Altbau\r\nDESCRIPTION:Bitte\\nmitbringen: Stifte\r\nDTSTART:20261110T190000\r\nDTEND:20261110T203000\r\nBEGIN:VALARM\r\nTRIGGER:-PT15M\r\nDESCRIPTION:ignored\r\nEND:VALARM\r\nEND:VEVENT\r\nEND:VCALENDAR",
+    "from": "2026-11-01",
+    "to": "2026-11-30",
+    "expect": [
+     {
+      "uid": "ferien-1",
+      "title": "Herbstferien",
+      "allDay": true,
+      "start": "2026-11-02T00:00",
+      "end": "2026-11-06T00:00"
+     },
+     {
+      "uid": "eltern",
+      "title": "Elternabend 3b",
+      "allDay": false,
+      "location": "Raum 12, Altbau",
+      "note": "Bitte\nmitbringen: Stifte",
+      "start": "2026-11-10T19:00",
+      "end": "2026-11-10T20:30"
+     }
+    ]
+   },
+   {
+    "text": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Test//DE\r\nBEGIN:VEVENT\r\nUID:tanz\r\nSUMMARY:Tanzen\r\nDTSTART:20261102T160000\r\nDTEND:20261102T170000\r\nRRULE:FREQ=WEEKLY;BYDAY=MO,WE;COUNT=5\r\nEXDATE:20261104T160000\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:tanz\r\nRECURRENCE-ID:20261109T160000\r\nSUMMARY:Tanzen (Halle 2)\r\nDTSTART:20261109T170000\r\nDTEND:20261109T180000\r\nEND:VEVENT\r\nEND:VCALENDAR",
+    "from": "2026-11-01",
+    "to": "2026-11-30",
+    "expect": [
+     {
+      "uid": "tanz@2026-11-02T16:00",
+      "title": "Tanzen",
+      "allDay": false,
+      "start": "2026-11-02T16:00",
+      "end": "2026-11-02T17:00"
+     },
+     {
+      "uid": "tanz@2026-11-09T16:00",
+      "title": "Tanzen (Halle 2)",
+      "allDay": false,
+      "start": "2026-11-09T17:00",
+      "end": "2026-11-09T18:00"
+     },
+     {
+      "uid": "tanz@2026-11-11T16:00",
+      "title": "Tanzen",
+      "allDay": false,
+      "start": "2026-11-11T16:00",
+      "end": "2026-11-11T17:00"
+     },
+     {
+      "uid": "tanz@2026-11-16T16:00",
+      "title": "Tanzen",
+      "allDay": false,
+      "start": "2026-11-16T16:00",
+      "end": "2026-11-16T17:00"
+     }
+    ]
+   },
+   {
+    "text": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Test//DE\r\nBEGIN:VEVENT\r\nUID:papier\r\nSUMMARY:Papiertonne\r\nDTSTART;VALUE=DATE:20260106\r\nRRULE:FREQ=MONTHLY;BYDAY=1TU;UNTIL=20260430\r\nEND:VEVENT\r\nEND:VCALENDAR",
+    "from": "2026-01-01",
+    "to": "2026-12-31",
+    "expect": [
+     {
+      "uid": "papier@2026-01-06T00:00",
+      "title": "Papiertonne",
+      "allDay": true,
+      "start": "2026-01-06T00:00"
+     },
+     {
+      "uid": "papier@2026-02-03T00:00",
+      "title": "Papiertonne",
+      "allDay": true,
+      "start": "2026-02-03T00:00"
+     },
+     {
+      "uid": "papier@2026-03-03T00:00",
+      "title": "Papiertonne",
+      "allDay": true,
+      "start": "2026-03-03T00:00"
+     },
+     {
+      "uid": "papier@2026-04-07T00:00",
+      "title": "Papiertonne",
+      "allDay": true,
+      "start": "2026-04-07T00:00"
+     }
+    ]
+   },
+   {
+    "text": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Test//DE\r\nBEGIN:VEVENT\r\nUID:a\r\nSUMMARY:Fällt aus\r\nSTATUS:CANCELLED\r\nDTSTART;VALUE=DATE:20261105\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:b\r\nSUMMARY:Bio\r\nDTSTART;VALUE=DATE:20260101\r\nRRULE:FREQ=DAILY;INTERVAL=2\r\nEND:VEVENT\r\nEND:VCALENDAR",
+    "from": "2026-11-05",
+    "to": "2026-11-09",
+    "expect": [
+     {
+      "uid": "b@2026-11-05T00:00",
+      "title": "Bio",
+      "allDay": true,
+      "start": "2026-11-05T00:00"
+     },
+     {
+      "uid": "b@2026-11-07T00:00",
+      "title": "Bio",
+      "allDay": true,
+      "start": "2026-11-07T00:00"
+     },
+     {
+      "uid": "b@2026-11-09T00:00",
+      "title": "Bio",
+      "allDay": true,
+      "start": "2026-11-09T00:00"
+     }
+    ]
+   },
+   {
+    "text": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Test//DE\r\nBEGIN:VEVENT\r\nUID:z\r\nSUMMARY:Konzert\r\nDTSTART;TZID=Europe/Berlin:20260715T180000\r\nDTEND;TZID=Europe/Berlin:20260715T200000\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:ny\r\nSUMMARY:Anruf New York\r\nDTSTART;TZID=America/New_York:20261029T090000\r\nDURATION:PT45M\r\nRRULE:FREQ=WEEKLY;COUNT=3\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:utc\r\nSUMMARY:Webinar\r\nDTSTART:20261024T230000Z\r\nDTEND:20261025T003000Z\r\nEND:VEVENT\r\nEND:VCALENDAR",
+    "from": "2026-07-01",
+    "to": "2026-11-30",
+    "expect": [
+     {
+      "uid": "z",
+      "title": "Konzert",
+      "allDay": false,
+      "start": "2026-07-15T18:00",
+      "end": "2026-07-15T20:00"
+     },
+     {
+      "uid": "utc",
+      "title": "Webinar",
+      "allDay": false,
+      "start": "2026-10-25T01:00",
+      "end": "2026-10-25T02:30"
+     },
+     {
+      "uid": "ny@2026-10-29T14:00",
+      "title": "Anruf New York",
+      "allDay": false,
+      "start": "2026-10-29T14:00",
+      "end": "2026-10-29T14:45"
+     },
+     {
+      "uid": "ny@2026-11-05T15:00",
+      "title": "Anruf New York",
+      "allDay": false,
+      "start": "2026-11-05T15:00",
+      "end": "2026-11-05T15:45"
+     },
+     {
+      "uid": "ny@2026-11-12T15:00",
+      "title": "Anruf New York",
+      "allDay": false,
+      "start": "2026-11-12T15:00",
+      "end": "2026-11-12T15:45"
+     }
+    ]
+   },
+   {
+    "text": "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Test//DE\r\nBEGIN:VEVENT\r\nUID:geb\r\nSUMMARY:Geburtstag Oma\r\nDTSTART;VALUE=DATE:20240229\r\nRRULE:FREQ=YEARLY\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:last\r\nSUMMARY:Elternsprechtag\r\nDTSTART:20260101T150000\r\nDTEND:20260101T180000\r\nRRULE:FREQ=MONTHLY;BYDAY=-1FR;BYMONTH=3,11\r\nRDATE:20261204T150000\r\nEND:VEVENT\r\nEND:VCALENDAR",
+    "from": "2026-01-01",
+    "to": "2028-12-31",
+    "expect": [
+     {
+      "uid": "last@2026-03-27T15:00",
+      "title": "Elternsprechtag",
+      "allDay": false,
+      "start": "2026-03-27T15:00",
+      "end": "2026-03-27T18:00"
+     },
+     {
+      "uid": "last@2026-11-27T15:00",
+      "title": "Elternsprechtag",
+      "allDay": false,
+      "start": "2026-11-27T15:00",
+      "end": "2026-11-27T18:00"
+     },
+     {
+      "uid": "last@2026-12-04T15:00",
+      "title": "Elternsprechtag",
+      "allDay": false,
+      "start": "2026-12-04T15:00",
+      "end": "2026-12-04T18:00"
+     },
+     {
+      "uid": "last@2027-03-26T15:00",
+      "title": "Elternsprechtag",
+      "allDay": false,
+      "start": "2027-03-26T15:00",
+      "end": "2027-03-26T18:00"
+     },
+     {
+      "uid": "last@2027-11-26T15:00",
+      "title": "Elternsprechtag",
+      "allDay": false,
+      "start": "2027-11-26T15:00",
+      "end": "2027-11-26T18:00"
+     },
+     {
+      "uid": "geb@2028-02-29T00:00",
+      "title": "Geburtstag Oma",
+      "allDay": true,
+      "start": "2028-02-29T00:00"
+     },
+     {
+      "uid": "last@2028-03-31T15:00",
+      "title": "Elternsprechtag",
+      "allDay": false,
+      "start": "2028-03-31T15:00",
+      "end": "2028-03-31T18:00"
+     },
+     {
+      "uid": "last@2028-11-24T15:00",
+      "title": "Elternsprechtag",
+      "allDay": false,
+      "start": "2028-11-24T15:00",
+      "end": "2028-11-24T18:00"
+     }
+    ]
+   }
+  ]
+ }
 }

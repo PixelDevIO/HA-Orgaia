@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -22,6 +23,7 @@ from custom_components.orgaia.protocol.crypto import (
     verify,
     verify_box_key,
 )
+from custom_components.orgaia.protocol.ics import parse_ics
 from custom_components.orgaia.protocol.invite import parse_invite
 from custom_components.orgaia.protocol.model import apply_op, empty_state, merge_state, to_app_state
 from custom_components.orgaia.protocol.plans import PlanLabels, is_plan_item, with_plan_items
@@ -213,3 +215,12 @@ def test_plans(case: dict) -> None:
     for mine, theirs in zip(derived, case["items"], strict=True):
         assert mine == theirs, theirs["id"]
     assert sorted(oid for oid, o in full.occs.items() if o.get("skip")) == case["skips"]
+
+
+def test_feeds() -> None:
+    """Subscribed calendars: the same file gives the same entries as in the app, in the same zone."""
+    case = VECTORS["feeds"]
+    zone = ZoneInfo(case["zone"])
+    for c in case["cases"]:
+        got = [e.to_json() for e in parse_ics(c["text"], c["from"], c["to"], zone)]
+        assert got == c["expect"]

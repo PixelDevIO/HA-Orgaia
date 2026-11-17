@@ -190,6 +190,9 @@ def build_view(space_id: str, kind: str, state: State) -> SpaceView:
                 lst["note"] = raw["note"]
             if raw.get("inbox") is True and kind == "private":
                 lst["inbox"] = True
+        elif ltype == "feed":
+            lst["url"] = raw["url"] if isinstance(raw.get("url"), str) else ""
+            lst["feedFor"] = raw["feedFor"] if isinstance(raw.get("feedFor"), list) else []
         elif ltype == "timetable":
             lst["timetable"] = plans.read_timetable(raw)
         elif ltype == "roster":
@@ -199,6 +202,9 @@ def build_view(space_id: str, kind: str, state: State) -> SpaceView:
     list_by_id = {lst["id"]: lst for lst in lists}
 
     gone = {p["id"] for p in persons if p["removed"]}
+    for lst in lists:
+        if lst.get("feedFor") and any(p in gone for p in lst["feedFor"]):
+            lst["feedFor"] = [p for p in lst["feedFor"] if p not in gone]
 
     def live(x: dict[str, Any]) -> dict[str, Any]:
         if not gone:
