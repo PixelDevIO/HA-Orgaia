@@ -193,6 +193,7 @@ def test_deadlines() -> None:
             "time": d.time,
             "occDate": d.occ_date,
             "done": d.done,
+            "assignees": d.item.get("assignees") or [],
         }
         for d in deadlines(view, case["from"], case["to"])
     ]
