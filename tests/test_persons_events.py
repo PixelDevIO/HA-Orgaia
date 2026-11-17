@@ -135,3 +135,44 @@ async def test_device_triggers(hass: HomeAssistant, service: FakeService, freeze
     service.write("item", "t2", {"done": {"at": now_ms(), "by": "anna"}})
     await refresh(hass, entry)
     assert [e.data["title"] for e in fired] == ["Steuer"]
+
+
+async def test_task_that_comes_back(hass: HomeAssistant, service: FakeService, freezer) -> None:
+    """Done with a task that comes back: it stays open with a new due date, yet it was completed."""
+    entry = await setup_group(hass, service, freezer)
+    service.write(
+        "item",
+        "r1",
+        {
+            "title": "Rasen mähen",
+            "listId": "todo",
+            "assignees": ["ben"],
+            "rotation": ["ben", "anna"],
+            "dueDate": "2000-01-01",
+            "again": {"freq": "week", "interval": 2},
+        },
+    )
+    await refresh(hass, entry)
+    events = async_capture_events(hass, EVENT_ORGAIA)
+
+    # What the app writes when Ben ticks it off: open again, due later, Anna's turn, lastDone set.
+    done = {"at": now_ms(), "by": "ben"}
+    service.write("item", "r1", {"done": None, "lastDone": done, "dueDate": "2000-01-15", "assignees": ["anna"]})
+    await refresh(hass, entry)
+    by_type = {e.data["type"]: e.data for e in events}
+    assert by_type["task_completed"]["title"] == "Rasen mähen"
+    assert by_type["task_completed"]["completed_by"] == "Ben"
+    assert by_type["task_completed"]["assignees"] == ["Ben"]  # the round that was finished
+    assert by_type["task_assigned"]["assigned"] == ["Anna"]
+    assert "task_reopened" not in by_type
+
+    # Taken back with "Rückgängig": lastDone goes back to what it was.
+    events.clear()
+    service.write("item", "r1", {"lastDone": None, "dueDate": "2000-01-01", "assignees": ["ben"]})
+    await refresh(hass, entry)
+    assert [e.data["type"] for e in events if e.data["type"] != "task_assigned"] == ["task_reopened"]
+
+    # Nothing changed: nothing fires.
+    events.clear()
+    await refresh(hass, entry)
+    assert events == []
