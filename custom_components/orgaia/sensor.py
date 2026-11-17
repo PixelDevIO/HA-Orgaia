@@ -61,6 +61,8 @@ async def async_setup_entry(
 class OrgaiaCountSensor(OrgaiaEntity, SensorEntity):
     entity_description: CountDescription
     _attr_state_class = SensorStateClass.MEASUREMENT
+    # What the tasks are called stays out of the recorder's database and so out of backups.
+    _unrecorded_attributes = frozenset({"titles"})
 
     def __init__(
         self, coordinator: OrgaiaCoordinator, description: CountDescription, person_id: str | None = None
@@ -116,6 +118,7 @@ class OrgaiaNextEventSensor(OrgaiaEntity, SensorEntity):
     _attr_translation_key = "next_event"
     _attr_device_class = SensorDeviceClass.TIMESTAMP
     _attr_icon = "mdi:calendar-clock"
+    _unrecorded_attributes = frozenset({"title", "location"})
 
     def __init__(self, coordinator: OrgaiaCoordinator) -> None:
         super().__init__(coordinator, "next_event")

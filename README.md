@@ -151,7 +151,7 @@ This version **reads only**. Changes are made in the Orgaia app; ticking off fro
 - **Plus ended**: Home Assistant stops reading and shows a repair notice. Once Plus is renewed it picks up again by itself.
 - **Removed from the group**: Home Assistant shows a notice under Settings → Devices & services that asks for a new link from the app.
 - **Removing the integration** leaves the group, so the admins see Home Assistant is gone.
-- **Privacy**: titles and names are decrypted on your Home Assistant and may end up in its history and logbook. Private lists in Orgaia never reach Home Assistant. Diagnostics hold only counts, no content and no keys.
+- **Privacy**: titles and names are decrypted on your Home Assistant. The lists of titles on the count sensors and the title and place of the next appointment are kept out of the recorder. What stays in its history: the state of the "next task" sensor (a title), and the data of `orgaia_event` in the logbook. Exclude `sensor.*_next_task` in the `recorder:` settings if you do not want that. The integration's storage file (`.storage/orgaia.*`) holds the group keys and every entry in plain text and goes into every Home Assistant backup: keep backups encrypted. Private lists in Orgaia never reach Home Assistant. Diagnostics hold only counts, no content and no keys.
 
 ## License
 

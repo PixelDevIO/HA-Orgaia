@@ -176,3 +176,22 @@ async def test_task_that_comes_back(hass: HomeAssistant, service: FakeService, f
     events.clear()
     await refresh(hass, entry)
     assert events == []
+
+
+async def test_drives_in_calendar(hass: HomeAssistant, service: FakeService, freezer) -> None:
+    """An appointment that needs a drive says in the calendar who drives, or that nobody does yet."""
+    hass.config.language = "de"
+    entry = await setup_group(hass, service, freezer)
+    service.write("item", "e1", {"needTo": True, "needFrom": True, "driveTo": "ben"})
+    await refresh(hass, entry)
+    today = dt_util.now().date().isoformat()
+    events = await hass.services.async_call(
+        "calendar",
+        "get_events",
+        {"start_date_time": f"{today}T00:00:00", "end_date_time": f"{today}T23:59:00"},
+        target={"entity_id": "calendar.familie_kalender"},
+        blocking=True,
+        return_response=True,
+    )
+    (abend,) = [e for e in events["calendar.familie_kalender"]["events"] if e["summary"] == "Elternabend"]
+    assert "🚗 Hinfahrt: Ben · Rückfahrt: noch offen" in abend["description"]
