@@ -195,3 +195,29 @@ async def test_drives_in_calendar(hass: HomeAssistant, service: FakeService, fre
     )
     (abend,) = [e for e in events["calendar.familie_kalender"]["events"] if e["summary"] == "Elternabend"]
     assert "🚗 Hinfahrt: Ben · Rückfahrt: noch offen" in abend["description"]
+
+
+async def _restart(hass: HomeAssistant, entry, service: FakeService, freezer, away: timedelta) -> list:
+    """Home Assistant stops cleanly, Ben ticks off Keller meanwhile, and Home Assistant comes back."""
+    entry.runtime_data.save_on_stop(None)
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    await hass.async_block_till_done()
+    service.write("item", "t1", {"done": {"at": now_ms(), "by": "ben"}})
+    freezer.tick(away)
+    events = async_capture_events(hass, EVENT_ORGAIA)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    return events
+
+
+async def test_catches_up_after_short_restart(hass: HomeAssistant, service: FakeService, freezer) -> None:
+    entry = await setup_group(hass, service, freezer)
+    events = await _restart(hass, entry, service, freezer, timedelta(minutes=5))
+    done = [e.data for e in events if e.data["type"] == "task_completed"]
+    assert [(d["title"], d["completed_by"], d["late"]) for d in done] == [("Keller aufräumen", "Ben", True)]
+
+
+async def test_no_catch_up_after_long_break(hass: HomeAssistant, service: FakeService, freezer) -> None:
+    entry = await setup_group(hass, service, freezer)
+    events = await _restart(hass, entry, service, freezer, timedelta(hours=2))
+    assert [e.data["type"] for e in events if e.data["type"] == "task_completed"] == []

@@ -6,11 +6,12 @@ import asyncio
 from datetime import timedelta
 import json
 import logging
+import time
 from typing import Any
 
 import aiohttp
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.storage import Store
@@ -97,6 +98,13 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
         self._update_issues()
         self._save()
         return self.build_view()
+
+    @callback
+    def save_on_stop(self, _event: Event) -> None:
+        """Home Assistant stops: note when, so a quick restart can catch up on what happened meanwhile."""
+        self.engine.stopped_at = int(time.time() * 1000)
+        # Written by Home Assistant's final write, after this.
+        self.store.async_delay_save(self.engine.to_dict, 0)
 
     def _save(self) -> None:
         """Writes the group to disk when anything in it changed since the last time."""

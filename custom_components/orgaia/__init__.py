@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import logging
 
-from homeassistant.const import Platform
+from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv, device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
+from homeassistant.util import dt as dt_util
 
 from .client.engine import GroupEngine
 from .const import CONF_SPACE, DOMAIN, STORAGE_VERSION
@@ -41,11 +42,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: OrgaiaConfigEntry) -> bo
     store: Store = Store(hass, STORAGE_VERSION, storage_key(entry.entry_id), private=True)
     engine = await _load_engine(hass, entry, store)
     coordinator = OrgaiaCoordinator(hass, entry, engine, store)
+    # The group as Home Assistant left it when it last stopped, to catch up on what changed meanwhile.
+    stopped, engine.stopped_at = engine.stopped_at, None
+    before = coordinator.build_view() if stopped is not None and engine.state.get("item") else None
     await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = coordinator
     entry.async_create_background_task(hass, coordinator.run_live(), f"{DOMAIN} live {entry.entry_id}")
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    entry.async_on_unload(EventTracker(hass, entry).start())
+    entry.async_on_unload(
+        EventTracker(hass, entry, before, dt_util.utc_from_timestamp(stopped / 1000) if stopped else None).start()
+    )
+    entry.async_on_unload(hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, coordinator.save_on_stop))
     entry.async_on_unload(coordinator.async_add_listener(lambda: _remove_gone_persons(hass, entry)))
     entry.async_on_unload(entry.add_update_listener(_options_changed))
     return True

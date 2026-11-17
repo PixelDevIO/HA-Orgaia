@@ -2,6 +2,10 @@
 
 Events come from comparing two views of the group, not from single changes, so nothing fires twice and
 nothing fires for what was already there when Home Assistant started.
+
+After a short restart (up to ``CATCH_UP``) the group as it was when Home Assistant stopped is the first
+view: what changed meanwhile and appointments that began meanwhile fire once Home Assistant runs, with
+``late: true``. After a longer break nothing is caught up, so no automation acts on old news.
 """
 
 from __future__ import annotations
@@ -15,6 +19,7 @@ from typing import Any
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.start import async_at_started
 
 from .const import COMPLETED_DAYS, DOMAIN, EVENT_ORGAIA
 from .coordinator import OrgaiaConfigEntry
@@ -49,6 +54,8 @@ EVENT_TYPES = [
 
 TICK = timedelta(minutes=1)
 LATE_START = timedelta(minutes=5)
+# How long Home Assistant may have been away for what happened meanwhile to still fire.
+CATCH_UP = timedelta(minutes=15)
 
 
 @dataclass(frozen=True)
@@ -73,8 +80,18 @@ def _round(item: dict[str, Any]) -> tuple[Any, Any] | None:
 class EventTracker:
     """Remembers the last view and fires an event for every difference that matters to automations."""
 
-    def __init__(self, hass: HomeAssistant, entry: OrgaiaConfigEntry) -> None:
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: OrgaiaConfigEntry,
+        before: SpaceView | None = None,
+        stopped: datetime | None = None,
+    ) -> None:
         self.hass = hass
+        # The group as it was when Home Assistant stopped, if that was only a short while ago.
+        self._before = before if before is not None and stopped is not None else None
+        self._stopped = stopped
+        self._late = False
         self.entry = entry
         self.coordinator = entry.runtime_data
         self._tasks: dict[str, _Task] = {}
@@ -90,17 +107,34 @@ class EventTracker:
 
     @callback
     def start(self) -> CALLBACK_TYPE:
-        self._remember(self.coordinator.data)
-        self._overdue = self._overdue_now(self.coordinator.data)
-        self._day = local_now().date().isoformat()
+        now = local_now()
+        catch_up = self._before is not None and self._stopped is not None and now - self._stopped <= CATCH_UP
+        self._remember(self._before if catch_up else self.coordinator.data)
+        self._overdue = self._overdue_now(self._before if catch_up else self.coordinator.data)
+        self._day = now.date().isoformat()
+        self._before = None
         unsub_update = self.coordinator.async_add_listener(self._on_update)
         unsub_tick = async_track_time_interval(self.hass, self._on_tick, TICK)
+        unsub_started = async_at_started(self.hass, self._catch_up) if catch_up else None
 
         def stop() -> None:
             unsub_update()
             unsub_tick()
+            if unsub_started:
+                unsub_started()
 
         return stop
+
+    @callback
+    def _catch_up(self, _hass: HomeAssistant) -> None:
+        """Once automations are loaded: what changed and began while Home Assistant was away."""
+        self._late = True
+        try:
+            self._on_update()
+            if self._stopped is not None:
+                self._fire_starting(local_now(), self._stopped)
+        finally:
+            self._late = False
 
     # --- Snapshots ---------------------------------------------------------------------------
 
@@ -192,22 +226,8 @@ class EventTracker:
         now = local_now()
         view = self.coordinator.data
         # An appointment that began long ago (Home Assistant was busy or the clock jumped) is not "starting".
-        start, self._last_tick = max(self._last_tick, now - LATE_START), now
+        self._fire_starting(now, max(self._last_tick, now - LATE_START))
         today = now.date().isoformat()
-        for occ in calendar_occurrences(view, add_days(today, -1), today):
-            if occ.item["kind"] != "event":
-                continue
-            begins = to_datetime(occ.start)
-            if start < begins <= now:
-                self._fire_appointment(
-                    view,
-                    EVENT_STARTING,
-                    occ.item,
-                    occ_date=occ.occ_date,
-                    start=occ.start,
-                    end=occ.end,
-                    assignees=occ.assignees,
-                )
         changed = False
         if today != self._day:
             self._day = today
@@ -218,6 +238,26 @@ class EventTracker:
         if changed:
             # Counts and lists depend on the time of day too.
             self.coordinator.async_update_listeners()
+
+    def _fire_starting(self, now: datetime, since: datetime) -> None:
+        """Appointments that began after ``since`` and up to ``now``."""
+        self._last_tick = now
+        view = self.coordinator.data
+        today = now.date().isoformat()
+        for occ in calendar_occurrences(view, add_days(since.date().isoformat(), -1), today):
+            if occ.item["kind"] != "event":
+                continue
+            begins = to_datetime(occ.start)
+            if since < begins <= now:
+                self._fire_appointment(
+                    view,
+                    EVENT_STARTING,
+                    occ.item,
+                    occ_date=occ.occ_date,
+                    start=occ.start,
+                    end=occ.end,
+                    assignees=occ.assignees,
+                )
 
     def _check_overdue(self, view: SpaceView) -> bool:
         late = self._overdue_now(view)
@@ -240,6 +280,7 @@ class EventTracker:
             "device_id": device.id if device else None,
             "config_entry_id": self.entry.entry_id,
             "group": self.entry.title,
+            **({"late": True} if self._late else {}),
         }
 
     def _people(self, view: SpaceView, ids: list[str]) -> tuple[list[str], list[str]]:
