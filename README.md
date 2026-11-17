@@ -46,7 +46,7 @@ Per group (device named after the group):
 | `sensor.<group>_overdue` | Tasks past their due date, and today's repeating tasks past their time. |
 | `sensor.<group>_shopping_list` | Items still to buy. |
 | `sensor.<group>_next_appointment` | Start of the next appointment, with title and location. |
-| `sensor.<group>_connection` | Diagnostic: `ok`, `offline`, `needs_plus`, `update_required` or `removed`. |
+| `sensor.<group>_connection` | Diagnostic: `ok`, `offline`, `needs_plus`, `update_required` or `removed`. Attribute `last_sync`: when the group was last read. |
 
 Per person of the group (device named "<person> (<group>)"):
 
@@ -58,6 +58,15 @@ Per person of the group (device named "<person> (<group>)"):
 | `sensor.<person>_<group>_next_task` | Title of the person's open task due next; attribute `due`. |
 
 New lists and people appear by themselves; deleted lists and people who left disappear.
+
+### Timetables and rosters
+
+They show as in the app, worked out on your Home Assistant:
+
+- A **timetable** is a to-do list with today's packing tasks ("Pack sports kit"), due at the packing time. They count in the sensors, appear in the person's to-do list and fire `task_overdue` when not ticked off in time. The school day is in the person's calendar, holidays left out.
+- A **roster** puts working time into the person's calendar: the fixed week with its days off, or the shifts entered day by day (with the shift's name unless the roster shows "busy" only). It has no to-do list.
+
+Titles follow Home Assistant's language (German or English).
 
 ### People in Home Assistant
 
@@ -137,6 +146,7 @@ This version **reads only**. Changes are made in the Orgaia app; ticking off fro
 
 ## Good to know
 
+- **Service not reachable**: everything stays on screen as last read, and `sensor.<group>_connection` says `offline` (with `last_sync`). Home Assistant also starts without a connection. Changes arrive as soon as the service is back.
 - **Time zone**: Orgaia stores times as wall-clock times. Home Assistant reads them in its own time zone, so it should be the one your family lives in.
 - **Plus ended**: Home Assistant stops reading and shows a repair notice. Once Plus is renewed it picks up again by itself.
 - **Removed from the group**: Home Assistant shows a notice under Settings → Devices & services that asks for a new link from the app.
@@ -163,6 +173,6 @@ Alles bleibt Ende-zu-Ende-verschlüsselt: Home Assistant tritt der Gruppe mit ei
 2. In Home Assistant: **Einstellungen → Geräte & Dienste → Integration hinzufügen → Orgaia**, Link einfügen.
 3. Ein Admin bestätigt in der App. Die Sicherheitsnummer in Home Assistant und in der App muss gleich sein.
 
-Home Assistant zählt nicht als Person; pro Gruppe gehen bis zu 3 Integrationen. Für jede Person der Gruppe gibt es eine eigene To-do-Liste, einen Kalender und Sensoren; unter **Konfigurieren** ordnest du ihr eine Person in Home Assistant zu. Für Automationen gibt es das Ereignis `orgaia_event` (auch als Geräte-Auslöser), zum Beispiel wenn eine Aufgabe erledigt oder überfällig ist oder ein Termin beginnt. Diese Version liest nur, abhaken aus Home Assistant kommt später. Home Assistant sollte auf die Zeitzone eingestellt sein, in der ihr lebt.
+Home Assistant zählt nicht als Person; pro Gruppe gehen bis zu 3 Integrationen. Für jede Person der Gruppe gibt es eine eigene To-do-Liste, einen Kalender und Sensoren; unter **Konfigurieren** ordnest du ihr eine Person in Home Assistant zu. Für Automationen gibt es das Ereignis `orgaia_event` (auch als Geräte-Auslöser), zum Beispiel wenn eine Aufgabe erledigt oder überfällig ist oder ein Termin beginnt. Stundenpläne erscheinen als To-do-Liste mit den Pack-Aufgaben von heute, Schulzeit und Arbeitszeit aus Dienstplänen stehen im Kalender der Person. Ist der Orgaia-Dienst nicht erreichbar, bleibt der letzte Stand sichtbar und der Sensor „Verbindung“ zeigt `offline`. Diese Version liest nur, abhaken aus Home Assistant kommt später. Home Assistant sollte auf die Zeitzone eingestellt sein, in der ihr lebt.
 
 **Lizenz:** Apache 2.0 (siehe [LICENSE](LICENSE)). Name und Logo „Orgaia“ sowie App und Dienst sind davon nicht umfasst.

@@ -19,6 +19,7 @@ from homeassistant.helpers.event import async_track_time_interval
 from .const import COMPLETED_DAYS, DOMAIN, EVENT_ORGAIA
 from .coordinator import OrgaiaConfigEntry
 from .entity import person_entity, space_key
+from .protocol.plans import is_plan_item
 from .protocol.recur import add_days
 from .protocol.view import SpaceView
 from .summary import TodoEntry, calendar_occurrences, overdue_entries, todo_entries
@@ -125,6 +126,11 @@ class EventTracker:
         for uid, task in self._tasks.items():
             entry = self._entries[uid]
             before = old_tasks.get(uid)
+            if is_plan_item(view.item_by_id.get(task.item_id) or {}):
+                # Packing tasks come and go with the timetable; only ticking them off is news.
+                if before is not None and task.done != before.done:
+                    self._fire_task(view, TASK_COMPLETED if task.done else TASK_REOPENED, entry)
+                continue
             if task.item_id not in old_items:
                 self._fire_task(view, TASK_CREATED, entry)
                 continue
@@ -139,6 +145,9 @@ class EventTracker:
                 self._fire_task(view, TASK_ASSIGNED, entry, assigned=added)
         for item_id, fingerprint in self._appointments.items():
             item = view.item_by_id[item_id]
+            if is_plan_item(item):
+                # School days and working time follow their plan, nobody "made" them.
+                continue
             if item_id not in old_items:
                 self._fire_appointment(view, EVENT_CREATED, item)
             elif old_appointments.get(item_id) not in (None, fingerprint):
@@ -168,10 +177,13 @@ class EventTracker:
                     end=occ.end,
                     assignees=occ.assignees,
                 )
-        changed = self._check_overdue(view)
+        changed = False
         if today != self._day:
             self._day = today
+            # Packing tasks, school days and shifts are worked out around today.
+            self.coordinator.data = view = self.coordinator.build_view()
             changed = True
+        changed = self._check_overdue(view) or changed
         if changed:
             # Counts and lists depend on the time of day too.
             self.coordinator.async_update_listeners()

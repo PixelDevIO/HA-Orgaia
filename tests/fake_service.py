@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import Any
 from urllib.parse import parse_qs, urlencode, urlparse
 
+import aiohttp
+
 from custom_components.orgaia.client.api import ApiError
 from custom_components.orgaia.protocol.b64 import to_b64
 from custom_components.orgaia.protocol.crypto import Identity, open_sealed, random_bytes, seal_for, seal_record
@@ -29,6 +31,8 @@ class FakeService:
         self.removed = False
         self.left = False
         self.block: tuple[int, str] | None = None
+        # The service or the internet is gone: every call fails as a connection error does.
+        self.down = False
         self.calls: list[tuple[str, str]] = []
 
     # --- What the admin does in the app ---------------------------------------------------------
@@ -70,6 +74,8 @@ class FakeService:
 
     async def req(self, method: str, path: str, body: Any = None) -> Any:
         self.calls.append((method, path))
+        if self.down:
+            raise aiohttp.ClientConnectionError("down")
         url = urlparse(path)
         if method == "POST" and url.path == f"/v1/invites/{INVITE}/join":
             assert body["kind"] == "integration"

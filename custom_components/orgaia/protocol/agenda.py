@@ -210,3 +210,33 @@ def occurrences_between(view: SpaceView, item: dict[str, Any], start: str, end: 
         if not r.skip:
             out.append(r)
     return out
+
+
+@dataclass
+class Deadline:
+    """A task's deadline on one day; for a repeating task without a slot, one per occurrence."""
+
+    item: dict[str, Any]
+    date: str
+    time: str | None
+    occ_date: str | None
+    done: bool
+
+
+def deadlines(view: SpaceView, start: str, end: str) -> list[Deadline]:
+    """Task deadlines between two dates (inclusive), sorted by date and time, as the app's ``deadlines``."""
+    out: list[Deadline] = []
+    for item in view.items:
+        if item["kind"] != "task" or not item.get("dueDate"):
+            continue
+        if item.get("repeat") and not item.get("start"):
+            for d in occurrence_dates(item, start, end):
+                occ = view.occs.get(occ_id(item["id"], d))
+                if occ and occ.get("skip"):
+                    continue
+                done = bool((occ or {}).get("done"))
+                out.append(Deadline(with_overrides(item, occ), d, item.get("dueTime"), d, done))
+        elif not item.get("repeat") and start <= item["dueDate"] <= end:
+            out.append(Deadline(item, item["dueDate"], item.get("dueTime"), None, bool(item.get("done"))))
+    out.sort(key=lambda d: (d.date, d.time or "99"))
+    return out
