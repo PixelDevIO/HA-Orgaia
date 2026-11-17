@@ -68,6 +68,10 @@ They show as in the app, worked out on your Home Assistant:
 
 Titles follow Home Assistant's language (German or English).
 
+### Subscribed calendars
+
+A calendar the family subscribed to in Orgaia (school, club, waste collection) shows in the group's calendar and in the calendars of the people it is for. Like every phone, Home Assistant fetches it itself, straight from its address, every 6 hours; the entries never go through the Orgaia service and are kept in their own storage file. When a fetch fails, the entries of the last good one stay. They fire `event_starting`, but never `event_created` or `event_changed`.
+
 ### People in Home Assistant
 
 Under **Settings → Devices & services → Orgaia → Configure**, choose which Home Assistant person (`person.*`) each person of the group is. People with the same name are suggested. Events and person sensors then carry the person entity too (`assignee_entities`, `completed_by_entity`, `person_entity`), so a notification can go to the right phone.
@@ -173,6 +177,6 @@ Alles bleibt Ende-zu-Ende-verschlüsselt: Home Assistant tritt der Gruppe mit ei
 2. In Home Assistant: **Einstellungen → Geräte & Dienste → Integration hinzufügen → Orgaia**, Link einfügen.
 3. Ein Admin bestätigt in der App. Die Sicherheitsnummer in Home Assistant und in der App muss gleich sein.
 
-Home Assistant zählt nicht als Person; pro Gruppe gehen bis zu 3 Integrationen. Für jede Person der Gruppe gibt es eine eigene To-do-Liste, einen Kalender und Sensoren; unter **Konfigurieren** ordnest du ihr eine Person in Home Assistant zu. Für Automationen gibt es das Ereignis `orgaia_event` (auch als Geräte-Auslöser), zum Beispiel wenn eine Aufgabe erledigt oder überfällig ist oder ein Termin beginnt. Stundenpläne erscheinen als To-do-Liste mit den Pack-Aufgaben von heute, Schulzeit und Arbeitszeit aus Dienstplänen stehen im Kalender der Person. Ist der Orgaia-Dienst nicht erreichbar, bleibt der letzte Stand sichtbar und der Sensor „Verbindung“ zeigt `offline`. Nach einem Neustart von höchstens 15 Minuten kommen die Ereignisse von zwischendurch nach, mit `late: true`. „Überfällig“ umfasst auch Serien- und Pack-Aufgaben nach ihrer Uhrzeit und verpasste Zeitfenster. Diese Version liest nur, abhaken aus Home Assistant kommt später. Home Assistant sollte auf die Zeitzone eingestellt sein, in der ihr lebt.
+Home Assistant zählt nicht als Person; pro Gruppe gehen bis zu 3 Integrationen. Für jede Person der Gruppe gibt es eine eigene To-do-Liste, einen Kalender und Sensoren; unter **Konfigurieren** ordnest du ihr eine Person in Home Assistant zu. Für Automationen gibt es das Ereignis `orgaia_event` (auch als Geräte-Auslöser), zum Beispiel wenn eine Aufgabe erledigt oder überfällig ist oder ein Termin beginnt. Stundenpläne erscheinen als To-do-Liste mit den Pack-Aufgaben von heute, Schulzeit und Arbeitszeit aus Dienstplänen stehen im Kalender der Person. Abonnierte Kalender (Schule, Verein, Müllabfuhr) holt Home Assistant selbst alle 6 Stunden und zeigt sie bei den Personen, für die sie gelten. Ist der Orgaia-Dienst nicht erreichbar, bleibt der letzte Stand sichtbar und der Sensor „Verbindung“ zeigt `offline`. Nach einem Neustart von höchstens 15 Minuten kommen die Ereignisse von zwischendurch nach, mit `late: true`. „Überfällig“ umfasst auch Serien- und Pack-Aufgaben nach ihrer Uhrzeit und verpasste Zeitfenster. Diese Version liest nur, abhaken aus Home Assistant kommt später. Home Assistant sollte auf die Zeitzone eingestellt sein, in der ihr lebt.
 
 **Lizenz:** Apache 2.0 (siehe [LICENSE](LICENSE)). Name und Logo „Orgaia“ sowie App und Dienst sind davon nicht umfasst.

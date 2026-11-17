@@ -24,6 +24,7 @@ from homeassistant.helpers.start import async_at_started
 from .const import COMPLETED_DAYS, DOMAIN, EVENT_ORGAIA
 from .coordinator import OrgaiaConfigEntry
 from .entity import person_entity, space_key
+from .protocol.feeds import is_feed_item
 from .protocol.plans import is_plan_item
 from .protocol.recur import add_days
 from .protocol.view import SpaceView
@@ -191,8 +192,8 @@ class EventTracker:
                 self._fire_task(view, TASK_ASSIGNED, entry, assigned=added)
         for item_id, fingerprint in self._appointments.items():
             item = view.item_by_id[item_id]
-            if is_plan_item(item):
-                # School days and working time follow their plan, nobody "made" them.
+            if is_plan_item(item) or is_feed_item(item):
+                # School days, working time and subscribed calendars follow their source, nobody "made" them.
                 continue
             if item_id not in old_items:
                 self._fire_appointment(view, EVENT_CREATED, item)

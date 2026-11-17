@@ -137,3 +137,50 @@ async def test_saves_only_changes(hass: HomeAssistant, service: FakeService, fre
         await coordinator.async_refresh()
         await coordinator.async_refresh()
         assert save.call_count == 1
+
+
+ICS = "\r\n".join(
+    [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "BEGIN:VEVENT",
+        "UID:wander",
+        "SUMMARY:Wandertag",
+        "DTSTART;TZID=Europe/Berlin:{day}T080000",
+        "DTEND;TZID=Europe/Berlin:{day}T130000",
+        "END:VEVENT",
+        "END:VCALENDAR",
+    ]
+)
+
+
+async def test_subscribed_calendar(hass: HomeAssistant, service: FakeService, freezer, aioclient_mock) -> None:
+    """A school calendar the family subscribed to shows in the calendars of the people it is for."""
+    today = dt_util.now().date()
+    day = (today + timedelta(days=2)).strftime("%Y%m%d")
+    aioclient_mock.get("https://schule.example/kal.ics", text=ICS.format(day=day))
+    service.write(
+        "list",
+        "feed1",
+        {"name": "Schule", "type": "feed", "url": "webcal://schule.example/kal.ics", "feedFor": ["ben"], "order": 9},
+    )
+    events = async_capture_events(hass, EVENT_ORGAIA)
+    entry = await setup_group(hass, service, freezer)
+    await hass.async_block_till_done()
+    when = (today + timedelta(days=2)).isoformat()
+    got = await hass.services.async_call(
+        "calendar",
+        "get_events",
+        {"start_date_time": f"{when}T00:00:00", "end_date_time": f"{when}T23:59:00"},
+        target={"entity_id": ["calendar.ben_familie_calendar", "calendar.anna_familie_calendar"]},
+        blocking=True,
+        return_response=True,
+    )
+    assert [e["summary"] for e in got["calendar.ben_familie_calendar"]["events"]] == ["Wandertag"]
+    assert got["calendar.anna_familie_calendar"]["events"] == []
+    assert got["calendar.ben_familie_calendar"]["events"][0]["start"].startswith(f"{when}T08:00:00")
+    # Nobody "made" it: no event for it, and it is fetched only once within a few hours.
+    await entry.runtime_data.async_refresh()
+    await hass.async_block_till_done()
+    assert not [e for e in events if e.data.get("title") == "Wandertag"]
+    assert aioclient_mock.call_count == 1

@@ -20,6 +20,8 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from .client.api import ApiError
 from .client.engine import STATUS_NEEDS_PLUS, STATUS_OFFLINE, STATUS_REMOVED, STATUS_UPDATE, GroupEngine
 from .const import DOMAIN
+from .feeds import FeedCache
+from .protocol.feeds import with_feed_items
 from .protocol.plans import labels_for, with_plan_items
 from .protocol.view import SpaceView
 from .util import today
@@ -50,7 +52,9 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
         )
         self.engine = engine
         self.store = store
-        self._view_key: tuple[int, str, str] | None = None
+        self.feeds = FeedCache(hass, entry.entry_id)
+        self._feeds_busy = False
+        self._view_key: tuple[int, int, str, str] | None = None
         self._view: SpaceView | None = None
         self._saved: tuple[Any, ...] | None = None
 
@@ -62,11 +66,29 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
         """The group as the app shows it today: with what its timetables and rosters stand for."""
         day = today()
         language = self.hass.config.language
-        key = (self.engine.version, day, language)
+        key = (self.engine.version, self.feeds.version, day, language)
         if self._view is None or self._view_key != key:
-            self._view = with_plan_items(self.engine.view(), labels_for(language), day)
+            view = self.engine.view()
+            view = with_feed_items(view, self.feeds.events(view))
+            self._view = with_plan_items(view, labels_for(language), day)
             self._view_key = key
         return self._view
+
+    @callback
+    def refresh_feeds(self) -> None:
+        """Fetches subscribed calendars that are due, in the background; the view follows when they changed."""
+        if self._feeds_busy or not self.feeds.stale(self.engine.view()):
+            return
+        self._feeds_busy = True
+
+        async def run() -> None:
+            try:
+                if await self.feeds.refresh(self.engine.view()):
+                    self.async_set_updated_data(self.build_view())
+            finally:
+                self._feeds_busy = False
+
+        self.config_entry.async_create_background_task(self.hass, run(), f"{DOMAIN} feeds")
 
     def _keep_showing(self, err: Exception) -> SpaceView:
         """The service or the internet is gone: the group stays on screen as it was, the status says offline.
@@ -97,6 +119,7 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
             raise ConfigEntryAuthFailed("removed from the group")
         self._update_issues()
         self._save()
+        self.refresh_feeds()
         return self.build_view()
 
     @callback

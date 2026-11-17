@@ -42,6 +42,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: OrgaiaConfigEntry) -> bo
     store: Store = Store(hass, STORAGE_VERSION, storage_key(entry.entry_id), private=True)
     engine = await _load_engine(hass, entry, store)
     coordinator = OrgaiaCoordinator(hass, entry, engine, store)
+    await coordinator.feeds.load()
     # The group as Home Assistant left it when it last stopped, to catch up on what changed meanwhile.
     stopped, engine.stopped_at = engine.stopped_at, None
     before = coordinator.build_view() if stopped is not None and engine.state.get("item") else None
@@ -102,3 +103,4 @@ async def async_remove_entry(hass: HomeAssistant, entry: OrgaiaConfigEntry) -> N
     except Exception as err:  # noqa: BLE001 - removing must work even when the service is not reachable
         _LOGGER.warning("Could not leave the Orgaia group; an admin can remove Home Assistant in the app: %s", err)
     await store.async_remove()
+    await Store(hass, STORAGE_VERSION, f"{storage_key(entry.entry_id)}.feeds", private=True).async_remove()
