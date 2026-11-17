@@ -1,0 +1,3352 @@
+{
+ "about": "Test vectors for the Orgaia protocol, made by packages/core/test/ha-vectors.ts. Do not edit by hand.",
+ "protocol": 1,
+ "identities": [
+  {
+   "seed": "HyYtNDtCSVBXXmVsc3qBiI-WnaSrsrnAx87V3OPq8fg",
+   "signPub": "HWcZ4HItc96Kr-Ulzt2Q0gtUC1cKlFKyHUqSSYmtG_k",
+   "boxPub": "DHkdZMf3vgurojoXc0iFzwzkoCYDzmsBpMq4aWxEHQU",
+   "boxSig": "-5UrA3bBuzO92j43Rpghu37NSyN961MeLTXp04H3Rkg0XQ-AYYJptm7KFXF5Qv3fgRPOEmN84tdccHvwMz26BQ",
+   "fingerprint": "WI9Xlaxo",
+   "privateSpaceId": "pbjfzM0pK3Bq9Y4QBsouh",
+   "privateSpaceKey": "mbPHtWJc9hhfs_RolrvX-3Ts7V-LV0UhBv1fpdQpINQ"
+  },
+  {
+   "seed": "PkVMU1phaG92fYSLkpmgp661vMPK0djf5u30-wIJEBc",
+   "signPub": "66oXgS3Vy3ywrq0t1QY_l2k4BmyJ0RdjNGYcL85LeGQ",
+   "boxPub": "Sj6iRUkukkpGeDFvCV65hfKGGA45-Ml0uUugU0cDFQ8",
+   "boxSig": "u2rLQ4rKhW014X9_5G_Z8dl7Ad4FcOZ7OkyTZam8jbZMVSFJuO-Cgckzg3VN_QYn9zhc_VW8pSNbgdjwNTHOBA",
+   "fingerprint": "LBjNvkMF",
+   "privateSpaceId": "pWR1cKmu2A4z-3ahQZY7g",
+   "privateSpaceKey": "XbxoizmuMaCPita_XKFQ1Omm1Jqamjc-RvuFWQ4hmP0"
+  },
+  {
+   "seed": "XWRrcnmAh46VnKOqsbi_xs3U2-Lp8Pf-BQwTGiEoLzY",
+   "signPub": "rORPAEoOLeUaLkX3GUuKSdZSd8sIyDmoZuPAcPyZqHA",
+   "boxPub": "SBQd95B1nbb_OjLCcF7dywCCiISPAs0E6U2U3AhNeVA",
+   "boxSig": "bZCB5xjSuVm2EOW1Vw5NyQQuvP1x_2v6Csyw5XPXs3N_2k_sqwk8FnNKHedhQIguzx7Kuj5q2JphnbehviHYAw",
+   "fingerprint": "iGrO5Vq0",
+   "privateSpaceId": "plbCSdQ9S777N6eWteuHt",
+   "privateSpaceKey": "hUfRBwJ8Upm5XcAlKpq3Pm2miX96zAMNJRdlEukLjU8"
+  }
+ ],
+ "records": [
+  {
+   "spaceId": "gGroupOne",
+   "epoch": 0,
+   "key": "__79_Pv6-fj39vX08_Lx8O_u7ezr6uno5-bl5OPi4eA",
+   "authorSeed": "HyYtNDtCSVBXXmVsc3qBiI-WnaSrsrnAx87V3OPq8fg",
+   "payload": {
+    "id": "op1",
+    "ts": "0lx5k3c00000node0001",
+    "by": "HWcZ4HItc96Kr-Ulzt2Q0gtUC1cKlFKyHUqSSYmtG_k",
+    "k": "item",
+    "e": "i1",
+    "set": {
+     "title": "Müll rausbringen ✓",
+     "listId": "l1",
+     "kind": "task"
+    }
+   },
+   "json": "{\"id\":\"op1\",\"ts\":\"0lx5k3c00000node0001\",\"by\":\"HWcZ4HItc96Kr-Ulzt2Q0gtUC1cKlFKyHUqSSYmtG_k\",\"k\":\"item\",\"e\":\"i1\",\"set\":{\"title\":\"Müll rausbringen ✓\",\"listId\":\"l1\",\"kind\":\"task\"}}",
+   "sealed": {
+    "e": 0,
+    "n": "QSg33XDJWbzkDGib1f1Ec_34iv1Qksbh",
+    "c": "uyUuu7e5SMZNLIq943SkOBqS6vjAPTOGrNMGsb0o4t4-xlDZHEm7t99E-IuiYqR3u5z2kAQ5zWTNcMG4MmqXQgdcjbDIGk04_CLbdUJ6Lm3NAYYWCZK4qbRPgNGIzXy9bD11lX1JbrqWc2gqXkx7D6V7Am-hF2lHKCfj-TTeEjlk7Etg3K2qd-XPq5UlOBsj9p9oY293jhBVCa2bSsgbZCfefjC6ZW541dplyyGul1okYNoFumyVJoDrrL51B07OPbAV",
+    "a": "HWcZ4HItc96Kr-Ulzt2Q0gtUC1cKlFKyHUqSSYmtG_k",
+    "s": "j6OP8CyIBbAfC7RZTvHNcEaSVFnFmTy3mHgnlk8bvQDfTdjzKAKQRpOyEHGV7qPQxRMF4xlECF2Lk6FI9i5YAA"
+   }
+  },
+  {
+   "spaceId": "gGroupOne",
+   "epoch": 3,
+   "key": "__79_Pv6-fj39vX08_Lx8O_u7ezr6uno5-bl5OPi4eA",
+   "authorSeed": "HyYtNDtCSVBXXmVsc3qBiI-WnaSrsrnAx87V3OPq8fg",
+   "payload": {
+    "id": "op2",
+    "ts": "0lx5k3c00001node0001",
+    "by": "HWcZ4HItc96Kr-Ulzt2Q0gtUC1cKlFKyHUqSSYmtG_k",
+    "k": "person",
+    "e": "p1",
+    "set": {
+     "name": "Anna",
+     "color": 2,
+     "role": "admin",
+     "order": 0
+    }
+   },
+   "json": "{\"id\":\"op2\",\"ts\":\"0lx5k3c00001node0001\",\"by\":\"HWcZ4HItc96Kr-Ulzt2Q0gtUC1cKlFKyHUqSSYmtG_k\",\"k\":\"person\",\"e\":\"p1\",\"set\":{\"name\":\"Anna\",\"color\":2,\"role\":\"admin\",\"order\":0}}",
+   "sealed": {
+    "e": 3,
+    "n": "8MFMwTPVrO4Hd3ygdzM1vhVfLfgJUN2e",
+    "c": "aM16AIynAYLxJFI0JtF6gntyAc9EQPQkG3tws-XIvvdl9Wl6mNBq80K3nurf30QawvlHkBiX8SCkGdK_nH3v6UTxiSC99fFTFa4OG4vuxB5tT_gJica8_8j_bxNL75vVCUzJJZc_scmya_s_-0Dhkye6lheJGh4dASzFIArnyuGtaQdNpXcwV6UvdPybqKTymQtCmeGCe1ukA-EFPYIOYyuxH8mru9kJfVWpDFiC3W7tpda2xWlDa78M",
+    "a": "HWcZ4HItc96Kr-Ulzt2Q0gtUC1cKlFKyHUqSSYmtG_k",
+    "s": "V4aAFwhNi5uyN6s3-y567pbQACZYEXWyLp30DlD1uOR3vtlCjswQ5ozoN-GWNxWweqHANMBnMZg4Vz5S2OM4Ag"
+   }
+  },
+  {
+   "spaceId": "gGroupTwo",
+   "epoch": 1,
+   "key": "__79_Pv6-fj39vX08_Lx8O_u7ezr6uno5-bl5OPi4eA",
+   "authorSeed": "HyYtNDtCSVBXXmVsc3qBiI-WnaSrsrnAx87V3OPq8fg",
+   "payload": {
+    "tables": {
+     "nested": [
+      1,
+      2.5,
+      null,
+      true,
+      "x"
+     ]
+    }
+   },
+   "json": "{\"tables\":{\"nested\":[1,2.5,null,true,\"x\"]}}",
+   "sealed": {
+    "e": 1,
+    "n": "QpF3hG4QAF2E2tmmPsNZoOcqORKgtQlR",
+    "c": "m2Fg-dN4FIcBzIFeZAtcv2B5-y1FRX8oD4wDPBruubH1tAE_-fs9MoQ7U6IxEaY9SOddcbMht1n3SVk",
+    "a": "HWcZ4HItc96Kr-Ulzt2Q0gtUC1cKlFKyHUqSSYmtG_k",
+    "s": "5_7CDm91J6pudmuAjRO115Llep_eqJDTmyti8k7trOfURVf4KLAtqhH6ZKvjocN5SeM5nbny6kxuFSnlj7TSAQ"
+   }
+  }
+ ],
+ "sealed": [
+  {
+   "context": "envelope:gGroupOne",
+   "senderSeed": "HyYtNDtCSVBXXmVsc3qBiI-WnaSrsrnAx87V3OPq8fg",
+   "recipientSeed": "PkVMU1phaG92fYSLkpmgp661vMPK0djf5u30-wIJEBc",
+   "payload": {
+    "keys": {
+     "0": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE",
+     "1": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI"
+    }
+   },
+   "json": "{\"keys\":{\"0\":\"AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE\",\"1\":\"AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI\"}}",
+   "ephSecret": "xNZTLNrdEkirp5nfT42XO2A3rPY-K_XYLMfhv678FtI",
+   "nonce": "2jbco-Z-26hlLkY8KgPC-_T6UDlVgnFQ",
+   "sealed": "zao0mXca5k-BjOOJs_k4VPXbvlWCFiTUFQbp5dBFKRfaNtyj5n7bqGUuRjwqA8L79PpQOVWCcVBaVJNwno-3ZNNDyHt8TZ40mx1tAGunsseLcLenCZZJvNVgZjIQYuOD_ds_xEuMw6NKWy8b5H5pTDpAS7zgbMsqGM6xBQzw851TLV6XgqnE_OyBBqkwsVDmIRTmfFb-zW9HcpHZ_kkAgciEqyGoKy6iqF3tfcmM2w8idTcwyG8.HWcZ4HItc96Kr-Ulzt2Q0gtUC1cKlFKyHUqSSYmtG_k.hQluFKPbtY8Sfewmlfed_yGM-bCnXKSDmWh0CdYp9eacQfGqGgZNzgK7ivC7JqfVePkmQgIZPELViSvmQcM6Aw"
+  },
+  {
+   "context": "join:inviteAbc",
+   "senderSeed": "HyYtNDtCSVBXXmVsc3qBiI-WnaSrsrnAx87V3OPq8fg",
+   "recipientSeed": "PkVMU1phaG92fYSLkpmgp661vMPK0djf5u30-wIJEBc",
+   "payload": {
+    "name": "Home Assistant",
+    "boxPub": "Sj6iRUkukkpGeDFvCV65hfKGGA45-Ml0uUugU0cDFQ8",
+    "x": "secretX"
+   },
+   "json": "{\"name\":\"Home Assistant\",\"boxPub\":\"Sj6iRUkukkpGeDFvCV65hfKGGA45-Ml0uUugU0cDFQ8\",\"x\":\"secretX\"}",
+   "ephSecret": "Jl95gwhyRNeFB02_2n4DPRwv5Gr_fAgOLkeOfH-f70o",
+   "nonce": "RPFP6L43wOVLZoaS89wyjkNbBlwGs1fk",
+   "sealed": "81zN5piM9L3uhvlrZXaozPlq92_ESTwukHCla1aZNyZE8U_ovjfA5UtmhpLz3DKOQ1sGXAazV-SnFbRIc_5eF9zZENsQNm7MRVpKtzBAOIl4asI0G0m4MzqIXu9ShgPWCVWFRcc0PiSRhyV-22gb8clMniQVcNOTqGSIQzoVR0RNY6atdvfWcN_fhlyzMni2rsrs10fHH6bs8uPo0CrdDkmv-Jqk9A.HWcZ4HItc96Kr-Ulzt2Q0gtUC1cKlFKyHUqSSYmtG_k.rfO9tkNVDiFq1s_0bus2wn8MiJIIU2uHtj-sMHhu9_Ib__HtQz1jbvGvTwtlFb_xG8XAgCXw_CZTvnpIOi_qDw"
+  }
+ ],
+ "auth": {
+  "seed": "XWRrcnmAh46VnKOqsbi_xs3U2-Lp8Pf-BQwTGiEoLzY",
+  "nonce": "n0nce.example.token",
+  "message": "orgaia-auth:n0nce.example.token",
+  "sig": "DlNBR1D8M0fCOlQKjEwLZStUQnP_o1kw-6DILCP1L5V6BAjl9383hxDxossXay-kjqe4CLPGaO88zsGeJ29cAg",
+  "protocol": 1
+ },
+ "invites": [
+  {
+   "text": "https://www.orgaia.de/join#v=1&s=https%3A%2F%2Fsync.example.org&i=inviteAbc&a=HWcZ4HItc96Kr-Ulzt2Q0gtUC1cKlFKyHUqSSYmtG_k&b=DHkdZMf3vgurojoXc0iFzwzkoCYDzmsBpMq4aWxEHQU&g=-5UrA3bBuzO92j43Rpghu37NSyN961MeLTXp04H3Rkg0XQ-AYYJptm7KFXF5Qv3fgRPOEmN84tdccHvwMz26BQ&x=secretX&n=Familie+M%C3%BCller",
+   "parsed": {
+    "v": 1,
+    "s": "https://sync.example.org",
+    "i": "inviteAbc",
+    "a": "HWcZ4HItc96Kr-Ulzt2Q0gtUC1cKlFKyHUqSSYmtG_k",
+    "b": "DHkdZMf3vgurojoXc0iFzwzkoCYDzmsBpMq4aWxEHQU",
+    "g": "-5UrA3bBuzO92j43Rpghu37NSyN961MeLTXp04H3Rkg0XQ-AYYJptm7KFXF5Qv3fgRPOEmN84tdccHvwMz26BQ",
+    "x": "secretX",
+    "n": "Familie Müller"
+   }
+  },
+  {
+   "text": "orgaia://join?v=1&s=https%3A%2F%2Fsync.example.org&i=inviteAbc&a=HWcZ4HItc96Kr-Ulzt2Q0gtUC1cKlFKyHUqSSYmtG_k&b=DHkdZMf3vgurojoXc0iFzwzkoCYDzmsBpMq4aWxEHQU&g=-5UrA3bBuzO92j43Rpghu37NSyN961MeLTXp04H3Rkg0XQ-AYYJptm7KFXF5Qv3fgRPOEmN84tdccHvwMz26BQ&x=secretX&n=Familie+M%C3%BCller",
+   "parsed": {
+    "v": 1,
+    "s": "https://sync.example.org",
+    "i": "inviteAbc",
+    "a": "HWcZ4HItc96Kr-Ulzt2Q0gtUC1cKlFKyHUqSSYmtG_k",
+    "b": "DHkdZMf3vgurojoXc0iFzwzkoCYDzmsBpMq4aWxEHQU",
+    "g": "-5UrA3bBuzO92j43Rpghu37NSyN961MeLTXp04H3Rkg0XQ-AYYJptm7KFXF5Qv3fgRPOEmN84tdccHvwMz26BQ",
+    "x": "secretX",
+    "n": "Familie Müller"
+   }
+  },
+  {
+   "text": "https://www.orgaia.de/join#v=2&s=x",
+   "parsed": null
+  },
+  {
+   "text": "kein Link",
+   "parsed": null
+  }
+ ],
+ "views": [
+  {
+   "today": "2026-11-17",
+   "minute": 480,
+   "ops": [
+    {
+     "id": "op0",
+     "ts": "0mubbs7i8000vecnode1",
+     "by": "author",
+     "k": "meta",
+     "e": "space",
+     "set": {
+      "name": "Familie",
+      "teams": [
+       {
+        "id": "t1",
+        "name": "Eltern",
+        "color": 1
+       },
+       {
+        "id": "t2",
+        "name": "Weg",
+        "color": 2,
+        "deleted": true
+       }
+      ]
+     }
+    },
+    {
+     "id": "op1",
+     "ts": "0mubbs8a0000vecnode1",
+     "by": "author",
+     "k": "person",
+     "e": "pA",
+     "set": {
+      "name": "Anna",
+      "color": 0,
+      "role": "admin",
+      "pub": "pubA",
+      "order": 0,
+      "teams": [
+       "t1"
+      ]
+     }
+    },
+    {
+     "id": "op2",
+     "ts": "0mubbs91s000vecnode1",
+     "by": "author",
+     "k": "person",
+     "e": "pB",
+     "set": {
+      "name": "Ben",
+      "color": 1,
+      "role": "member",
+      "pub": "pubB",
+      "order": 1,
+      "teams": [
+       "t1"
+      ]
+     }
+    },
+    {
+     "id": "op3",
+     "ts": "0mubbs9tk000vecnode1",
+     "by": "author",
+     "k": "person",
+     "e": "pC",
+     "set": {
+      "name": "Cleo",
+      "color": 2,
+      "role": "member",
+      "order": 2,
+      "child": true
+     }
+    },
+    {
+     "id": "op4",
+     "ts": "0mubbsalc000vecnode1",
+     "by": "author",
+     "k": "person",
+     "e": "pD",
+     "set": {
+      "name": "Dora",
+      "color": 3,
+      "role": "member",
+      "order": 3
+     }
+    },
+    {
+     "id": "op5",
+     "ts": "0mubbsbd4000vecnode1",
+     "by": "author",
+     "k": "person",
+     "e": "pD",
+     "set": {
+      "removed": true
+     }
+    },
+    {
+     "id": "op6",
+     "ts": "0mubbsc4w000vecnode1",
+     "by": "author",
+     "k": "list",
+     "e": "lHaus",
+     "set": {
+      "name": "Haushalt",
+      "type": "tasks",
+      "color": 0,
+      "order": 1
+     }
+    },
+    {
+     "id": "op7",
+     "ts": "0mubbscwo000vecnode1",
+     "by": "author",
+     "k": "list",
+     "e": "lEinkauf",
+     "set": {
+      "name": "Einkauf",
+      "type": "shopping",
+      "color": 1,
+      "order": 2
+     }
+    },
+    {
+     "id": "op8",
+     "ts": "0mubbsdog000vecnode1",
+     "by": "author",
+     "k": "list",
+     "e": "lProjekt",
+     "set": {
+      "name": "Umzug",
+      "type": "tasks",
+      "color": 2,
+      "order": 3,
+      "from": "2026-11-01",
+      "dueDate": "2026-11-30",
+      "assignees": [
+       "pA",
+       "pD"
+      ]
+     }
+    },
+    {
+     "id": "op9",
+     "ts": "0mubbseg8000vecnode1",
+     "by": "author",
+     "k": "list",
+     "e": "lAlt",
+     "set": {
+      "name": "Alt",
+      "type": "tasks",
+      "color": 4,
+      "order": 4,
+      "deleted": true,
+      "deletedAt": 1790000000000
+     }
+    },
+    {
+     "id": "op10",
+     "ts": "0mubbsf80000vecnode1",
+     "by": "author",
+     "k": "list",
+     "e": "lFeed",
+     "set": {
+      "name": "Schule",
+      "type": "feed",
+      "color": 5,
+      "order": 5,
+      "url": "https://example.org/s.ics",
+      "feedFor": [
+       "pC"
+      ]
+     }
+    },
+    {
+     "id": "op11",
+     "ts": "0mubbsfzs000vecnode1",
+     "by": "author",
+     "k": "item",
+     "e": "i1",
+     "set": {
+      "listId": "lHaus",
+      "kind": "task",
+      "title": "Müll",
+      "assignees": [
+       "pA"
+      ],
+      "dueDate": "2026-11-17",
+      "dueTime": "07:00",
+      "createdAt": 1790000000000,
+      "order": 1
+     }
+    },
+    {
+     "id": "op12",
+     "ts": "0mubbsgrk000vecnode1",
+     "by": "author",
+     "k": "item",
+     "e": "i2",
+     "set": {
+      "listId": "lHaus",
+      "kind": "task",
+      "title": "Steuer",
+      "assignees": [
+       "pB",
+       "pD"
+      ],
+      "dueDate": "2026-11-10",
+      "note": "Belege",
+      "priority": 2,
+      "createdAt": 1790000000001,
+      "order": 2
+     }
+    },
+    {
+     "id": "op13",
+     "ts": "0mubbshjc000vecnode1",
+     "by": "author",
+     "k": "item",
+     "e": "i3",
+     "set": {
+      "listId": "lHaus",
+      "kind": "task",
+      "title": "Fenster",
+      "assignees": [
+       "pC"
+      ],
+      "done": {
+       "by": "pC",
+       "at": 1790000000005
+      },
+      "createdAt": 1790000000002,
+      "order": 3
+     }
+    },
+    {
+     "id": "op14",
+     "ts": "0mubbsib4000vecnode1",
+     "by": "author",
+     "k": "item",
+     "e": "i4",
+     "set": {
+      "listId": "lHaus",
+      "kind": "task",
+      "title": "Gelöscht",
+      "deleted": true,
+      "deletedAt": 1790000000000,
+      "createdAt": 1790000000003
+     }
+    },
+    {
+     "id": "op15",
+     "ts": "0mubbsj2w000vecnode1",
+     "by": "author",
+     "k": "item",
+     "e": "i5",
+     "set": {
+      "listId": "lAlt",
+      "kind": "task",
+      "title": "Auf alter Liste",
+      "createdAt": 1790000000004
+     }
+    },
+    {
+     "id": "op16",
+     "ts": "0mubbsjuo000vecnode1",
+     "by": "author",
+     "k": "item",
+     "e": "i6",
+     "set": {
+      "listId": "lHaus",
+      "kind": "task",
+      "title": "Später",
+      "dueDate": "2026-11-25",
+      "createdAt": 1790000000005,
+      "order": 6
+     }
+    },
+    {
+     "id": "op17",
+     "ts": "0mubbskmg000vecnode1",
+     "by": "author",
+     "k": "item",
+     "e": "i7",
+     "set": {
+      "listId": "lHaus",
+      "kind": "task",
+      "title": "Alle",
+      "everyone": true,
+      "dueDate": "2026-11-17",
+      "createdAt": 1790000000006,
+      "order": 7
+     }
+    },
+    {
+     "id": "op18",
+     "ts": "0mubbsle8000vecnode1",
+     "by": "author",
+     "k": "item",
+     "e": "i8",
+     "set": {
+      "listId": "lHaus",
+      "kind": "task",
+      "title": "Eltern",
+      "teams": [
+       "t1",
+       "t2"
+      ],
+      "assignees": [
+       "pC"
+      ],
+      "createdAt": 1790000000007,
+      "order": 8
+     }
+    },
+    {
+     "id": "op19",
+     "ts": "0mubbsm60000vecnode1",
+     "by": "author",
+     "k": "item",
+     "e": "i9",
+     "set": {
+      "listId": "lHaus",
+      "kind": "task",
+      "title": "Jeder selbst",
+      "mode": "each",
+      "assignees": [
+       "pA",
+       "pB"
+      ],
+      "done.pA": {
+       "by": "pA",
+       "at": 1790000000009
+      },
+      "createdAt": 1790000000008,
+      "order": 9
+     }
+    },
+    {
+     "id": "op20",
+     "ts": "0mubbsmxs000vecnode1",
+     "by": "author",
+     "k": "item",
+     "e": "i10",
+     "set": {
+      "listId": "lHaus",
+      "kind": "task",
+      "title": "Jeder fertig",
+      "mode": "each",
+      "assignees": [
+       "pA",
+       "pB"
+      ],
+      "done.pA": {
+       "by": "pA",
+       "at": 1790000000009
+      },
+      "done.pB": {
+       "by": "pB",
+       "at": 1790000000012
+      },
+      "createdAt": 1790000000009,
+      "order": 10
+     }
+    },
+    {
+     "id": "op21",
+     "ts": "0mubbsnpk000vecnode1",
+     "by": "author",
+     "k": "item",
+     "e": "i11",
+     "set": {
+      "listId": "lProjekt",
+      "kind": "task",
+      "title": "Kartons",
+      "createdAt": 1790000000010
+     }
+    },
+    {
+     "id": "op22",
+     "ts": "0mubbsohc000vecnode1",
+     "by": "author",
+     "k": "item",
+     "e": "i12",
+     "set": {
+      "listId": "lProjekt",
+      "kind": "task",
+      "title": "Eigenes",
+      "assignees": [
+       "pB"
+      ],
+      "dueDate": "2026-11-20",
+      "createdAt": 1790000000011
+     }
+    },
+    {
+     "id": "op23",
+     "ts": "0mubbsp94000vecnode1",
+     "by": "author",
+     "k": "item",
+     "e": "i13",
+     "set": {
+      "listId": "lEinkauf",
+      "kind": "task",
+      "title": "Milch",
+      "qty": "2",
+      "createdAt": 1790000000012
+     }
+    },
+    {
+     "id": "op24",
+     "ts": "0mubbsq0w000vecnode1",
+     "by": "author",
+     "k": "item",
+     "e": "i14",
+     "set": {
+      "listId": "lEinkauf",
+      "kind": "task",
+      "title": "Brot",
+      "done": {
+       "by": "pA",
+       "at": 1790000000013
+      },
+      "createdAt": 1790000000013
+     }
+    },
+    {
+     "id": "op25",
+     "ts": "0mubbsqso000vecnode1",
+     "by": "author",
+     "k": "item",
+     "e": "r1",
+     "set": {
+      "listId": "lHaus",
+      "kind": "task",
+      "title": "Spülmaschine",
+      "dueDate": "2026-11-01",
+      "repeat": {
+       "freq": "day",
+       "interval": 1
+      },
+      "rotation": [
+       "pA",
+       "pB",
+       "pD"
+      ],
+      "createdAt": 1790000000014
+     }
+    },
+    {
+     "id": "op26",
+     "ts": "0mubbsrkg000vecnode1",
+     "by": "author",
+     "k": "item",
+     "e": "r2",
+     "set": {
+      "listId": "lHaus",
+      "kind": "task",
+      "title": "Sport",
+      "start": "2026-11-02T18:00",
+      "end": "2026-11-02T19:00",
+      "repeat": {
+       "freq": "week",
+       "interval": 1,
+       "days": [
+        1,
+        3
+       ]
+      },
+      "assignees": [
+       "pB"
+      ],
+      "createdAt": 1790000000015
+     }
+    },
+    {
+     "id": "op27",
+     "ts": "0mubbssc8000vecnode1",
+     "by": "author",
+     "k": "item",
+     "e": "r3",
+     "set": {
+      "listId": "lHaus",
+      "kind": "task",
+      "title": "Miete",
+      "dueDate": "2026-01-31",
+      "repeat": {
+       "freq": "month",
+       "interval": 1
+      },
+      "assignees": [
+       "pA"
+      ],
+      "createdAt": 1790000000016
+     }
+    },
+    {
+     "id": "op28",
+     "ts": "0mubbst40000vecnode1",
+     "by": "author",
+     "k": "item",
+     "e": "r4",
+     "set": {
+      "listId": "lHaus",
+      "kind": "task",
+      "title": "Kurs",
+      "dueDate": "2026-11-03",
+      "repeat": {
+       "freq": "week",
+       "interval": 2,
+       "until": "2026-12-01"
+      },
+      "createdAt": 1790000000017
+     }
+    },
+    {
+     "id": "op29",
+     "ts": "0mubbstvs000vecnode1",
+     "by": "author",
+     "k": "occ",
+     "e": "r1|2026-11-16",
+     "set": {
+      "done": {
+       "by": "pB",
+       "at": 1790000000020
+      }
+     }
+    },
+    {
+     "id": "op30",
+     "ts": "0mubbsunk000vecnode1",
+     "by": "author",
+     "k": "occ",
+     "e": "r1|2026-11-17",
+     "set": {
+      "assignees": [
+       "pC"
+      ]
+     }
+    },
+    {
+     "id": "op31",
+     "ts": "0mubbsvfc000vecnode1",
+     "by": "author",
+     "k": "occ",
+     "e": "r2|2026-11-18",
+     "set": {
+      "skip": true
+     }
+    },
+    {
+     "id": "op32",
+     "ts": "0mubbsw74000vecnode1",
+     "by": "author",
+     "k": "occ",
+     "e": "r2|2026-11-16",
+     "set": {
+      "title": "Sport (Halle B)",
+      "start": "2026-11-16T17:00",
+      "end": "2026-11-16T18:30"
+     }
+    },
+    {
+     "id": "op33",
+     "ts": "0mubbswyw000vecnode1",
+     "by": "author",
+     "k": "item",
+     "e": "e1",
+     "set": {
+      "listId": "lHaus",
+      "kind": "event",
+      "title": "Zahnarzt",
+      "start": "2026-11-18T09:30",
+      "end": "2026-11-18T10:15",
+      "assignees": [
+       "pC"
+      ],
+      "location": "Praxis",
+      "createdAt": 1790000000018
+     }
+    },
+    {
+     "id": "op34",
+     "ts": "0mubbsxqo000vecnode1",
+     "by": "author",
+     "k": "item",
+     "e": "e2",
+     "set": {
+      "listId": "lHaus",
+      "kind": "event",
+      "title": "Urlaub",
+      "start": "2026-12-20T00:00",
+      "end": "2026-12-27T00:00",
+      "allDay": true,
+      "everyone": true,
+      "createdAt": 1790000000019
+     }
+    },
+    {
+     "id": "op35",
+     "ts": "0mubbsyig000vecnode1",
+     "by": "author",
+     "k": "item",
+     "e": "e3",
+     "set": {
+      "listId": "lHaus",
+      "kind": "event",
+      "title": "Chor",
+      "start": "2026-11-04T19:00",
+      "end": "2026-11-04T21:00",
+      "repeat": {
+       "freq": "week",
+       "interval": 1
+      },
+      "assignees": [
+       "pA",
+       "pB"
+      ],
+      "rsvp.pB": {
+       "a": "no",
+       "at": 1790000000030
+      },
+      "createdAt": 1790000000020
+     }
+    },
+    {
+     "id": "op36",
+     "ts": "0mubbsza8000vecnode1",
+     "by": "author",
+     "k": "occ",
+     "e": "e3|2026-11-25",
+     "set": {
+      "skip": true
+     }
+    },
+    {
+     "id": "op37",
+     "ts": "0mubc2xb4000vecnode2",
+     "by": "author",
+     "k": "item",
+     "e": "i1",
+     "set": {
+      "title": "Müll (gelb)"
+     }
+    },
+    {
+     "id": "op37",
+     "ts": "0mubbs7i9000vecnode3",
+     "by": "author",
+     "k": "item",
+     "e": "i1",
+     "set": {
+      "title": "älter"
+     }
+    }
+   ],
+   "state": {
+    "meta": {
+     "space": {
+      "name": {
+       "ts": "0mubbs7i8000vecnode1",
+       "v": "Familie"
+      },
+      "teams": {
+       "ts": "0mubbs7i8000vecnode1",
+       "v": [
+        {
+         "id": "t1",
+         "name": "Eltern",
+         "color": 1
+        },
+        {
+         "id": "t2",
+         "name": "Weg",
+         "color": 2,
+         "deleted": true
+        }
+       ]
+      }
+     }
+    },
+    "person": {
+     "pA": {
+      "color": {
+       "ts": "0mubbs8a0000vecnode1",
+       "v": 0
+      },
+      "name": {
+       "ts": "0mubbs8a0000vecnode1",
+       "v": "Anna"
+      },
+      "order": {
+       "ts": "0mubbs8a0000vecnode1",
+       "v": 0
+      },
+      "pub": {
+       "ts": "0mubbs8a0000vecnode1",
+       "v": "pubA"
+      },
+      "role": {
+       "ts": "0mubbs8a0000vecnode1",
+       "v": "admin"
+      },
+      "teams": {
+       "ts": "0mubbs8a0000vecnode1",
+       "v": [
+        "t1"
+       ]
+      }
+     },
+     "pB": {
+      "color": {
+       "ts": "0mubbs91s000vecnode1",
+       "v": 1
+      },
+      "name": {
+       "ts": "0mubbs91s000vecnode1",
+       "v": "Ben"
+      },
+      "order": {
+       "ts": "0mubbs91s000vecnode1",
+       "v": 1
+      },
+      "pub": {
+       "ts": "0mubbs91s000vecnode1",
+       "v": "pubB"
+      },
+      "role": {
+       "ts": "0mubbs91s000vecnode1",
+       "v": "member"
+      },
+      "teams": {
+       "ts": "0mubbs91s000vecnode1",
+       "v": [
+        "t1"
+       ]
+      }
+     },
+     "pC": {
+      "child": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": true
+      },
+      "color": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": 2
+      },
+      "name": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": "Cleo"
+      },
+      "order": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": 2
+      },
+      "role": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": "member"
+      }
+     },
+     "pD": {
+      "color": {
+       "ts": "0mubbsalc000vecnode1",
+       "v": 3
+      },
+      "name": {
+       "ts": "0mubbsalc000vecnode1",
+       "v": "Dora"
+      },
+      "order": {
+       "ts": "0mubbsalc000vecnode1",
+       "v": 3
+      },
+      "removed": {
+       "ts": "0mubbsbd4000vecnode1",
+       "v": true
+      },
+      "role": {
+       "ts": "0mubbsalc000vecnode1",
+       "v": "member"
+      }
+     }
+    },
+    "list": {
+     "lAlt": {
+      "color": {
+       "ts": "0mubbseg8000vecnode1",
+       "v": 4
+      },
+      "deleted": {
+       "ts": "0mubbseg8000vecnode1",
+       "v": true
+      },
+      "deletedAt": {
+       "ts": "0mubbseg8000vecnode1",
+       "v": 1790000000000
+      },
+      "name": {
+       "ts": "0mubbseg8000vecnode1",
+       "v": "Alt"
+      },
+      "order": {
+       "ts": "0mubbseg8000vecnode1",
+       "v": 4
+      },
+      "type": {
+       "ts": "0mubbseg8000vecnode1",
+       "v": "tasks"
+      }
+     },
+     "lEinkauf": {
+      "color": {
+       "ts": "0mubbscwo000vecnode1",
+       "v": 1
+      },
+      "name": {
+       "ts": "0mubbscwo000vecnode1",
+       "v": "Einkauf"
+      },
+      "order": {
+       "ts": "0mubbscwo000vecnode1",
+       "v": 2
+      },
+      "type": {
+       "ts": "0mubbscwo000vecnode1",
+       "v": "shopping"
+      }
+     },
+     "lFeed": {
+      "color": {
+       "ts": "0mubbsf80000vecnode1",
+       "v": 5
+      },
+      "feedFor": {
+       "ts": "0mubbsf80000vecnode1",
+       "v": [
+        "pC"
+       ]
+      },
+      "name": {
+       "ts": "0mubbsf80000vecnode1",
+       "v": "Schule"
+      },
+      "order": {
+       "ts": "0mubbsf80000vecnode1",
+       "v": 5
+      },
+      "type": {
+       "ts": "0mubbsf80000vecnode1",
+       "v": "feed"
+      },
+      "url": {
+       "ts": "0mubbsf80000vecnode1",
+       "v": "https://example.org/s.ics"
+      }
+     },
+     "lHaus": {
+      "color": {
+       "ts": "0mubbsc4w000vecnode1",
+       "v": 0
+      },
+      "name": {
+       "ts": "0mubbsc4w000vecnode1",
+       "v": "Haushalt"
+      },
+      "order": {
+       "ts": "0mubbsc4w000vecnode1",
+       "v": 1
+      },
+      "type": {
+       "ts": "0mubbsc4w000vecnode1",
+       "v": "tasks"
+      }
+     },
+     "lProjekt": {
+      "assignees": {
+       "ts": "0mubbsdog000vecnode1",
+       "v": [
+        "pA",
+        "pD"
+       ]
+      },
+      "color": {
+       "ts": "0mubbsdog000vecnode1",
+       "v": 2
+      },
+      "dueDate": {
+       "ts": "0mubbsdog000vecnode1",
+       "v": "2026-11-30"
+      },
+      "from": {
+       "ts": "0mubbsdog000vecnode1",
+       "v": "2026-11-01"
+      },
+      "name": {
+       "ts": "0mubbsdog000vecnode1",
+       "v": "Umzug"
+      },
+      "order": {
+       "ts": "0mubbsdog000vecnode1",
+       "v": 3
+      },
+      "type": {
+       "ts": "0mubbsdog000vecnode1",
+       "v": "tasks"
+      }
+     }
+    },
+    "item": {
+     "e1": {
+      "assignees": {
+       "ts": "0mubbswyw000vecnode1",
+       "v": [
+        "pC"
+       ]
+      },
+      "createdAt": {
+       "ts": "0mubbswyw000vecnode1",
+       "v": 1790000000018
+      },
+      "end": {
+       "ts": "0mubbswyw000vecnode1",
+       "v": "2026-11-18T10:15"
+      },
+      "kind": {
+       "ts": "0mubbswyw000vecnode1",
+       "v": "event"
+      },
+      "listId": {
+       "ts": "0mubbswyw000vecnode1",
+       "v": "lHaus"
+      },
+      "location": {
+       "ts": "0mubbswyw000vecnode1",
+       "v": "Praxis"
+      },
+      "start": {
+       "ts": "0mubbswyw000vecnode1",
+       "v": "2026-11-18T09:30"
+      },
+      "title": {
+       "ts": "0mubbswyw000vecnode1",
+       "v": "Zahnarzt"
+      }
+     },
+     "e2": {
+      "allDay": {
+       "ts": "0mubbsxqo000vecnode1",
+       "v": true
+      },
+      "createdAt": {
+       "ts": "0mubbsxqo000vecnode1",
+       "v": 1790000000019
+      },
+      "end": {
+       "ts": "0mubbsxqo000vecnode1",
+       "v": "2026-12-27T00:00"
+      },
+      "everyone": {
+       "ts": "0mubbsxqo000vecnode1",
+       "v": true
+      },
+      "kind": {
+       "ts": "0mubbsxqo000vecnode1",
+       "v": "event"
+      },
+      "listId": {
+       "ts": "0mubbsxqo000vecnode1",
+       "v": "lHaus"
+      },
+      "start": {
+       "ts": "0mubbsxqo000vecnode1",
+       "v": "2026-12-20T00:00"
+      },
+      "title": {
+       "ts": "0mubbsxqo000vecnode1",
+       "v": "Urlaub"
+      }
+     },
+     "e3": {
+      "assignees": {
+       "ts": "0mubbsyig000vecnode1",
+       "v": [
+        "pA",
+        "pB"
+       ]
+      },
+      "createdAt": {
+       "ts": "0mubbsyig000vecnode1",
+       "v": 1790000000020
+      },
+      "end": {
+       "ts": "0mubbsyig000vecnode1",
+       "v": "2026-11-04T21:00"
+      },
+      "kind": {
+       "ts": "0mubbsyig000vecnode1",
+       "v": "event"
+      },
+      "listId": {
+       "ts": "0mubbsyig000vecnode1",
+       "v": "lHaus"
+      },
+      "repeat": {
+       "ts": "0mubbsyig000vecnode1",
+       "v": {
+        "freq": "week",
+        "interval": 1
+       }
+      },
+      "rsvp.pB": {
+       "ts": "0mubbsyig000vecnode1",
+       "v": {
+        "a": "no",
+        "at": 1790000000030
+       }
+      },
+      "start": {
+       "ts": "0mubbsyig000vecnode1",
+       "v": "2026-11-04T19:00"
+      },
+      "title": {
+       "ts": "0mubbsyig000vecnode1",
+       "v": "Chor"
+      }
+     },
+     "i1": {
+      "assignees": {
+       "ts": "0mubbsfzs000vecnode1",
+       "v": [
+        "pA"
+       ]
+      },
+      "createdAt": {
+       "ts": "0mubbsfzs000vecnode1",
+       "v": 1790000000000
+      },
+      "dueDate": {
+       "ts": "0mubbsfzs000vecnode1",
+       "v": "2026-11-17"
+      },
+      "dueTime": {
+       "ts": "0mubbsfzs000vecnode1",
+       "v": "07:00"
+      },
+      "kind": {
+       "ts": "0mubbsfzs000vecnode1",
+       "v": "task"
+      },
+      "listId": {
+       "ts": "0mubbsfzs000vecnode1",
+       "v": "lHaus"
+      },
+      "order": {
+       "ts": "0mubbsfzs000vecnode1",
+       "v": 1
+      },
+      "title": {
+       "ts": "0mubc2xb4000vecnode2",
+       "v": "Müll (gelb)"
+      }
+     },
+     "i10": {
+      "assignees": {
+       "ts": "0mubbsmxs000vecnode1",
+       "v": [
+        "pA",
+        "pB"
+       ]
+      },
+      "createdAt": {
+       "ts": "0mubbsmxs000vecnode1",
+       "v": 1790000000009
+      },
+      "done.pA": {
+       "ts": "0mubbsmxs000vecnode1",
+       "v": {
+        "by": "pA",
+        "at": 1790000000009
+       }
+      },
+      "done.pB": {
+       "ts": "0mubbsmxs000vecnode1",
+       "v": {
+        "by": "pB",
+        "at": 1790000000012
+       }
+      },
+      "kind": {
+       "ts": "0mubbsmxs000vecnode1",
+       "v": "task"
+      },
+      "listId": {
+       "ts": "0mubbsmxs000vecnode1",
+       "v": "lHaus"
+      },
+      "mode": {
+       "ts": "0mubbsmxs000vecnode1",
+       "v": "each"
+      },
+      "order": {
+       "ts": "0mubbsmxs000vecnode1",
+       "v": 10
+      },
+      "title": {
+       "ts": "0mubbsmxs000vecnode1",
+       "v": "Jeder fertig"
+      }
+     },
+     "i11": {
+      "createdAt": {
+       "ts": "0mubbsnpk000vecnode1",
+       "v": 1790000000010
+      },
+      "kind": {
+       "ts": "0mubbsnpk000vecnode1",
+       "v": "task"
+      },
+      "listId": {
+       "ts": "0mubbsnpk000vecnode1",
+       "v": "lProjekt"
+      },
+      "title": {
+       "ts": "0mubbsnpk000vecnode1",
+       "v": "Kartons"
+      }
+     },
+     "i12": {
+      "assignees": {
+       "ts": "0mubbsohc000vecnode1",
+       "v": [
+        "pB"
+       ]
+      },
+      "createdAt": {
+       "ts": "0mubbsohc000vecnode1",
+       "v": 1790000000011
+      },
+      "dueDate": {
+       "ts": "0mubbsohc000vecnode1",
+       "v": "2026-11-20"
+      },
+      "kind": {
+       "ts": "0mubbsohc000vecnode1",
+       "v": "task"
+      },
+      "listId": {
+       "ts": "0mubbsohc000vecnode1",
+       "v": "lProjekt"
+      },
+      "title": {
+       "ts": "0mubbsohc000vecnode1",
+       "v": "Eigenes"
+      }
+     },
+     "i13": {
+      "createdAt": {
+       "ts": "0mubbsp94000vecnode1",
+       "v": 1790000000012
+      },
+      "kind": {
+       "ts": "0mubbsp94000vecnode1",
+       "v": "task"
+      },
+      "listId": {
+       "ts": "0mubbsp94000vecnode1",
+       "v": "lEinkauf"
+      },
+      "qty": {
+       "ts": "0mubbsp94000vecnode1",
+       "v": "2"
+      },
+      "title": {
+       "ts": "0mubbsp94000vecnode1",
+       "v": "Milch"
+      }
+     },
+     "i14": {
+      "createdAt": {
+       "ts": "0mubbsq0w000vecnode1",
+       "v": 1790000000013
+      },
+      "done": {
+       "ts": "0mubbsq0w000vecnode1",
+       "v": {
+        "by": "pA",
+        "at": 1790000000013
+       }
+      },
+      "kind": {
+       "ts": "0mubbsq0w000vecnode1",
+       "v": "task"
+      },
+      "listId": {
+       "ts": "0mubbsq0w000vecnode1",
+       "v": "lEinkauf"
+      },
+      "title": {
+       "ts": "0mubbsq0w000vecnode1",
+       "v": "Brot"
+      }
+     },
+     "i2": {
+      "assignees": {
+       "ts": "0mubbsgrk000vecnode1",
+       "v": [
+        "pB",
+        "pD"
+       ]
+      },
+      "createdAt": {
+       "ts": "0mubbsgrk000vecnode1",
+       "v": 1790000000001
+      },
+      "dueDate": {
+       "ts": "0mubbsgrk000vecnode1",
+       "v": "2026-11-10"
+      },
+      "kind": {
+       "ts": "0mubbsgrk000vecnode1",
+       "v": "task"
+      },
+      "listId": {
+       "ts": "0mubbsgrk000vecnode1",
+       "v": "lHaus"
+      },
+      "note": {
+       "ts": "0mubbsgrk000vecnode1",
+       "v": "Belege"
+      },
+      "order": {
+       "ts": "0mubbsgrk000vecnode1",
+       "v": 2
+      },
+      "priority": {
+       "ts": "0mubbsgrk000vecnode1",
+       "v": 2
+      },
+      "title": {
+       "ts": "0mubbsgrk000vecnode1",
+       "v": "Steuer"
+      }
+     },
+     "i3": {
+      "assignees": {
+       "ts": "0mubbshjc000vecnode1",
+       "v": [
+        "pC"
+       ]
+      },
+      "createdAt": {
+       "ts": "0mubbshjc000vecnode1",
+       "v": 1790000000002
+      },
+      "done": {
+       "ts": "0mubbshjc000vecnode1",
+       "v": {
+        "by": "pC",
+        "at": 1790000000005
+       }
+      },
+      "kind": {
+       "ts": "0mubbshjc000vecnode1",
+       "v": "task"
+      },
+      "listId": {
+       "ts": "0mubbshjc000vecnode1",
+       "v": "lHaus"
+      },
+      "order": {
+       "ts": "0mubbshjc000vecnode1",
+       "v": 3
+      },
+      "title": {
+       "ts": "0mubbshjc000vecnode1",
+       "v": "Fenster"
+      }
+     },
+     "i4": {
+      "createdAt": {
+       "ts": "0mubbsib4000vecnode1",
+       "v": 1790000000003
+      },
+      "deleted": {
+       "ts": "0mubbsib4000vecnode1",
+       "v": true
+      },
+      "deletedAt": {
+       "ts": "0mubbsib4000vecnode1",
+       "v": 1790000000000
+      },
+      "kind": {
+       "ts": "0mubbsib4000vecnode1",
+       "v": "task"
+      },
+      "listId": {
+       "ts": "0mubbsib4000vecnode1",
+       "v": "lHaus"
+      },
+      "title": {
+       "ts": "0mubbsib4000vecnode1",
+       "v": "Gelöscht"
+      }
+     },
+     "i5": {
+      "createdAt": {
+       "ts": "0mubbsj2w000vecnode1",
+       "v": 1790000000004
+      },
+      "kind": {
+       "ts": "0mubbsj2w000vecnode1",
+       "v": "task"
+      },
+      "listId": {
+       "ts": "0mubbsj2w000vecnode1",
+       "v": "lAlt"
+      },
+      "title": {
+       "ts": "0mubbsj2w000vecnode1",
+       "v": "Auf alter Liste"
+      }
+     },
+     "i6": {
+      "createdAt": {
+       "ts": "0mubbsjuo000vecnode1",
+       "v": 1790000000005
+      },
+      "dueDate": {
+       "ts": "0mubbsjuo000vecnode1",
+       "v": "2026-11-25"
+      },
+      "kind": {
+       "ts": "0mubbsjuo000vecnode1",
+       "v": "task"
+      },
+      "listId": {
+       "ts": "0mubbsjuo000vecnode1",
+       "v": "lHaus"
+      },
+      "order": {
+       "ts": "0mubbsjuo000vecnode1",
+       "v": 6
+      },
+      "title": {
+       "ts": "0mubbsjuo000vecnode1",
+       "v": "Später"
+      }
+     },
+     "i7": {
+      "createdAt": {
+       "ts": "0mubbskmg000vecnode1",
+       "v": 1790000000006
+      },
+      "dueDate": {
+       "ts": "0mubbskmg000vecnode1",
+       "v": "2026-11-17"
+      },
+      "everyone": {
+       "ts": "0mubbskmg000vecnode1",
+       "v": true
+      },
+      "kind": {
+       "ts": "0mubbskmg000vecnode1",
+       "v": "task"
+      },
+      "listId": {
+       "ts": "0mubbskmg000vecnode1",
+       "v": "lHaus"
+      },
+      "order": {
+       "ts": "0mubbskmg000vecnode1",
+       "v": 7
+      },
+      "title": {
+       "ts": "0mubbskmg000vecnode1",
+       "v": "Alle"
+      }
+     },
+     "i8": {
+      "assignees": {
+       "ts": "0mubbsle8000vecnode1",
+       "v": [
+        "pC"
+       ]
+      },
+      "createdAt": {
+       "ts": "0mubbsle8000vecnode1",
+       "v": 1790000000007
+      },
+      "kind": {
+       "ts": "0mubbsle8000vecnode1",
+       "v": "task"
+      },
+      "listId": {
+       "ts": "0mubbsle8000vecnode1",
+       "v": "lHaus"
+      },
+      "order": {
+       "ts": "0mubbsle8000vecnode1",
+       "v": 8
+      },
+      "teams": {
+       "ts": "0mubbsle8000vecnode1",
+       "v": [
+        "t1",
+        "t2"
+       ]
+      },
+      "title": {
+       "ts": "0mubbsle8000vecnode1",
+       "v": "Eltern"
+      }
+     },
+     "i9": {
+      "assignees": {
+       "ts": "0mubbsm60000vecnode1",
+       "v": [
+        "pA",
+        "pB"
+       ]
+      },
+      "createdAt": {
+       "ts": "0mubbsm60000vecnode1",
+       "v": 1790000000008
+      },
+      "done.pA": {
+       "ts": "0mubbsm60000vecnode1",
+       "v": {
+        "by": "pA",
+        "at": 1790000000009
+       }
+      },
+      "kind": {
+       "ts": "0mubbsm60000vecnode1",
+       "v": "task"
+      },
+      "listId": {
+       "ts": "0mubbsm60000vecnode1",
+       "v": "lHaus"
+      },
+      "mode": {
+       "ts": "0mubbsm60000vecnode1",
+       "v": "each"
+      },
+      "order": {
+       "ts": "0mubbsm60000vecnode1",
+       "v": 9
+      },
+      "title": {
+       "ts": "0mubbsm60000vecnode1",
+       "v": "Jeder selbst"
+      }
+     },
+     "r1": {
+      "createdAt": {
+       "ts": "0mubbsqso000vecnode1",
+       "v": 1790000000014
+      },
+      "dueDate": {
+       "ts": "0mubbsqso000vecnode1",
+       "v": "2026-11-01"
+      },
+      "kind": {
+       "ts": "0mubbsqso000vecnode1",
+       "v": "task"
+      },
+      "listId": {
+       "ts": "0mubbsqso000vecnode1",
+       "v": "lHaus"
+      },
+      "repeat": {
+       "ts": "0mubbsqso000vecnode1",
+       "v": {
+        "freq": "day",
+        "interval": 1
+       }
+      },
+      "rotation": {
+       "ts": "0mubbsqso000vecnode1",
+       "v": [
+        "pA",
+        "pB",
+        "pD"
+       ]
+      },
+      "title": {
+       "ts": "0mubbsqso000vecnode1",
+       "v": "Spülmaschine"
+      }
+     },
+     "r2": {
+      "assignees": {
+       "ts": "0mubbsrkg000vecnode1",
+       "v": [
+        "pB"
+       ]
+      },
+      "createdAt": {
+       "ts": "0mubbsrkg000vecnode1",
+       "v": 1790000000015
+      },
+      "end": {
+       "ts": "0mubbsrkg000vecnode1",
+       "v": "2026-11-02T19:00"
+      },
+      "kind": {
+       "ts": "0mubbsrkg000vecnode1",
+       "v": "task"
+      },
+      "listId": {
+       "ts": "0mubbsrkg000vecnode1",
+       "v": "lHaus"
+      },
+      "repeat": {
+       "ts": "0mubbsrkg000vecnode1",
+       "v": {
+        "freq": "week",
+        "interval": 1,
+        "days": [
+         1,
+         3
+        ]
+       }
+      },
+      "start": {
+       "ts": "0mubbsrkg000vecnode1",
+       "v": "2026-11-02T18:00"
+      },
+      "title": {
+       "ts": "0mubbsrkg000vecnode1",
+       "v": "Sport"
+      }
+     },
+     "r3": {
+      "assignees": {
+       "ts": "0mubbssc8000vecnode1",
+       "v": [
+        "pA"
+       ]
+      },
+      "createdAt": {
+       "ts": "0mubbssc8000vecnode1",
+       "v": 1790000000016
+      },
+      "dueDate": {
+       "ts": "0mubbssc8000vecnode1",
+       "v": "2026-01-31"
+      },
+      "kind": {
+       "ts": "0mubbssc8000vecnode1",
+       "v": "task"
+      },
+      "listId": {
+       "ts": "0mubbssc8000vecnode1",
+       "v": "lHaus"
+      },
+      "repeat": {
+       "ts": "0mubbssc8000vecnode1",
+       "v": {
+        "freq": "month",
+        "interval": 1
+       }
+      },
+      "title": {
+       "ts": "0mubbssc8000vecnode1",
+       "v": "Miete"
+      }
+     },
+     "r4": {
+      "createdAt": {
+       "ts": "0mubbst40000vecnode1",
+       "v": 1790000000017
+      },
+      "dueDate": {
+       "ts": "0mubbst40000vecnode1",
+       "v": "2026-11-03"
+      },
+      "kind": {
+       "ts": "0mubbst40000vecnode1",
+       "v": "task"
+      },
+      "listId": {
+       "ts": "0mubbst40000vecnode1",
+       "v": "lHaus"
+      },
+      "repeat": {
+       "ts": "0mubbst40000vecnode1",
+       "v": {
+        "freq": "week",
+        "interval": 2,
+        "until": "2026-12-01"
+       }
+      },
+      "title": {
+       "ts": "0mubbst40000vecnode1",
+       "v": "Kurs"
+      }
+     }
+    },
+    "sub": {},
+    "occ": {
+     "e3|2026-11-25": {
+      "skip": {
+       "ts": "0mubbsza8000vecnode1",
+       "v": true
+      }
+     },
+     "r1|2026-11-16": {
+      "done": {
+       "ts": "0mubbstvs000vecnode1",
+       "v": {
+        "by": "pB",
+        "at": 1790000000020
+       }
+      }
+     },
+     "r1|2026-11-17": {
+      "assignees": {
+       "ts": "0mubbsunk000vecnode1",
+       "v": [
+        "pC"
+       ]
+      }
+     },
+     "r2|2026-11-16": {
+      "end": {
+       "ts": "0mubbsw74000vecnode1",
+       "v": "2026-11-16T18:30"
+      },
+      "start": {
+       "ts": "0mubbsw74000vecnode1",
+       "v": "2026-11-16T17:00"
+      },
+      "title": {
+       "ts": "0mubbsw74000vecnode1",
+       "v": "Sport (Halle B)"
+      }
+     },
+     "r2|2026-11-18": {
+      "skip": {
+       "ts": "0mubbsvfc000vecnode1",
+       "v": true
+      }
+     }
+    },
+    "tpl": {},
+    "inv": {}
+   },
+   "expect": {
+    "persons": [
+     {
+      "id": "pA",
+      "name": "Anna",
+      "removed": false,
+      "child": false,
+      "role": "admin",
+      "teams": [
+       "t1"
+      ]
+     },
+     {
+      "id": "pB",
+      "name": "Ben",
+      "removed": false,
+      "child": false,
+      "role": "member",
+      "teams": [
+       "t1"
+      ]
+     },
+     {
+      "id": "pC",
+      "name": "Cleo",
+      "removed": false,
+      "child": true,
+      "role": "member",
+      "teams": []
+     },
+     {
+      "id": "pD",
+      "name": "Dora",
+      "removed": true,
+      "child": false,
+      "role": "member",
+      "teams": []
+     }
+    ],
+    "lists": [
+     {
+      "id": "lHaus",
+      "name": "Haushalt",
+      "type": "tasks"
+     },
+     {
+      "id": "lEinkauf",
+      "name": "Einkauf",
+      "type": "shopping"
+     },
+     {
+      "id": "lProjekt",
+      "name": "Umzug",
+      "type": "tasks"
+     },
+     {
+      "id": "lFeed",
+      "name": "Schule",
+      "type": "feed"
+     }
+    ],
+    "items": [
+     {
+      "id": "i11",
+      "listId": "lProjekt",
+      "kind": "task",
+      "title": "Kartons",
+      "note": null,
+      "assignees": [
+       "pA"
+      ],
+      "done": false,
+      "doneBy": null,
+      "dueDate": "2026-11-30",
+      "dueTime": null,
+      "start": null,
+      "end": null,
+      "allDay": false,
+      "repeats": false,
+      "overdue": false,
+      "current": null,
+      "occurrences": []
+     },
+     {
+      "id": "i12",
+      "listId": "lProjekt",
+      "kind": "task",
+      "title": "Eigenes",
+      "note": null,
+      "assignees": [
+       "pB"
+      ],
+      "done": false,
+      "doneBy": null,
+      "dueDate": "2026-11-20",
+      "dueTime": null,
+      "start": null,
+      "end": null,
+      "allDay": false,
+      "repeats": false,
+      "overdue": false,
+      "current": null,
+      "occurrences": []
+     },
+     {
+      "id": "i13",
+      "listId": "lEinkauf",
+      "kind": "task",
+      "title": "Milch",
+      "note": null,
+      "assignees": [],
+      "done": false,
+      "doneBy": null,
+      "dueDate": null,
+      "dueTime": null,
+      "start": null,
+      "end": null,
+      "allDay": false,
+      "repeats": false,
+      "overdue": false,
+      "current": null,
+      "occurrences": []
+     },
+     {
+      "id": "i14",
+      "listId": "lEinkauf",
+      "kind": "task",
+      "title": "Brot",
+      "note": null,
+      "assignees": [],
+      "done": true,
+      "doneBy": "pA",
+      "dueDate": null,
+      "dueTime": null,
+      "start": null,
+      "end": null,
+      "allDay": false,
+      "repeats": false,
+      "overdue": false,
+      "current": null,
+      "occurrences": []
+     },
+     {
+      "id": "r1",
+      "listId": "lHaus",
+      "kind": "task",
+      "title": "Spülmaschine",
+      "note": null,
+      "assignees": [],
+      "done": false,
+      "doneBy": null,
+      "dueDate": "2026-11-01",
+      "dueTime": null,
+      "start": null,
+      "end": null,
+      "allDay": false,
+      "repeats": true,
+      "overdue": false,
+      "current": {
+       "date": "2026-11-17",
+       "done": false
+      },
+      "occurrences": [
+       {
+        "date": "2026-11-01",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-11-02",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-11-03",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-11-04",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-11-05",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-11-06",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-11-07",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-11-08",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-11-09",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-11-10",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-11-11",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-11-12",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-11-13",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-11-14",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-11-15",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-11-16",
+        "done": true,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-11-17",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pC"
+        ]
+       },
+       {
+        "date": "2026-11-18",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-11-19",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-11-20",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-11-21",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-11-22",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-11-23",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-11-24",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-11-25",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-11-26",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-11-27",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-11-28",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-11-29",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-11-30",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-01",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-12-02",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-03",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-12-04",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-05",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-12-06",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-07",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-12-08",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-09",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-12-10",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-11",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-12-12",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-13",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-12-14",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-15",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-12-16",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-17",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-12-18",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-19",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-12-20",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-21",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-12-22",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-23",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-12-24",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-25",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-12-26",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-27",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-12-28",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-29",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-12-30",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-31",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       }
+      ]
+     },
+     {
+      "id": "r2",
+      "listId": "lHaus",
+      "kind": "task",
+      "title": "Sport",
+      "note": null,
+      "assignees": [
+       "pB"
+      ],
+      "done": false,
+      "doneBy": null,
+      "dueDate": null,
+      "dueTime": null,
+      "start": "2026-11-02T18:00",
+      "end": "2026-11-02T19:00",
+      "allDay": false,
+      "repeats": true,
+      "overdue": false,
+      "current": {
+       "date": "2026-11-16",
+       "done": false
+      },
+      "occurrences": [
+       {
+        "date": "2026-11-02",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-11-04",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-11-09",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-11-11",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-11-16",
+        "done": false,
+        "skip": false,
+        "title": "Sport (Halle B)",
+        "start": "2026-11-16T17:00",
+        "end": "2026-11-16T18:30",
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-11-18",
+        "done": false,
+        "skip": true,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-11-23",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-11-25",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-11-30",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-02",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-07",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-09",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-14",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-16",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-21",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-23",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-28",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-30",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pB"
+        ]
+       }
+      ]
+     },
+     {
+      "id": "r3",
+      "listId": "lHaus",
+      "kind": "task",
+      "title": "Miete",
+      "note": null,
+      "assignees": [
+       "pA"
+      ],
+      "done": false,
+      "doneBy": null,
+      "dueDate": "2026-01-31",
+      "dueTime": null,
+      "start": null,
+      "end": null,
+      "allDay": false,
+      "repeats": true,
+      "overdue": false,
+      "current": {
+       "date": "2026-10-31",
+       "done": false
+      },
+      "occurrences": [
+       {
+        "date": "2026-11-30",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       },
+       {
+        "date": "2026-12-31",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA"
+        ]
+       }
+      ]
+     },
+     {
+      "id": "r4",
+      "listId": "lHaus",
+      "kind": "task",
+      "title": "Kurs",
+      "note": null,
+      "assignees": [],
+      "done": false,
+      "doneBy": null,
+      "dueDate": "2026-11-03",
+      "dueTime": null,
+      "start": null,
+      "end": null,
+      "allDay": false,
+      "repeats": true,
+      "overdue": false,
+      "current": {
+       "date": "2026-11-17",
+       "done": false
+      },
+      "occurrences": [
+       {
+        "date": "2026-11-03",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": []
+       },
+       {
+        "date": "2026-11-17",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": []
+       },
+       {
+        "date": "2026-12-01",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": []
+       }
+      ]
+     },
+     {
+      "id": "e1",
+      "listId": "lHaus",
+      "kind": "event",
+      "title": "Zahnarzt",
+      "note": null,
+      "assignees": [
+       "pC"
+      ],
+      "done": false,
+      "doneBy": null,
+      "dueDate": null,
+      "dueTime": null,
+      "start": "2026-11-18T09:30",
+      "end": "2026-11-18T10:15",
+      "allDay": false,
+      "repeats": false,
+      "overdue": false,
+      "current": null,
+      "occurrences": []
+     },
+     {
+      "id": "e2",
+      "listId": "lHaus",
+      "kind": "event",
+      "title": "Urlaub",
+      "note": null,
+      "assignees": [
+       "pA",
+       "pB",
+       "pC"
+      ],
+      "done": false,
+      "doneBy": null,
+      "dueDate": null,
+      "dueTime": null,
+      "start": "2026-12-20T00:00",
+      "end": "2026-12-27T00:00",
+      "allDay": true,
+      "repeats": false,
+      "overdue": false,
+      "current": null,
+      "occurrences": []
+     },
+     {
+      "id": "e3",
+      "listId": "lHaus",
+      "kind": "event",
+      "title": "Chor",
+      "note": null,
+      "assignees": [
+       "pA",
+       "pB"
+      ],
+      "done": false,
+      "doneBy": null,
+      "dueDate": null,
+      "dueTime": null,
+      "start": "2026-11-04T19:00",
+      "end": "2026-11-04T21:00",
+      "allDay": false,
+      "repeats": true,
+      "overdue": false,
+      "current": {
+       "date": "2026-11-11",
+       "done": false
+      },
+      "occurrences": [
+       {
+        "date": "2026-11-04",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA",
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-11-11",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA",
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-11-18",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA",
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-11-25",
+        "done": false,
+        "skip": true,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA",
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-02",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA",
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-09",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA",
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-16",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA",
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-23",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA",
+         "pB"
+        ]
+       },
+       {
+        "date": "2026-12-30",
+        "done": false,
+        "skip": false,
+        "title": null,
+        "start": null,
+        "end": null,
+        "assignees": [
+         "pA",
+         "pB"
+        ]
+       }
+      ]
+     },
+     {
+      "id": "i1",
+      "listId": "lHaus",
+      "kind": "task",
+      "title": "Müll (gelb)",
+      "note": null,
+      "assignees": [
+       "pA"
+      ],
+      "done": false,
+      "doneBy": null,
+      "dueDate": "2026-11-17",
+      "dueTime": "07:00",
+      "start": null,
+      "end": null,
+      "allDay": false,
+      "repeats": false,
+      "overdue": true,
+      "current": null,
+      "occurrences": []
+     },
+     {
+      "id": "i2",
+      "listId": "lHaus",
+      "kind": "task",
+      "title": "Steuer",
+      "note": "Belege",
+      "assignees": [
+       "pB"
+      ],
+      "done": false,
+      "doneBy": null,
+      "dueDate": "2026-11-10",
+      "dueTime": null,
+      "start": null,
+      "end": null,
+      "allDay": false,
+      "repeats": false,
+      "overdue": true,
+      "current": null,
+      "occurrences": []
+     },
+     {
+      "id": "i3",
+      "listId": "lHaus",
+      "kind": "task",
+      "title": "Fenster",
+      "note": null,
+      "assignees": [
+       "pC"
+      ],
+      "done": true,
+      "doneBy": "pC",
+      "dueDate": null,
+      "dueTime": null,
+      "start": null,
+      "end": null,
+      "allDay": false,
+      "repeats": false,
+      "overdue": false,
+      "current": null,
+      "occurrences": []
+     },
+     {
+      "id": "i6",
+      "listId": "lHaus",
+      "kind": "task",
+      "title": "Später",
+      "note": null,
+      "assignees": [],
+      "done": false,
+      "doneBy": null,
+      "dueDate": "2026-11-25",
+      "dueTime": null,
+      "start": null,
+      "end": null,
+      "allDay": false,
+      "repeats": false,
+      "overdue": false,
+      "current": null,
+      "occurrences": []
+     },
+     {
+      "id": "i7",
+      "listId": "lHaus",
+      "kind": "task",
+      "title": "Alle",
+      "note": null,
+      "assignees": [
+       "pA",
+       "pB",
+       "pC"
+      ],
+      "done": false,
+      "doneBy": null,
+      "dueDate": "2026-11-17",
+      "dueTime": null,
+      "start": null,
+      "end": null,
+      "allDay": false,
+      "repeats": false,
+      "overdue": false,
+      "current": null,
+      "occurrences": []
+     },
+     {
+      "id": "i8",
+      "listId": "lHaus",
+      "kind": "task",
+      "title": "Eltern",
+      "note": null,
+      "assignees": [
+       "pC",
+       "pA",
+       "pB"
+      ],
+      "done": false,
+      "doneBy": null,
+      "dueDate": null,
+      "dueTime": null,
+      "start": null,
+      "end": null,
+      "allDay": false,
+      "repeats": false,
+      "overdue": false,
+      "current": null,
+      "occurrences": []
+     },
+     {
+      "id": "i9",
+      "listId": "lHaus",
+      "kind": "task",
+      "title": "Jeder selbst",
+      "note": null,
+      "assignees": [
+       "pA",
+       "pB"
+      ],
+      "done": false,
+      "doneBy": null,
+      "dueDate": null,
+      "dueTime": null,
+      "start": null,
+      "end": null,
+      "allDay": false,
+      "repeats": false,
+      "overdue": false,
+      "current": null,
+      "occurrences": []
+     },
+     {
+      "id": "i10",
+      "listId": "lHaus",
+      "kind": "task",
+      "title": "Jeder fertig",
+      "note": null,
+      "assignees": [
+       "pA",
+       "pB"
+      ],
+      "done": true,
+      "doneBy": "pB",
+      "dueDate": null,
+      "dueTime": null,
+      "start": null,
+      "end": null,
+      "allDay": false,
+      "repeats": false,
+      "overdue": false,
+      "current": null,
+      "occurrences": []
+     }
+    ],
+    "openCounts": {
+     "pA": 5,
+     "pB": 5,
+     "pC": 2
+    }
+   }
+  }
+ ]
+}

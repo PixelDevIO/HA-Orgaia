@@ -1,0 +1,326 @@
+"""Keeps one group in sync as a member of the kind ``integration``, as packages/core/src/engine.ts does for the app.
+
+Home Assistant is never an admin of a group, so everything only admins do (letting people in, new
+group keys, snapshots) is left out. The engine does not depend on Home Assistant: it reads and
+writes its state through ``to_dict``/``from_dict`` and reports changes through a callback.
+"""
+
+from __future__ import annotations
+
+import asyncio
+from collections.abc import Callable
+import logging
+import secrets
+from typing import Any
+
+import aiohttp
+
+from ..protocol.b64 import from_b64, to_b64
+from ..protocol.crypto import CryptoError, Identity, open_record, open_sealed, seal_for, verify_box_key
+from ..protocol.invite import InviteCode
+from ..protocol.model import MAX_DRIFT_MS, Clock, State, apply_op, empty_state, hlc_wall, merge_state, now_ms
+from ..protocol.view import SpaceView, build_view
+from .api import Api, ApiError, space_path
+
+_LOGGER = logging.getLogger(__name__)
+
+# Why a group cannot be read right now, as far as Home Assistant can tell.
+STATUS_OK = "ok"
+STATUS_NEEDS_PLUS = "needs_plus"
+STATUS_UPDATE = "update_required"
+STATUS_REMOVED = "removed"
+STATUS_OFFLINE = "offline"
+
+
+class JoinError(Exception):
+    """Joining did not work: the invitation is wrong, used up, or the group cannot take a service."""
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(reason)
+        self.reason = reason
+
+
+def _random_id(n: int) -> str:
+    return to_b64(secrets.token_bytes(n))
+
+
+class GroupEngine:
+    """One group, read with Home Assistant's own key."""
+
+    def __init__(self, session: aiohttp.ClientSession, data: dict[str, Any], now: Callable[[], int] = now_ms) -> None:
+        self.identity = Identity.from_seed(from_b64(data["seed"]))
+        self.server: str = data["server"].rstrip("/")
+        self.device_id: str = data.get("device") or _random_id(16)
+        self.node: str = data.get("node") or _random_id(6).replace("-", "x").replace("_", "x")[:8].ljust(8, "0")
+        self.space_id: str | None = data.get("space")
+        self.join: dict[str, Any] | None = data.get("join")
+        self.epoch: int = int(data.get("epoch", 0))
+        self.keys: dict[int, str] = {int(k): v for k, v in (data.get("keys") or {}).items()}
+        self.cursor: int = int(data.get("cursor", 0))
+        self.members: list[dict[str, Any]] = data.get("members") or []
+        self.plan: dict[str, Any] | None = data.get("plan")
+        self.state: State = data.get("state") or empty_state()
+        self.status: str = data.get("status") or STATUS_OK
+        self._now = now
+        self.clock = Clock(self.node, now)
+        for table in self.state.values():
+            for doc in table.values():
+                for cell in doc.values():
+                    self.clock.observe(cell[0])
+        self.api = Api(session, self.server, self.identity, self.device_id)
+        self._listeners: list[Callable[[], None]] = []
+        self._version = 0
+        self._view: tuple[int, SpaceView] | None = None
+        self._sync_lock = asyncio.Lock()
+
+    # --- Persistence -------------------------------------------------------------------------
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "seed": to_b64(self.identity.seed),
+            "server": self.server,
+            "device": self.device_id,
+            "node": self.node,
+            "space": self.space_id,
+            "join": self.join,
+            "epoch": self.epoch,
+            "keys": {str(k): v for k, v in self.keys.items()},
+            "cursor": self.cursor,
+            "members": self.members,
+            "plan": self.plan,
+            "state": self.state,
+            "status": self.status,
+        }
+
+    @staticmethod
+    def new_data(server: str) -> dict[str, Any]:
+        """Data for a fresh identity on a service."""
+        return {"seed": to_b64(Identity.create().seed), "server": server.rstrip("/")}
+
+    # --- Observation -------------------------------------------------------------------------
+
+    def subscribe(self, fn: Callable[[], None]) -> Callable[[], None]:
+        self._listeners.append(fn)
+        return lambda: self._listeners.remove(fn) if fn in self._listeners else None
+
+    def _changed(self) -> None:
+        self._version += 1
+        for fn in list(self._listeners):
+            fn()
+
+    def view(self) -> SpaceView:
+        if self._view is None or self._view[0] != self._version:
+            self._view = (self._version, build_view(self.space_id or "", "group", self.state))
+        return self._view[1]
+
+    # --- Joining ------------------------------------------------------------------------------
+
+    async def request_join(self, code: InviteCode, name: str) -> None:
+        """Asks to join with an invitation for a service. An admin confirms it in the app."""
+        if not verify_box_key(code.a, code.b, code.g):
+            raise JoinError("invalid_link")
+        profile = {"name": name[:60], "boxPub": self.identity.box_pub, "x": code.x}
+        body = {"profile": seal_for(code.b, self.identity, "join:" + code.i, profile), "kind": "integration"}
+        try:
+            await self.api.req("POST", f"/v1/invites/{code.i}/join", body)
+        except ApiError as err:
+            raise JoinError(_join_reason(err)) from err
+        self.join = {"invite": code.i, "admin": code.a}
+
+    async def check_join(self) -> str:
+        """Whether the admin answered: ``pending``, ``accepted``, ``rejected`` or ``expired``."""
+        if self.space_id:
+            return "accepted"
+        if not self.join:
+            return "expired"
+        try:
+            res = await self.api.req("GET", f"/v1/invites/{self.join['invite']}/status")
+        except ApiError as err:
+            if err.status in (404, 410):
+                return "expired"
+            raise
+        state = res.get("state")
+        if state == "accepted" and isinstance(res.get("spaceId"), str):
+            self.space_id = res["spaceId"]
+            await self.refresh_space()
+            return "accepted" if self.keys else "pending"
+        return state if state in ("pending", "rejected", "expired") else "pending"
+
+    async def leave(self) -> None:
+        """Leaves the group, for when the integration is removed from Home Assistant."""
+        if self.space_id:
+            await self.api.req("POST", space_path(self.space_id) + "/leave")
+
+    # --- Syncing ------------------------------------------------------------------------------
+
+    def _adopt_envelope(self, info: dict[str, Any]) -> bool:
+        """Takes the group keys, but only from an envelope an admin of the group sealed."""
+        envelope = info.get("envelope")
+        if not isinstance(envelope, str):
+            return False
+        try:
+            payload, sender = open_sealed(envelope, self.identity, "envelope:" + info["id"])
+        except CryptoError:
+            return False
+        admins = {m.get("signPub") for m in info.get("members") or [] if m.get("role") == "admin"}
+        expected = self.join and self.join.get("admin") == sender
+        if sender not in admins and not expected:
+            return False
+        keys = payload.get("keys") if isinstance(payload, dict) else None
+        if not isinstance(keys, dict):
+            return False
+        for epoch, key in keys.items():
+            if isinstance(key, str):
+                self.keys[int(epoch)] = key
+        if self.keys:
+            self.epoch = max(self.keys)
+        return True
+
+    async def refresh_space(self) -> bool:
+        """Reads members, plan and keys. Returns False when Home Assistant is no longer in the group."""
+        infos = await self.api.req("GET", "/v1/spaces")
+        info = next((s for s in infos or [] if s.get("id") == self.space_id), None)
+        if info is None:
+            self.status = STATUS_REMOVED
+            return False
+        self.members = info.get("members") or []
+        self.plan = info.get("plan")
+        self._adopt_envelope(info)
+        return True
+
+    def _known_author(self, sign_pub: str) -> bool:
+        return sign_pub == self.identity.sign_pub or any(m.get("signPub") == sign_pub for m in self.members)
+
+    def _apply_remote(self, rec: dict[str, Any]) -> bool:
+        key = self.keys.get(rec.get("e")) if isinstance(rec, dict) else None
+        if not key or not self._known_author(rec.get("a", "")):
+            return False
+        try:
+            op = open_record(self.space_id or "", from_b64(key), rec)
+        except CryptoError:
+            return False
+        if not isinstance(op, dict) or op.get("by") != rec.get("a") or not isinstance(op.get("ts"), str):
+            return False
+        # A device with a clock far ahead would otherwise win every later edit of these fields.
+        if not 0 <= hlc_wall(op["ts"]) <= self._now() + MAX_DRIFT_MS:
+            return False
+        self.clock.observe(op["ts"])
+        return apply_op(self.state, op)
+
+    async def _load_snapshot(self) -> bool:
+        path = space_path(self.space_id or "")
+        snap = await self.api.req("GET", path + "/snapshot")
+        if not isinstance(snap, dict):
+            return False
+        rec = snap.get("rec") or {}
+        if not self.keys.get(rec.get("e")) or not self._known_author(rec.get("a", "")):
+            await self.refresh_space()
+        key = self.keys.get(rec.get("e"))
+        if not key or not self._known_author(rec.get("a", "")):
+            return False
+        try:
+            other = open_record(self.space_id or "", from_b64(key), rec)
+        except CryptoError:
+            return False
+        changed = merge_state(self.state, other) if isinstance(other, dict) else False
+        self.cursor = max(self.cursor, int(snap.get("uptoSeq") or 0))
+        return changed
+
+    async def sync(self) -> bool:
+        """Fetches what changed. Returns True when the group looks different afterwards."""
+        async with self._sync_lock:
+            try:
+                changed = await self._sync()
+            except ApiError as err:
+                if err.code == "integration-needs-plan":
+                    self.status = STATUS_NEEDS_PLUS
+                elif err.code == "update-required":
+                    self.status = STATUS_UPDATE
+                elif err.status in (403, 404):
+                    # Removed from the group, or the group is gone.
+                    if not await self.refresh_space():
+                        self.status = STATUS_REMOVED
+                        self._changed()
+                        return True
+                raise
+            except (aiohttp.ClientError, TimeoutError):
+                self.status = STATUS_OFFLINE
+                raise
+            self.status = STATUS_OK
+            if changed:
+                self._changed()
+            return changed
+
+    async def _sync(self) -> bool:
+        if not self.space_id:
+            raise JoinError("not_joined")
+        if not self.keys:
+            await self.refresh_space()
+        path = space_path(self.space_id) + "/ops"
+        changed = False
+        asked_for_keys = False
+        first_pull = self.cursor == 0
+        tried_snapshot = False
+        for _ in range(1000):
+            res = await self.api.req("GET", f"{path}?after={self.cursor}")
+            # A new member of a group with a long history starts from the snapshot.
+            if first_pull and self.cursor == 0 and res.get("more") and not tried_snapshot:
+                tried_snapshot = True
+                changed = await self._load_snapshot() or changed
+                if self.cursor > 0:
+                    continue
+            floor = int(res.get("floor") or 0)
+            if floor > self.cursor:
+                changed = await self._load_snapshot() or changed
+                self.cursor = max(self.cursor, floor)
+                continue
+            missing = False
+            for row in res.get("ops") or []:
+                rec = row.get("rec") or {}
+                epoch = rec.get("e")
+                # Written with a key or by a member Home Assistant does not know yet: read the group again first.
+                if not asked_for_keys and (
+                    (isinstance(epoch, int) and epoch > self.epoch and epoch not in self.keys)
+                    or not self._known_author(rec.get("a", ""))
+                ):
+                    missing = True
+                    break
+                if self._apply_remote(rec):
+                    changed = True
+                self.cursor = int(row.get("seq") or self.cursor)
+            if missing:
+                asked_for_keys = True
+                if not await self.refresh_space():
+                    return True
+                continue
+            if not res.get("more"):
+                break
+        return changed
+
+    async def on_event(self, event: dict[str, Any]) -> bool:
+        """Handles a message from the live connection. Returns True when a sync is due."""
+        if event.get("spaceId") != self.space_id:
+            return False
+        if event.get("t") == "ops":
+            head = event.get("head")
+            return not (isinstance(head, int) and head <= self.cursor)
+        if event.get("t") in ("members", "joined"):
+            if not await self.refresh_space():
+                self._changed()
+                return False
+            return True
+        return False
+
+
+def _join_reason(err: ApiError) -> str:
+    if err.code == "integration-needs-plan":
+        return "needs_plus"
+    if err.code == "too-many-integrations":
+        return "too_many"
+    if err.code in ("invite-invalid", "not-found") or err.status in (404, 410):
+        return "invite_invalid"
+    if err.code == "already-member":
+        return "already_member"
+    if err.code == "update-required":
+        return "update_required"
+    return "unknown"
