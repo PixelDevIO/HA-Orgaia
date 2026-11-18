@@ -91,6 +91,25 @@ const TEXT = {
     shopping: 'Shopping',
     room: 'Room {room}',
     more: '{n} more',
+    look: 'Appearance',
+    accent: 'Accent colour (today, buttons, ticks)',
+    background: 'Background colour',
+    opacity: 'Background opacity (%)',
+    textColor: 'Text colour',
+    fill: 'Strength of the coloured fields (%)',
+    subjectColors: 'Colours of the subjects',
+    shiftColors: 'Colours of the shifts',
+    kindColors: 'Colours by kind',
+    colorBy: 'Coloured bar',
+    colorNone: 'None',
+    colorPerson: 'By person',
+    colorKind: 'By kind',
+    kindEvent: 'Appointment',
+    kindTask: 'Task',
+    kindSchool: 'School',
+    kindWork: 'Work',
+    kindDue: 'Due',
+    kindShopping: 'Shopping',
   },
   de: {
     who: 'Wer bist du?',
@@ -171,6 +190,25 @@ const TEXT = {
     shopping: 'Einkauf',
     room: 'Raum {room}',
     more: '{n} weitere',
+    look: 'Aussehen',
+    accent: 'Akzentfarbe (heute, Knöpfe, Haken)',
+    background: 'Hintergrundfarbe',
+    opacity: 'Deckkraft des Hintergrunds (%)',
+    textColor: 'Textfarbe',
+    fill: 'Farbstärke der Felder (%)',
+    subjectColors: 'Farben der Fächer',
+    shiftColors: 'Farben der Schichten',
+    kindColors: 'Farben nach Art',
+    colorBy: 'Farbstreifen',
+    colorNone: 'Keiner',
+    colorPerson: 'Nach Person',
+    colorKind: 'Nach Art',
+    kindEvent: 'Termin',
+    kindTask: 'Aufgabe',
+    kindSchool: 'Schule',
+    kindWork: 'Arbeit',
+    kindDue: 'Fällig',
+    kindShopping: 'Einkauf',
   },
 };
 
@@ -202,6 +240,25 @@ const hueOf = (text) => {
   for (const ch of String(text)) h = (h * 31 + ch.codePointAt(0)) % 360;
   return h;
 };
+
+/**
+ * A colour from the editor: one of Home Assistant's own (red, deep-purple, primary, …), which follow
+ * the theme, or any CSS colour written by hand. Nothing that could carry more than a colour.
+ */
+const cssColor = (value) => {
+  if (Array.isArray(value) && value.length === 3 && value.every((n) => Number.isFinite(Number(n)))) return `rgb(${value.map((n) => Math.round(Number(n))).join(' ')})`;
+  const v = typeof value === 'string' ? value.trim() : '';
+  if (!v || v === 'none' || v === 'default') return '';
+  if (/^[a-z]+(-[a-z]+)*$/.test(v)) return `var(--${v}-color, ${v})`;
+  return /^[#\w\s(),.%/-]+$/.test(v) ? v : '';
+};
+/** The colour chosen for one name (a subject, a shift, a kind), whatever its capitals. */
+const chosenColor = (map, name) => {
+  if (!map || typeof map !== 'object') return '';
+  const key = Object.keys(map).find((k) => k.trim().toLowerCase() === String(name).trim().toLowerCase());
+  return key ? cssColor(map[key]) : '';
+};
+const KINDS = { event: 'primary', task: 'green', school: 'blue', work: 'orange', due: 'red', shopping: 'teal' };
 
 /*
  * One connection per group, however many cards show it. What came last is kept, so a card that is
@@ -264,7 +321,7 @@ function known(hass, entry) {
 
 const STYLE = `
   :host { display: block; container-type: inline-size; }
-  ha-card { padding: 12px 16px 16px; }
+  ha-card { padding: 12px 16px 16px; color: var(--primary-text-color); }
   h1 { font-size: 1.25rem; font-weight: 500; margin: 4px 0 12px; }
   h2 { font-size: 1rem; font-weight: 500; margin: 0; flex: 1; min-width: 0; overflow-wrap: anywhere; }
   .hint { color: var(--secondary-text-color); font-size: 0.875rem; margin: 0 0 8px; }
@@ -333,7 +390,8 @@ const STYLE = `
   .tt .cell.today { background: color-mix(in srgb, var(--primary-color) 8%, transparent); }
   .lesson, .shift {
     flex: 1; min-width: 0; box-sizing: border-box; padding: 4px 6px; border-radius: 8px; overflow-wrap: anywhere; hyphens: auto;
-    background: hsl(var(--h) 65% 50% / 0.16); border-left: 3px solid hsl(var(--h) 55% 45%);
+    --c: hsl(var(--h) 55% 45%);
+    background: color-mix(in srgb, var(--c) var(--fill, 16%), transparent); border-left: 3px solid var(--c);
     display: flex; flex-direction: column; justify-content: center; font-size: 0.875rem; line-height: 1.2;
   }
   .lesson.live, .shift.live, .ev.live .when { outline: 2px solid var(--primary-color); outline-offset: 1px; }
@@ -355,6 +413,7 @@ const STYLE = `
   .ev { display: flex; gap: 10px; align-items: flex-start; min-height: 40px; }
   .ev .when { flex: none; width: 6.25rem; padding: 2px 4px; margin-top: 8px; border-radius: 6px; font-variant-numeric: tabular-nums; font-size: 0.875rem; color: var(--secondary-text-color); }
   .ev .text { padding: 9px 0; }
+  .ev.bar { border-left: 3px solid var(--c, transparent); padding-left: 8px; margin-bottom: 2px; }
   .ev.school .name, .ev.work .name { color: var(--secondary-text-color); }
   .ev.done .name { text-decoration: line-through; color: var(--secondary-text-color); }
   @container (max-width: 520px) {
@@ -651,7 +710,7 @@ class OrgaiaCard extends HTMLElement {
     const ab = week.days.find((d) => d.week);
     let head = `<div class="head"><h2>${esc(plan.name)}${owner && this._name(plan.person) !== plan.name ? ` <span class="sub">${owner}</span>` : ''}</h2>`;
     const cell = (l, live) =>
-      `<div class="lesson${live ? ' live' : ''}" style="--h:${hueOf(l.subject)}" title="${esc(l.subject)}${l.room ? ', ' + esc(l.room) : ''}"><span class="name">${esc(l.subject)}</span>${rooms && l.room ? `<span class="sub">${esc(l.room)}</span>` : ''}</div>`;
+      `<div class="lesson${live ? ' live' : ''}" style="--h:${hueOf(l.subject)}${chosenColor(this._config.subject_colors, l.subject) ? ';--c:' + chosenColor(this._config.subject_colors, l.subject) : ''}" title="${esc(l.subject)}${l.room ? ', ' + esc(l.room) : ''}"><span class="name">${esc(l.subject)}</span>${rooms && l.room ? `<span class="sub">${esc(l.room)}</span>` : ''}</div>`;
     const pack = week.days.find((d) => d.date === today);
     const foot = this._config.show_pack !== false && pack && pack.pack.length ? `<p class="pack"><b>${esc(t.packToday)}:</b> ${esc(pack.pack.join(', '))}</p>` : '';
 
@@ -736,7 +795,7 @@ class OrgaiaCard extends HTMLElement {
         const live = today && d.spans.some((s) => s.start <= now && (s.overnight || now < s.end));
         const times = d.spans.map((s) => `${esc(s.start)}–${esc(s.end)}`).join(', ');
         const code = d.code ? `<span class="code">${esc(d.code)}</span>` : '';
-        grid += `<div class="cell${cls}" style="${place}"><div class="shift${live ? ' live' : ''}" style="--h:${hueOf(d.shift || times)}">${code}<span class="name">${esc(d.shift || times)}</span>${d.shift ? `<span class="sub">${times}</span>` : ''}</div></div>`;
+        grid += `<div class="cell${cls}" style="${place}"><div class="shift${live ? ' live' : ''}" style="--h:${hueOf(d.shift || times)}${d.shift && chosenColor(this._config.shift_colors, d.shift) ? ';--c:' + chosenColor(this._config.shift_colors, d.shift) : ''}">${code}<span class="name">${esc(d.shift || times)}</span>${d.shift ? `<span class="sub">${times}</span>` : ''}</div></div>`;
       });
     });
     return grid + '</div>';
@@ -782,10 +841,38 @@ class OrgaiaCard extends HTMLElement {
       if (r.kind === 'shopping') sub.push(esc(t.shopping));
       if (r.location) sub.push(esc(r.location));
       if (this._config.show_persons !== false && (r.persons || []).length) sub.push(r.persons.map((id) => this._badge(id)).filter(Boolean).join(' '));
-      html += `<div class="ev ${esc(r.kind)}${live ? ' live' : ''}${r.done ? ' done' : ''}"><span class="when">${esc(when)}</span><div class="text"><span class="name">${esc(r.title)}</span>${sub.length ? `<div class="sub">${sub.join(' · ')}</div>` : ''}</div></div>`;
+      let bar = '';
+      if (this._config.color_by === 'person') {
+        const first = this._person((r.persons || [])[0]);
+        bar = first ? colorOf(first.color) : 'transparent';
+      } else if (this._config.color_by === 'kind') {
+        bar = chosenColor(this._config.kind_colors, r.kind) || cssColor(KINDS[r.kind]);
+      }
+      html += `<div class="ev ${esc(r.kind)}${live ? ' live' : ''}${r.done ? ' done' : ''}${bar ? ' bar' : ''}"${bar ? ` style="--c:${bar}"` : ''}><span class="when">${esc(when)}</span><div class="text"><span class="name">${esc(r.title)}</span>${sub.length ? `<div class="sub">${sub.join(' · ')}</div>` : ''}</div></div>`;
     }
     if (hidden) html += `<p class="hint">${esc(this._say('more', { n: hidden }))}</p>`;
     return html;
+  }
+
+  /** What the editor's "Appearance" says, as styles of the card itself. */
+  _look() {
+    const c = this._config;
+    const out = [];
+    const accent = cssColor(c.accent_color);
+    if (accent) out.push(`--primary-color:${accent}`);
+    const text = cssColor(c.text_color);
+    if (text) out.push(`--primary-text-color:${text}`);
+    const fill = Number(c.fill);
+    if (c.fill != null && c.fill !== '' && fill >= 0 && fill <= 100) out.push(`--fill:${fill}%`);
+    const opacity = c.background_opacity == null || c.background_opacity === '' ? 100 : Math.min(100, Math.max(0, Number(c.background_opacity)));
+    const ground = cssColor(c.background_color);
+    if (ground || opacity < 100) {
+      const base = ground || 'var(--ha-card-background, var(--card-background-color, #fff))';
+      out.push(`background:${opacity < 100 ? `color-mix(in srgb, ${base} ${opacity}%, transparent)` : base}`);
+    }
+    // Nothing behind it: then no frame around nothing either.
+    if (opacity === 0) out.push('border-color:transparent', 'box-shadow:none');
+    return out.join(';');
   }
 
   _render() {
@@ -797,7 +884,8 @@ class OrgaiaCard extends HTMLElement {
     const focus = active && active.dataset ? active.dataset.draft : null;
     const data = this._data;
     const title = this._config.title != null ? this._config.title : data && data.title;
-    let html = `<style>${STYLE}</style><ha-card>${title ? `<h1>${esc(title)}</h1>` : ''}`;
+    const look = this._look();
+    let html = `<style>${STYLE}</style><ha-card${look ? ` style="${esc(look)}"` : ''}>${title ? `<h1>${esc(title)}</h1>` : ''}`;
     if (!data || !data.lists) {
       html += `<p class="hint">${esc(data ? t.notLoaded : '…')}</p>`;
     } else if (['timetable', 'roster', 'agenda'].includes(viewOf(this._config))) {
@@ -906,6 +994,9 @@ class OrgaiaCard extends HTMLElement {
  * The editor: first the view, then only what that view can be told. The lists, plans and people on
  * offer are those of the group; while they are not known yet, a name can be typed instead.
  */
+const MAPS = { timetable: 'subject_colors', roster: 'shift_colors', agenda: 'kind_colors' };
+const SEP = '::';
+
 class OrgaiaCardEditor extends HTMLElement {
   constructor() {
     super();
@@ -985,7 +1076,34 @@ class OrgaiaCardEditor extends HTMLElement {
     } else {
       schema.push(number('days', 1, 31), pick('person', data.persons, false), flag('show_plans'), flag('show_deadlines'), flag('show_persons'), number('max', 0, 100));
     }
+    const color = (name) => ({ name, selector: { ui_color: {} } });
+    const section = (name, title, fields) => ({ type: 'expandable', name, title, flatten: true, schema: fields });
+    const look = [color('accent_color'), color('background_color'), { name: 'background_opacity', selector: { number: { min: 0, max: 100, step: 5, mode: 'slider' } } }, color('text_color')];
+    if (view === 'timetable' || view === 'roster') look.push({ name: 'fill', selector: { number: { min: 0, max: 100, step: 2, mode: 'slider' } } });
+    if (view === 'agenda') look.push(choice('color_by', [['none', t.colorNone], ['person', t.colorPerson], ['kind', t.colorKind]]));
+    schema.push(section('look', t.look, look));
+    const names = this._names();
+    if (names.length) schema.push(section('colors', t[{ timetable: 'subjectColors', roster: 'shiftColors', agenda: 'kindColors' }[view]], names.map((n) => color(MAPS[view] + SEP + n))));
     return schema;
+  }
+
+  /** What can be given a colour of its own in this view: the subjects, the shifts, or the kinds of entries. */
+  _names() {
+    const data = this._data || {};
+    const view = viewOf(this._config);
+    const seen = new Set();
+    if (view === 'timetable') {
+      const plans = data.timetables || [];
+      const plan = (wanted(this._config.plan).length ? among(plans, this._config.plan)[0] : null) || plans[0];
+      if (plan) plan.weeks.forEach((w) => w.days.forEach((d) => d.lessons.forEach((l) => seen.add(l.subject))));
+    } else if (view === 'roster') {
+      among(data.rosters || [], this._config.plans).forEach((p) => p.days.forEach((d) => d.shift && seen.add(d.shift)));
+    } else if (view === 'agenda' && this._config.color_by === 'kind') {
+      Object.keys(KINDS).forEach((k) => seen.add(k));
+    }
+    // Colours once set stay on offer, also when the plan does not use the name right now.
+    Object.keys(this._config[MAPS[view]] || {}).forEach((k) => seen.add(k));
+    return [...seen].sort((a, b) => a.localeCompare(b));
   }
 
   /** What the form shows where nothing was set: the card's own defaults. */
@@ -1012,14 +1130,27 @@ class OrgaiaCardEditor extends HTMLElement {
       fill('ask', 'auto');
       fill('forget_after', 60);
     }
+    if (shown.background_opacity == null) shown.background_opacity = 100;
+    if ((view === 'timetable' || view === 'roster') && shown.fill == null) shown.fill = 16;
+    if (view === 'agenda') fill('color_by', 'none');
+    // The form knows no nested values: every colour of a subject, shift or kind is a field of its own.
+    for (const map of Object.values(MAPS)) {
+      for (const [name, value] of Object.entries(c[map] || {})) shown[map + SEP + name] = value;
+      delete shown[map];
+    }
     return shown;
   }
 
   _label(field) {
     const t = textsFor(this._hass);
+    if (field.name.includes(SEP)) {
+      const [map, name] = field.name.split(SEP);
+      return map === 'kind_colors' ? t['kind' + name[0].toUpperCase() + name.slice(1)] || name : name;
+    }
     const key = {
       view: 'view', entry: 'entry', title: 'title', lists: 'lists', person: 'person', show_done: 'showDone', add_tasks: 'addTasks',
       ask: 'ask', forget_after: 'forget', plan: 'plan', layout: 'layout', show_rooms: 'showRooms', show_pack: 'showPack', plans: 'plans',
+      accent_color: 'accent', background_color: 'background', background_opacity: 'opacity', text_color: 'textColor', fill: 'fill', color_by: 'colorBy',
       days: 'days', start: 'startAt', show_plans: 'showPlans', show_deadlines: 'showDeadlines', show_persons: 'showPersons', max: 'max',
     }[field.name];
     return t[key] || field.name;
@@ -1030,7 +1161,16 @@ class OrgaiaCardEditor extends HTMLElement {
     const before = viewOf(this._config);
     const value = { ...ev.detail.value };
     // Another view reads from other places: what was chosen for the old one does not carry over.
-    if (viewOf(value) !== before) for (const key of Object.keys(value)) if (!['view', 'entry', 'title'].includes(key)) delete value[key];
+    if (viewOf(value) !== before) for (const key of Object.keys(value)) if (!['view', 'entry', 'title', 'accent_color', 'background_color', 'background_opacity', 'text_color'].includes(key)) delete value[key];
+    for (const key of Object.keys(value)) {
+      if (!key.includes(SEP)) continue;
+      const [map, name] = key.split(SEP);
+      if (value[key] != null && value[key] !== '' && value[key] !== 'none') value[map] = { ...(value[map] || {}), [name]: value[key] };
+      delete value[key];
+    }
+    if (Number(value.background_opacity) === 100) delete value.background_opacity;
+    if (Number(value.fill) === 16) delete value.fill;
+    if (value.color_by === 'none') delete value.color_by;
     for (const key of Object.keys(value)) {
       const v = value[key];
       if (v == null || v === '' || (Array.isArray(v) && !v.length)) delete value[key];
