@@ -1,6 +1,6 @@
 {
  "about": "Test vectors for the Orgaia protocol, made by packages/core/test/ha-vectors.ts. Do not edit by hand.",
- "protocol": 1,
+ "protocol": 2,
  "identities": [
   {
    "seed": "HyYtNDtCSVBXXmVsc3qBiI-WnaSrsrnAx87V3OPq8fg",
@@ -146,7 +146,7 @@
   "nonce": "n0nce.example.token",
   "message": "orgaia-auth:n0nce.example.token",
   "sig": "DlNBR1D8M0fCOlQKjEwLZStUQnP_o1kw-6DILCP1L5V6BAjl9383hxDxossXay-kjqe4CLPGaO88zsGeJ29cAg",
-  "protocol": 1
+  "protocol": 2
  },
  "invites": [
   {
