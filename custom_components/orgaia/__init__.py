@@ -18,7 +18,7 @@ from .board import async_setup_board, group_loaded, notify_boards
 from .client.engine import GroupEngine
 from .const import CARD_URL, CONF_SPACE, DOMAIN, STORAGE_VERSION, VERSION
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator, storage_key
-from .entity import active_person_ids, person_device_key
+from .entity import active_person_ids, group_device_name, person_device_key, person_device_name, space_key
 from .events import EventTracker
 from .services import async_setup_services
 
@@ -75,6 +75,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: OrgaiaConfigEntry) -> bo
     )
     entry.async_on_unload(hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, coordinator.save_on_stop))
     entry.async_on_unload(coordinator.async_add_listener(lambda: _remove_gone_persons(hass, entry)))
+    entry.async_on_unload(coordinator.async_add_listener(lambda: _follow_names(hass, entry)))
+    _follow_names(hass, entry)
     entry.async_on_unload(entry.add_update_listener(_options_changed))
     entry.async_on_unload(coordinator.async_add_listener(lambda: notify_boards(hass)))
     group_loaded(hass, entry, True)
@@ -96,6 +98,29 @@ def _remove_gone_persons(hass: HomeAssistant, entry: OrgaiaConfigEntry) -> None:
         keys = {ident for domain, ident in device.identifiers if domain == DOMAIN}
         if not keys & active:
             registry.async_update_device(device.id, remove_config_entry_id=entry.entry_id)
+
+
+@callback
+def _follow_names(hass: HomeAssistant, entry: OrgaiaConfigEntry) -> None:
+    """A group or person renamed in the app gets the new name on its device, and so on its entities.
+
+    Entity ids stay as they are, so automations and dashboards keep working; a name set by hand in
+    Home Assistant (name_by_user) still wins.
+    """
+    coordinator = entry.runtime_data
+    group_key = space_key(entry)
+    persons = {person_device_key(entry, p): p for p in coordinator.data.person_by_id}
+    registry = dr.async_get(hass)
+    for device in dr.async_entries_for_config_entry(registry, entry.entry_id):
+        keys = {ident for domain, ident in device.identifiers if domain == DOMAIN}
+        if group_key in keys:
+            name = group_device_name(coordinator)
+        elif person := next((persons[k] for k in keys if k in persons), None):
+            name = person_device_name(coordinator, person)
+        else:
+            continue
+        if device.name != name:
+            registry.async_update_device(device.id, name=name)
 
 
 async def async_remove_config_entry_device(
