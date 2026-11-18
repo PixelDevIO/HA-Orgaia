@@ -9,7 +9,14 @@ import aiohttp
 
 from custom_components.orgaia.client.api import ApiError
 from custom_components.orgaia.protocol.b64 import to_b64
-from custom_components.orgaia.protocol.crypto import Identity, open_sealed, random_bytes, seal_for, seal_record
+from custom_components.orgaia.protocol.crypto import (
+    Identity,
+    open_record,
+    open_sealed,
+    random_bytes,
+    seal_for,
+    seal_record,
+)
 from custom_components.orgaia.protocol.model import Clock, now_ms
 
 SERVER = "https://orgaia.test"
@@ -34,6 +41,10 @@ class FakeService:
         # The service or the internet is gone: every call fails as a connection error does.
         self.down = False
         self.calls: list[tuple[str, str]] = []
+        # Whether an admin allowed Home Assistant to write, in the app.
+        self.can_write = False
+        # The group got a new key: changes sealed with the old one are refused.
+        self.stale = False
 
     # --- What the admin does in the app ---------------------------------------------------------
 
@@ -64,12 +75,22 @@ class FakeService:
         }
         self.rows.append({"seq": len(self.rows) + 1, "rec": seal_record(SPACE, self.epoch, self.key, author, op)})
 
+    def sent(self) -> list[dict[str, Any]]:
+        """What Home Assistant wrote, opened as a member of the group opens it."""
+        return [
+            op
+            for row in self.rows
+            if row["rec"]["a"] == self.ha_sign
+            for op in [open_record(SPACE, self.key, row["rec"])]
+        ]
+
     # --- The service ---------------------------------------------------------------------------
 
     def _members(self) -> list[dict[str, Any]]:
         out = [{"signPub": self.admin.sign_pub, "boxPub": self.admin.box_pub, "role": "admin", "kind": "person"}]
         if self.ha_sign and self.answer == "accepted":
-            out.append({"signPub": self.ha_sign, "boxPub": self.ha_box, "role": "member", "kind": "integration"})
+            ha = {"signPub": self.ha_sign, "boxPub": self.ha_box, "role": "member", "kind": "integration"}
+            out.append({**ha, **({"write": True} if self.can_write else {})})
         return out
 
     async def req(self, method: str, path: str, body: Any = None) -> Any:
@@ -98,6 +119,21 @@ class FakeService:
                 raise ApiError(*self.block)
             after = int(parse_qs(url.query).get("after", ["0"])[0])
             return {"ops": [r for r in self.rows if r["seq"] > after], "more": False, "floor": 0}
+        if method == "POST" and url.path == f"/v1/spaces/{SPACE}/ops":
+            if self.removed:
+                raise ApiError(403, "removed")
+            if not self.can_write:
+                raise ApiError(403, "integration-read-only")
+            if self.block:
+                raise ApiError(*self.block)
+            if self.stale:
+                self.stale = False
+                raise ApiError(409, "stale-epoch")
+            assert body["ops"] and len(body["ops"]) <= 200
+            for op in body["ops"]:
+                assert op["rec"]["a"] == self.ha_sign and op["rec"]["e"] == self.epoch
+                self.rows.append({"seq": len(self.rows) + 1, "rec": op["rec"]})
+            return {"head": len(self.rows)}
         if method == "POST" and url.path == f"/v1/spaces/{SPACE}/leave":
             self.left = True
             return {"ok": True}

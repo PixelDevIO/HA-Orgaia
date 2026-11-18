@@ -6,6 +6,7 @@ import asyncio
 from datetime import timedelta
 import json
 import logging
+import random
 import time
 from typing import Any
 
@@ -18,7 +19,15 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .client.api import ApiError
-from .client.engine import STATUS_NEEDS_PLUS, STATUS_OFFLINE, STATUS_REMOVED, STATUS_UPDATE, GroupEngine
+from .client.engine import (
+    STATUS_NEEDS_PLUS,
+    STATUS_OFFLINE,
+    STATUS_OK,
+    STATUS_REMOVED,
+    STATUS_UPDATE,
+    Change,
+    GroupEngine,
+)
 from .const import DOMAIN
 from .feeds import FeedCache
 from .protocol.feeds import with_feed_items
@@ -30,6 +39,9 @@ _LOGGER = logging.getLogger(__name__)
 
 # Without the live connection (or when it misses something) the group is read again this often.
 FALLBACK_INTERVAL = timedelta(minutes=15)
+# While the live connection stands it says when something changed: the group is then only read
+# again this often, to be safe.
+LIVE_INTERVAL = 60 * 60.0
 # The whole group is one file: write it at most once a minute, and only when the group changed.
 # Home Assistant writes what is still pending when it stops.
 SAVE_DELAY = 60
@@ -39,6 +51,11 @@ LIVE_STABLE = 30.0
 LATE_AFTER = 15 * 60.0
 
 type OrgaiaConfigEntry = ConfigEntry[OrgaiaCoordinator]
+
+
+def spread(delay: float) -> float:
+    """A waiting time that differs between installations: up to twice as long, plus a few seconds."""
+    return delay * random.uniform(1.0, 2.0) + random.uniform(0.0, 4.0)
 
 
 def storage_key(entry_id: str) -> str:
@@ -64,6 +81,10 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
         self._offline_since: float | None = None
         # True while the entities hear about a first read after a long time without the service.
         self.late = False
+        # The live connection stands: the service tells when there is something to fetch.
+        self.live = False
+        self._wanted = True
+        self._read_at: float | None = None
 
     @property
     def status(self) -> str:
@@ -111,9 +132,27 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
             _LOGGER.warning("Orgaia not reachable, showing the last state: %s", err)
         return self.build_view()
 
+    async def fetch(self) -> None:
+        """Reads the group now, whatever the live connection says."""
+        self._wanted = True
+        await self.async_request_refresh()
+
     async def _async_update_data(self) -> SpaceView:
         self.late = False
+        if (
+            self.live
+            and not self._wanted
+            and self._read_at is not None
+            and time.monotonic() - self._read_at < LIVE_INTERVAL
+            and self.engine.status == STATUS_OK
+        ):
+            # Nothing was announced: the quarter-hourly look only moves on what depends on the time of day.
+            return self.build_view()
+        self._wanted = False
         try:
+            if not self.live and self.engine.keys:
+                # Without the live connection nobody says that an admin allowed or forbade writing.
+                await self.engine.refresh_space()
             await self.engine.sync()
         except ApiError as err:
             self._update_issues()
@@ -129,10 +168,20 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
             raise ConfigEntryAuthFailed("removed from the group")
         self.late = self._offline_since is not None and time.monotonic() - self._offline_since > LATE_AFTER
         self._offline_since = None
+        self._read_at = time.monotonic()
         self._update_issues()
         self._save()
         self.refresh_feeds()
         return self.build_view()
+
+    async def write(self, changes: list[Change], person_id: str) -> None:
+        """Makes changes in a person's name and shows them at once. Raises WriteError when it did not work."""
+        try:
+            await self.engine.write(changes, person_id)
+        finally:
+            # Also after a refusal: it may have told that writing is no longer allowed.
+            self.async_set_updated_data(self.build_view())
+            self._save()
 
     @callback
     def save_on_stop(self, _event: Event) -> None:
@@ -175,8 +224,9 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
                 ws = await self.engine.api.ws_connect()
                 opened = time.monotonic()
                 async with ws:
+                    self.live = True
                     # Whatever happened while the connection was down.
-                    await self.async_request_refresh()
+                    await self.fetch()
                     async for msg in ws:
                         if msg.type != aiohttp.WSMsgType.TEXT:
                             continue
@@ -186,11 +236,10 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
                             continue
                         if not isinstance(event, dict):
                             continue
-                        if await self.engine.on_event(event):
-                            await self.async_request_refresh()
-                        elif self.engine.status == STATUS_REMOVED:
-                            await self.async_request_refresh()
+                        if await self.engine.on_event(event) or self.engine.status == STATUS_REMOVED:
+                            await self.fetch()
             except asyncio.CancelledError:
+                self.live = False
                 raise
             except ApiError as err:
                 _LOGGER.debug("Live connection refused: %s", err)
@@ -201,9 +250,11 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
             except Exception:
                 # Anything unexpected must not end live updates until the next restart.
                 _LOGGER.exception("Live connection failed, trying again")
+            self.live = False
             # A connection the service closes right away (too many, or refused) does not count as one:
             # only one that held starts the waiting time over.
             if opened is not None and time.monotonic() - opened >= LIVE_STABLE:
                 delay = 1.0
-            await asyncio.sleep(delay)
+            # Not all at the same moment: after the service restarts, every Home Assistant comes back.
+            await asyncio.sleep(spread(delay))
             delay = min(delay * 2, 60.0) if delay < 60 else delay

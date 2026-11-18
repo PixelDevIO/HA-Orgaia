@@ -1,7 +1,10 @@
 """Keeps one group in sync as a member of the kind ``integration``, as packages/core/src/engine.ts does for the app.
 
 Home Assistant is never an admin of a group, so everything only admins do (letting people in, new
-group keys, snapshots) is left out. The engine does not depend on Home Assistant: it reads and
+group keys, snapshots) is left out. It reads; once an admin allowed it in the app it also writes,
+always in the name of a person of the group who said at Home Assistant who they are.
+
+The engine does not depend on Home Assistant: it reads and
 writes its state through ``to_dict``/``from_dict`` and reports changes through a callback.
 """
 
@@ -16,7 +19,15 @@ from typing import Any
 import aiohttp
 
 from ..protocol.b64 import from_b64, to_b64
-from ..protocol.crypto import CryptoError, Identity, open_record, open_sealed, seal_for, verify_box_key
+from ..protocol.crypto import (
+    CryptoError,
+    Identity,
+    open_record,
+    open_sealed,
+    seal_for,
+    seal_record,
+    verify_box_key,
+)
 from ..protocol.invite import InviteCode
 from ..protocol.model import MAX_DRIFT_MS, Clock, State, apply_op, empty_state, hlc_wall, merge_state, now_ms
 from ..protocol.view import SpaceView, build_view
@@ -40,12 +51,26 @@ class JoinError(Exception):
         self.reason = reason
 
 
+class WriteError(Exception):
+    """A change could not be made: ``read_only``, ``offline``, ``needs_plus``, ``removed``, ``full`` or ``unknown``."""
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(reason)
+        self.reason = reason
+
+
+# One kind of entity, its id and the fields to set.
+Change = tuple[str, str, dict[str, Any]]
+# The service takes at most 200 changes at once; the app sends 100.
+WRITE_BATCH = 100
+
+
 def _random_id(n: int) -> str:
     return to_b64(secrets.token_bytes(n))
 
 
 class GroupEngine:
-    """One group, read with Home Assistant's own key."""
+    """One group, read (and, when allowed, written) with Home Assistant's own key."""
 
     def __init__(self, session: aiohttp.ClientSession, data: dict[str, Any], now: Callable[[], int] = now_ms) -> None:
         self.identity = Identity.from_seed(from_b64(data["seed"]))
@@ -125,6 +150,95 @@ class GroupEngine:
         if self._view is None or self._view[0] != self._version:
             self._view = (self._version, build_view(self.space_id or "", "group", self.state))
         return self._view[1]
+
+    # --- Writing ------------------------------------------------------------------------------
+
+    @property
+    def can_write(self) -> bool:
+        """Whether an admin allowed this Home Assistant to write, as far as it was told."""
+        return any(m.get("signPub") == self.identity.sign_pub and m.get("write") is True for m in self.members)
+
+    def new_id(self) -> str:
+        """An id for a new entry."""
+        return _random_id(9)
+
+    async def write(self, changes: list[Change], as_person: str) -> None:
+        """Makes changes in the name of a person of the group.
+
+        Nothing is kept for later: the changes reach the service now, or the call fails and the group
+        stays as it was. So Home Assistant never shows a tick the others do not see.
+        """
+        if not changes:
+            return
+        if not self.space_id:
+            raise WriteError("removed")
+        try:
+            if not self.can_write or not self.keys.get(self.epoch):
+                # Allowed a moment ago, perhaps: ask before saying no.
+                if not await self.refresh_space():
+                    raise WriteError("removed")
+                if not self.can_write:
+                    raise WriteError("read_only")
+            ops = [
+                {
+                    "id": _random_id(12),
+                    "ts": self.clock.tick(),
+                    "by": self.identity.sign_pub,
+                    "k": kind,
+                    "e": eid,
+                    "set": fields,
+                    "as": as_person,
+                }
+                for kind, eid, fields in changes
+            ]
+            for at in range(0, len(ops), WRITE_BATCH):
+                batch = ops[at : at + WRITE_BATCH]
+                await self._post(batch)
+                for op in batch:
+                    apply_op(self.state, op)
+                self._changed()
+        except (aiohttp.ClientError, TimeoutError) as err:
+            raise WriteError("offline") from err
+
+    async def _post(self, ops: list[dict[str, Any]]) -> None:
+        path = space_path(self.space_id or "") + "/ops"
+        for attempt in range(2):
+            key = self.keys.get(self.epoch)
+            if not key:
+                raise WriteError("unknown")
+            body = {
+                "ops": [
+                    {
+                        "id": op["id"],
+                        "rec": seal_record(self.space_id or "", self.epoch, from_b64(key), self.identity, op),
+                    }
+                    for op in ops
+                ]
+            }
+            try:
+                await self.api.req("POST", path, body)
+                return
+            except ApiError as err:
+                if err.code == "stale-epoch" and attempt == 0 and await self.refresh_space():
+                    # The group got a new key meanwhile: seal again with that one.
+                    continue
+                if err.code == "integration-read-only":
+                    await self.refresh_space()
+                    raise WriteError("read_only") from err
+                if err.code == "update-required":
+                    self.status = STATUS_UPDATE
+                    raise WriteError("update_required") from err
+                if err.status == 402:
+                    raise WriteError("needs_plus") from err
+                if err.status in (403, 404):
+                    if not await self.refresh_space():
+                        self._changed()
+                    raise WriteError("removed") from err
+                if err.status in (409, 413):
+                    raise WriteError("full") from err
+                if err.status >= 500 or err.status == 429:
+                    raise WriteError("offline") from err
+                raise WriteError("unknown") from err
 
     # --- Joining ------------------------------------------------------------------------------
 

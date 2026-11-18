@@ -12,13 +12,29 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .calendar import LOOKAHEAD_DAYS, events_between
+from .calendar import DONE_MARK, LOOKAHEAD_DAYS, events_between
 from .client.engine import STATUS_NEEDS_PLUS, STATUS_OFFLINE, STATUS_OK, STATUS_REMOVED, STATUS_UPDATE
 from .const import MAX_TITLES
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator
-from .entity import OrgaiaEntity, active_person_ids, person_entity, track_dynamic
-from .summary import Counts, counts
-from .util import from_ms, local_now, minute_of_day, to_date, to_datetime
+from .entity import OrgaiaEntity, OrgaiaPlanEntity, active_person_ids, person_entity, plan_list_ids, track_dynamic
+from .protocol.plans import STATUS_FREE, STATUS_HOLIDAY, pack_on, school_day, work_day
+from .protocol.recur import add_days
+from .protocol.shopping import STATE_READY
+from .summary import Counts, counts, shopping_trips
+from .util import from_ms, local_now, minute_of_day, to_date, to_datetime, today
+
+# What a day without school or work reads as; times read "07:55–13:15".
+DAY_LABELS = {
+    "de": {STATUS_FREE: "frei", STATUS_HOLIDAY: "Ferien"},
+    "en": {STATUS_FREE: "off", STATUS_HOLIDAY: "holidays"},
+}
+# How many days ahead a roster's sensor lists.
+WORK_AHEAD_DAYS = 7
+
+
+def day_label(language: str | None, status: str) -> str:
+    labels = DAY_LABELS.get((language or "de").split("-")[0].lower(), DAY_LABELS["en"])
+    return labels.get(status, status)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -43,8 +59,28 @@ async def async_setup_entry(
 ) -> None:
     coordinator = entry.runtime_data
     entities: list[SensorEntity] = [OrgaiaCountSensor(coordinator, d) for d in COUNTS]
-    entities += [OrgaiaNextEventSensor(coordinator), OrgaiaConnectionSensor(coordinator)]
+    entities += [
+        OrgaiaShoppingWaitingSensor(coordinator),
+        OrgaiaNextEventSensor(coordinator),
+        OrgaiaConnectionSensor(coordinator),
+    ]
     async_add_entities(entities)
+    track_dynamic(
+        hass,
+        entry,
+        plan_list_ids("timetable"),
+        lambda list_id: [OrgaiaSchoolSensor(coordinator, list_id)],
+        async_add_entities,
+        "sensor",
+    )
+    track_dynamic(
+        hass,
+        entry,
+        plan_list_ids("roster"),
+        lambda list_id: [OrgaiaWorkSensor(coordinator, list_id)],
+        async_add_entities,
+        "sensor",
+    )
     track_dynamic(
         hass,
         entry,
@@ -82,6 +118,138 @@ class OrgaiaCountSensor(OrgaiaEntity, SensorEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         attrs: dict[str, Any] = {"titles": self._titles()[:MAX_TITLES]}
+        if self.person_id is not None:
+            attrs["person_entity"] = person_entity(self.coordinator.config_entry, self.person_id)
+        return attrs
+
+
+class OrgaiaShoppingWaitingSensor(OrgaiaEntity, SensorEntity):
+    """Shopping lists that were released and that nobody has taken over yet."""
+
+    _attr_translation_key = "shopping_waiting"
+    _attr_icon = "mdi:cart-arrow-right"
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _unrecorded_attributes = frozenset({"lists"})
+
+    def __init__(self, coordinator: OrgaiaCoordinator) -> None:
+        super().__init__(coordinator, "shopping_waiting")
+
+    def _lists(self) -> list[str]:
+        return [lst["name"] for lst, trip in shopping_trips(self.coordinator.data) if trip.state == STATE_READY]
+
+    @property
+    def native_value(self) -> int:
+        return len(self._lists())
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return {"lists": self._lists()[:MAX_TITLES]}
+
+
+def _span_text(start: str, end: str) -> str:
+    return f"{start}–{end}"
+
+
+class OrgaiaSchoolSensor(OrgaiaPlanEntity, SensorEntity):
+    """A timetable today: from when to when, with every lesson, and what to pack."""
+
+    plan_type = "timetable"
+    _attr_translation_key = "school_today"
+    _attr_icon = "mdi:school-outline"
+    # Subjects and things say a lot about a child: they stay out of the recorder's database.
+    _unrecorded_attributes = frozenset({"lessons", "tomorrow", "pack_today", "pack_tomorrow", "holiday", "plan"})
+
+    def __init__(self, coordinator: OrgaiaCoordinator, list_id: str) -> None:
+        super().__init__(coordinator, list_id, "today")
+
+    def _day(self, ahead: int = 0) -> dict[str, Any] | None:
+        plan = self.plan
+        if plan is None:
+            return None
+        return school_day(plan, self.coordinator.data.meta.get("schoolOff") or [], add_days(today(), ahead))
+
+    def _text(self, day: dict[str, Any]) -> str:
+        if day["start"]:
+            return _span_text(day["start"], day["end"])
+        return day_label(self.hass.config.language if self.hass else None, day["status"])
+
+    @property
+    def native_value(self) -> str | None:
+        day = self._day()
+        return self._text(day) if day else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        plan, day, nxt = self.plan, self._day(), self._day(1)
+        if plan is None or day is None or nxt is None:
+            return {}
+        off = self.coordinator.data.meta.get("schoolOff") or []
+        attrs: dict[str, Any] = {
+            "plan": plan["name"],
+            "status": day["status"],
+            "start": day["start"],
+            "end": day["end"],
+            "lessons": day["lessons"],
+            "pack_today": pack_on(plan, off, day["date"]),
+            "pack_tomorrow": pack_on(plan, off, nxt["date"]),
+            "tomorrow": {**{k: nxt[k] for k in ("status", "start", "end", "lessons")}, "text": self._text(nxt)},
+        }
+        for key in ("week", "holiday"):
+            if key in day:
+                attrs[key] = day[key]
+        if self.person_id is not None:
+            attrs["person_entity"] = person_entity(self.coordinator.config_entry, self.person_id)
+        return attrs
+
+
+class OrgaiaWorkSensor(OrgaiaPlanEntity, SensorEntity):
+    """A roster today: the shift or the working time, and the days ahead."""
+
+    plan_type = "roster"
+    _attr_translation_key = "work_today"
+    _attr_icon = "mdi:briefcase-clock-outline"
+    _unrecorded_attributes = frozenset({"spans", "shift", "code", "tomorrow", "next_days", "plan"})
+
+    def __init__(self, coordinator: OrgaiaCoordinator, list_id: str) -> None:
+        super().__init__(coordinator, list_id, "today")
+
+    def _text(self, day: dict[str, Any]) -> str:
+        if not day["spans"]:
+            return day_label(self.hass.config.language if self.hass else None, STATUS_FREE)
+        times = ", ".join(_span_text(s["start"], s["end"]) for s in day["spans"])
+        return f"{day['shift']} {times}" if day.get("shift") else times
+
+    def _days(self) -> list[dict[str, Any]]:
+        plan = self.plan
+        if plan is None:
+            return []
+        first = today()
+        days = [work_day(plan, add_days(first, n)) for n in range(WORK_AHEAD_DAYS)]
+        return [{**d, "text": self._text(d)} for d in days]
+
+    @property
+    def native_value(self) -> str | None:
+        days = self._days()
+        return days[0]["text"][:255] if days else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        plan, days = self.plan, self._days()
+        if plan is None or not days:
+            return {}
+        day = days[0]
+        attrs: dict[str, Any] = {
+            "plan": plan["name"],
+            "status": day["status"],
+            "spans": day["spans"],
+            "start": day["spans"][0]["start"] if day["spans"] else None,
+            "end": day["spans"][-1]["end"] if day["spans"] else None,
+            "tomorrow": days[1],
+            "next_days": days,
+        }
+        for key in ("shift", "code"):
+            if key in day:
+                attrs[key] = day[key]
         if self.person_id is not None:
             attrs["person_entity"] = person_entity(self.coordinator.config_entry, self.person_id)
         return attrs
@@ -128,7 +296,8 @@ class OrgaiaNextEventSensor(OrgaiaEntity, SensorEntity):
         upcoming = [
             e
             for e in events_between(self.coordinator.data, now, now + timedelta(days=LOOKAHEAD_DAYS))
-            if e.start_datetime_local >= now
+            # What is ticked off already is not what comes next.
+            if e.start_datetime_local >= now and not e.summary.startswith(DONE_MARK)
         ]
         return upcoming[0] if upcoming else None
 

@@ -54,6 +54,9 @@
     "calendar": {
       "calendar": {
         "name": "Kalender"
+      },
+      "timetable": {
+        "name": "Stundenplan"
       }
     },
     "todo": {
@@ -143,6 +146,31 @@
             "name": "Person"
           }
         }
+      },
+      "shopping_waiting": {
+        "name": "Einkauf offen",
+        "state_attributes": {
+          "lists": {
+            "name": "Listen"
+          }
+        }
+      },
+      "school_today": {
+        "name": "Schule heute"
+      },
+      "work_today": {
+        "name": "Arbeit heute"
+      }
+    },
+    "binary_sensor": {
+      "at_school": {
+        "name": "In der Schule"
+      },
+      "at_work": {
+        "name": "Bei der Arbeit"
+      },
+      "school_holidays": {
+        "name": "Schulferien"
       }
     }
   },
@@ -177,7 +205,261 @@
       "task_overdue": "Eine Aufgabe ist überfällig geworden",
       "event_created": "Ein Termin wurde angelegt",
       "event_changed": "Ein Termin wurde geändert",
-      "event_starting": "Ein Termin beginnt"
+      "event_starting": "Ein Termin beginnt",
+      "shopping_released": "Eine Einkaufsliste wurde freigegeben",
+      "shopping_taken": "Jemand hat den Einkauf übernommen",
+      "shopping_done": "Der Einkauf ist erledigt"
+    }
+  },
+  "services": {
+    "set_done": {
+      "name": "Aufgabe abhaken",
+      "description": "Hakt eine Aufgabe im Namen einer Person der Gruppe ab oder öffnet sie wieder. Bei einer Serie wird der Tag abgehakt, der gerade fällig ist.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Gruppe",
+          "description": "Die Orgaia-Gruppe. Nur nötig, wenn mehr als eine Gruppe verbunden ist."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Wer es macht: eine Person der Gruppe mit Namen, oder die Home-Assistant-Person, die ihr in den Optionen zugeordnet ist. Dieser Name steht dann in der App."
+        },
+        "item": {
+          "name": "Aufgabe",
+          "description": "Die Aufgabe: ihr Titel, oder ihre Kennung, wie die To-do-Liste sie nennt."
+        },
+        "list": {
+          "name": "Liste",
+          "description": "Die Liste: ihre To-do-Entität oder ihr Name."
+        },
+        "done": {
+          "name": "Erledigt",
+          "description": "Aus, um die Aufgabe wieder zu öffnen."
+        }
+      }
+    },
+    "add_article": {
+      "name": "Artikel auf die Einkaufsliste",
+      "description": "Setzt einen Artikel auf eine Einkaufsliste. Auf einer schon freigegebenen Liste wird er als neu markiert.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Gruppe",
+          "description": "Die Orgaia-Gruppe. Nur nötig, wenn mehr als eine Gruppe verbunden ist."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Wer es macht: eine Person der Gruppe mit Namen, oder die Home-Assistant-Person, die ihr in den Optionen zugeordnet ist. Dieser Name steht dann in der App."
+        },
+        "list": {
+          "name": "Liste",
+          "description": "Die Liste: ihre To-do-Entität oder ihr Name."
+        },
+        "title": {
+          "name": "Titel",
+          "description": "Wie es heißt."
+        },
+        "quantity": {
+          "name": "Menge",
+          "description": "Wie viel davon, als freier Text."
+        }
+      }
+    },
+    "add_task": {
+      "name": "Aufgabe anlegen",
+      "description": "Legt eine Aufgabe auf einer Aufgabenliste an.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Gruppe",
+          "description": "Die Orgaia-Gruppe. Nur nötig, wenn mehr als eine Gruppe verbunden ist."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Wer es macht: eine Person der Gruppe mit Namen, oder die Home-Assistant-Person, die ihr in den Optionen zugeordnet ist. Dieser Name steht dann in der App."
+        },
+        "list": {
+          "name": "Liste",
+          "description": "Die Liste: ihre To-do-Entität oder ihr Name."
+        },
+        "title": {
+          "name": "Titel",
+          "description": "Wie es heißt."
+        },
+        "due_date": {
+          "name": "Fällig",
+          "description": "Der Tag, bis zu dem es erledigt sein soll."
+        },
+        "assignees": {
+          "name": "Für",
+          "description": "Die Personen, für die es ist, mit Namen."
+        }
+      }
+    },
+    "release_shopping_list": {
+      "name": "Einkaufsliste freigeben",
+      "description": "Sagt, dass die Einkaufsliste vollständig ist: ab jetzt ist sie etwas zu erledigen.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Gruppe",
+          "description": "Die Orgaia-Gruppe. Nur nötig, wenn mehr als eine Gruppe verbunden ist."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Wer es macht: eine Person der Gruppe mit Namen, oder die Home-Assistant-Person, die ihr in den Optionen zugeordnet ist. Dieser Name steht dann in der App."
+        },
+        "list": {
+          "name": "Liste",
+          "description": "Die Liste: ihre To-do-Entität oder ihr Name."
+        },
+        "due_date": {
+          "name": "Fällig",
+          "description": "Der Tag, bis zu dem es erledigt sein soll."
+        },
+        "for": {
+          "name": "Gefragt sind",
+          "description": "Die Personen, die einkaufen sollen. Leer heißt alle."
+        },
+        "note": {
+          "name": "Hinweis",
+          "description": "Ein kurzer Hinweis für die Person, die einkauft."
+        }
+      }
+    },
+    "withdraw_shopping_list": {
+      "name": "Freigabe zurücknehmen",
+      "description": "Nimmt die Freigabe zurück: an der Einkaufsliste wird wieder geschrieben.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Gruppe",
+          "description": "Die Orgaia-Gruppe. Nur nötig, wenn mehr als eine Gruppe verbunden ist."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Wer es macht: eine Person der Gruppe mit Namen, oder die Home-Assistant-Person, die ihr in den Optionen zugeordnet ist. Dieser Name steht dann in der App."
+        },
+        "list": {
+          "name": "Liste",
+          "description": "Die Liste: ihre To-do-Entität oder ihr Name."
+        }
+      }
+    },
+    "take_shopping": {
+      "name": "Einkauf übernehmen",
+      "description": "„Mache ich“: die Person übernimmt eine freigegebene Einkaufsliste.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Gruppe",
+          "description": "Die Orgaia-Gruppe. Nur nötig, wenn mehr als eine Gruppe verbunden ist."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Wer es macht: eine Person der Gruppe mit Namen, oder die Home-Assistant-Person, die ihr in den Optionen zugeordnet ist. Dieser Name steht dann in der App."
+        },
+        "list": {
+          "name": "Liste",
+          "description": "Die Liste: ihre To-do-Entität oder ihr Name."
+        }
+      }
+    },
+    "drop_shopping": {
+      "name": "Einkauf abgeben",
+      "description": "„Doch nicht“: die Einkaufsliste ist wieder für die anderen offen.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Gruppe",
+          "description": "Die Orgaia-Gruppe. Nur nötig, wenn mehr als eine Gruppe verbunden ist."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Wer es macht: eine Person der Gruppe mit Namen, oder die Home-Assistant-Person, die ihr in den Optionen zugeordnet ist. Dieser Name steht dann in der App."
+        },
+        "list": {
+          "name": "Liste",
+          "description": "Die Liste: ihre To-do-Entität oder ihr Name."
+        }
+      }
+    },
+    "finish_shopping": {
+      "name": "Einkauf abschließen",
+      "description": "Beendet den Einkauf: Gekauftes verschwindet von der Liste, der Rest bleibt.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Gruppe",
+          "description": "Die Orgaia-Gruppe. Nur nötig, wenn mehr als eine Gruppe verbunden ist."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Wer es macht: eine Person der Gruppe mit Namen, oder die Home-Assistant-Person, die ihr in den Optionen zugeordnet ist. Dieser Name steht dann in der App."
+        },
+        "list": {
+          "name": "Liste",
+          "description": "Die Liste: ihre To-do-Entität oder ihr Name."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "no_group": {
+      "message": "Diese Orgaia-Gruppe ist nicht verbunden."
+    },
+    "which_group": {
+      "message": "Es sind mehrere Orgaia-Gruppen verbunden: bitte die Gruppe angeben."
+    },
+    "no_person": {
+      "message": "{person} ist keine Person der Gruppe. Bitte einen Namen aus der Gruppe angeben oder eine in den Optionen zugeordnete Home-Assistant-Person."
+    },
+    "no_list": {
+      "message": "In der Gruppe gibt es keine Liste {list}."
+    },
+    "no_item": {
+      "message": "Es gibt keine Aufgabe {item}, die sich gerade abhaken ließe."
+    },
+    "read_only": {
+      "message": "Home Assistant darf {group} nur lesen. Ein Admin kann Abhaken und Eintragen in der Orgaia-App unter Verwalten › Home Assistant erlauben."
+    },
+    "not_a_task": {
+      "message": "Nur Aufgaben lassen sich abhaken."
+    },
+    "needs_date": {
+      "message": "Bei dieser Serie ist gerade kein Tag fällig."
+    },
+    "not_assigned": {
+      "message": "Hier hakt jede Person ihren eigenen Teil ab, und diese Person gehört nicht dazu."
+    },
+    "not_shopping": {
+      "message": "Das ist keine Einkaufsliste."
+    },
+    "not_tasks": {
+      "message": "Das ist keine Aufgabenliste."
+    },
+    "empty": {
+      "message": "Es fehlt ein Titel."
+    },
+    "no_release": {
+      "message": "Diese Einkaufsliste wird nicht freigegeben: die Freigabe ist für sie abgeschaltet."
+    },
+    "nothing_to_buy": {
+      "message": "Auf dieser Liste steht nichts zum Einkaufen."
+    },
+    "not_released": {
+      "message": "Diese Einkaufsliste ist noch nicht freigegeben."
+    },
+    "write_offline": {
+      "message": "Orgaia war nicht erreichbar, es wurde nichts geändert. Bitte noch einmal versuchen."
+    },
+    "write_needs_plus": {
+      "message": "{group} nimmt gerade keine Änderungen an: Orgaia Plus fehlt oder die Gruppe ist über ihren Grenzen."
+    },
+    "write_removed": {
+      "message": "Home Assistant ist nicht mehr mit {group} verbunden."
+    },
+    "write_full": {
+      "message": "{group} ist voll und nimmt gerade keine Änderungen an."
+    },
+    "write_update_required": {
+      "message": "Diese Version der Integration ist zu alt für den Orgaia-Dienst. Bitte in HACS aktualisieren."
+    },
+    "write_unknown": {
+      "message": "Orgaia hat die Änderung nicht angenommen."
     }
   }
 }

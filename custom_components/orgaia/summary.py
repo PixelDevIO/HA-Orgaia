@@ -6,8 +6,17 @@ import calendar
 from dataclasses import dataclass, field
 from typing import Any
 
-from .protocol.agenda import Occurrence, current_occurrence, is_overdue, occurrences_between, resolve_occurrence
+from .protocol.agenda import (
+    Deadline,
+    Occurrence,
+    current_occurrence,
+    deadlines,
+    is_overdue,
+    occurrences_between,
+    resolve_occurrence,
+)
 from .protocol.recur import add_days, date_of, occurrence_dates, parse_ymd, to_min
+from .protocol.shopping import STATE_GOING, STATE_READY, TRIP_PREFIX, Trip, is_late, trip_of, trip_overdue
 from .protocol.view import SpaceView, occ_id
 
 
@@ -28,6 +37,9 @@ class TodoEntry:
     assignees: list[str]
     persons: list[str]
     subtasks: list[tuple[str, bool]] = field(default_factory=list)
+    # Shopping: how much of it, and whether it came onto the list after the list was released.
+    qty: str | None = None
+    late: bool = False
 
 
 # Lists whose tasks belong to people: task lists, and timetables with their packing tasks.
@@ -108,6 +120,7 @@ def _entry(view: SpaceView, item: dict[str, Any], today: str) -> TodoEntry | Non
         assignees=list(item["assignees"]),
         persons=view.names(item["assignees"]),
         subtasks=subs,
+        qty=item["qty"].strip() if isinstance(item.get("qty"), str) and item["qty"].strip() else None,
     )
 
 
@@ -121,6 +134,7 @@ def todo_entries(
     """Tasks of one list, or of one person across all task lists. Old ticks drop out."""
     oldest_ms = _days_ago_ms(today, keep_done_days)
     out: list[TodoEntry] = []
+    trips: dict[str, Trip] = {}
     for item in view.items:
         if item["kind"] != "task":
             continue
@@ -139,6 +153,10 @@ def todo_entries(
             and entry.done_at < oldest_ms
         ):
             continue
+        if ltype == "shopping":
+            lst = view.list_by_id[item["listId"]]
+            trip = trips.get(lst["id"]) or trips.setdefault(lst["id"], trip_of(view, lst))
+            entry.late = is_late(item, trip)
         out.append(entry)
     return out
 
@@ -162,6 +180,53 @@ def calendar_occurrences(view: SpaceView, start: str, end: str, person: str | No
             if date_of(occ.start) <= end and last >= start:
                 out.append(occ)
     out.sort(key=lambda o: o.start)
+    return out
+
+
+def shopping_trips(view: SpaceView) -> list[tuple[dict[str, Any], Trip]]:
+    """Every shopping list with where its release stands."""
+    return [(lst, trip_of(view, lst)) for lst in view.lists if lst["type"] == "shopping"]
+
+
+def _trip_people(trip: Trip) -> list[str]:
+    """Whom a released list is asked of: who shops, else the people it was released for (nobody: everybody)."""
+    return [trip.shopper] if trip.shopper else list((trip.ready or {}).get("for") or [])
+
+
+def calendar_deadlines(view: SpaceView, start: str, end: str, person: str | None = None) -> list[Deadline]:
+    """Deadlines the calendar shows on their day: tasks due without a time slot, and released shopping lists.
+
+    Packing tasks stay in their to-do list; a calendar full of "pack ..." helps nobody.
+    """
+    out: list[Deadline] = []
+    for d in deadlines(view, start, end):
+        item = d.item
+        if item.get("start") or item.get("fromTimetable"):
+            continue
+        if view.list_by_id.get(item["listId"], {}).get("type") == "shopping":
+            continue
+        if person is not None and person not in (item.get("assignees") or []):
+            continue
+        out.append(d)
+    for lst, trip in shopping_trips(view):
+        due = (trip.ready or {}).get("due")
+        if trip.state not in (STATE_READY, STATE_GOING) or not due or not start <= due <= end:
+            continue
+        who = _trip_people(trip)
+        if person is not None and who and person not in who:
+            continue
+        item = {
+            "id": TRIP_PREFIX + lst["id"],
+            "listId": lst["id"],
+            "kind": "task",
+            "title": lst["name"],
+            "assignees": who,
+            "dueDate": due,
+            "fromTrip": lst["id"],
+            "note": (trip.ready or {}).get("note"),
+        }
+        out.append(Deadline(item, due, None, None, False))
+    out.sort(key=lambda d: (d.date, d.time or "99"))
     return out
 
 
@@ -232,6 +297,19 @@ def counts(view: SpaceView, today: str, minute: int, person: str | None = None) 
             c.due_today.append(item["title"])
         if is_overdue(item, today, minute):
             c.overdue.append(item["title"])
+    # A released shopping list is a thing to do by its day, for who shops or whom it was released for.
+    for lst, trip in shopping_trips(view):
+        due = (trip.ready or {}).get("due")
+        if trip.state not in (STATE_READY, STATE_GOING) or not due:
+            continue
+        who = _trip_people(trip)
+        if person is not None and person not in who:
+            continue
+        if due == today:
+            c.due_today.append(lst["name"])
+        if trip_overdue(trip, today):
+            c.overdue.append(lst["name"])
+        upcoming.append((due, lst["name"]))
     if upcoming:
         c.next = min(upcoming)
     return c

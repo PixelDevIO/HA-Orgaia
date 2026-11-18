@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
+from typing import Any
 
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er
@@ -101,3 +102,32 @@ def track_dynamic(
 
     _sync()
     entry.async_on_unload(coordinator.async_add_listener(_sync))
+
+
+def plan_list_ids(list_type: str) -> Callable[[SpaceView], list[str]]:
+    """The timetables or rosters of a group."""
+    return lambda view: [lst["id"] for lst in view.lists if lst["type"] == list_type and lst.get(list_type)]
+
+
+class OrgaiaPlanEntity(OrgaiaEntity):
+    """Something read from one timetable or roster. It belongs to the person the plan is for."""
+
+    plan_type = "timetable"
+
+    def __init__(self, coordinator: OrgaiaCoordinator, list_id: str, key: str) -> None:
+        self.list_id = list_id
+        plan = (coordinator.data.list_by_id.get(list_id) or {}).get(self.plan_type) or {}
+        person = plan.get("personId")
+        if person not in coordinator.data.person_by_id:
+            person = None
+        super().__init__(coordinator, f"{self.plan_type}_{list_id}_{key}", person)
+
+    @property
+    def plan(self) -> dict[str, Any] | None:
+        """The list of the plan, while it exists."""
+        lst = self.coordinator.data.list_by_id.get(self.list_id)
+        return lst if lst and lst["type"] == self.plan_type and lst.get(self.plan_type) else None
+
+    @property
+    def available(self) -> bool:
+        return super().available and self.plan is not None

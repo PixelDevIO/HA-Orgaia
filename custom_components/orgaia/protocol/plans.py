@@ -342,3 +342,103 @@ def with_plan_items(view: SpaceView, labels: PlanLabels, today: str) -> SpaceVie
         item.setdefault("done", None)
     items = [*view.items, *extra]
     return replace(view, items=items, occs=occs, item_by_id={i["id"]: i for i in items})
+
+
+# --- One day of a plan, for sensors and dashboards ---------------------------------------------
+
+STATUS_SCHOOL = "school"
+STATUS_WORK = "work"
+STATUS_FREE = "free"
+STATUS_HOLIDAY = "holiday"
+
+
+def holiday_on(off: list[dict[str, Any]], date: str) -> dict[str, Any] | None:
+    """The school holiday a day lies in, if any."""
+    return next((o for o in off if o["from"] <= date <= o["to"]), None)
+
+
+def next_holiday(off: list[dict[str, Any]], date: str) -> dict[str, Any] | None:
+    """The first school holiday that begins after a day."""
+    return next((o for o in off if o["from"] > date), None)
+
+
+def school_day(lst: dict[str, Any], off: list[dict[str, Any]], date: str) -> dict[str, Any]:
+    """A timetable on one day: the lessons with their subjects, from when to when, or why there is no school."""
+    tt = lst["timetable"]
+    week = week_of(tt, date)
+    holiday = holiday_on(off, date)
+    lessons = [] if holiday else lessons_of(tt, weekday(date), week)
+    out: dict[str, Any] = {
+        "date": date,
+        "status": STATUS_HOLIDAY if holiday else STATUS_SCHOOL if lessons else STATUS_FREE,
+        "start": None,
+        "end": None,
+        "lessons": [
+            {
+                "period": lesson["n"],
+                "start": lesson["start"],
+                "end": lesson["end"],
+                "subject": lesson["subject"]["name"],
+                **({"room": lesson["subject"]["room"]} if lesson["subject"].get("room") else {}),
+            }
+            for lesson in lessons
+        ],
+    }
+    if week:
+        out["week"] = week
+    if holiday and holiday["name"]:
+        out["holiday"] = holiday["name"]
+    if lessons:
+        out["start"] = lessons[0]["start"]
+        out["end"] = max(lesson["end"] for lesson in lessons)
+    return out
+
+
+def pack_on(lst: dict[str, Any], off: list[dict[str, Any]], date: str) -> list[str]:
+    """What is packed on a day, for the school day after it (Monday's things on Sunday, or on Friday)."""
+    tt = lst["timetable"]
+    out: dict[str, str] = {}
+    for ahead in (1, 3):
+        target = add_days(date, ahead)
+        wd = weekday(target)
+        if _pack_back(tt, wd) != ahead or holiday_on(off, target):
+            continue
+        for key, thing in things_of(tt, wd, week_of(tt, target)).items():
+            out.setdefault(key, thing["name"])
+    return list(out.values())
+
+
+def work_day(lst: dict[str, Any], date: str) -> dict[str, Any]:
+    """A roster on one day: the working times, and the shift when one was entered."""
+    r = lst["roster"]
+    day = work_on(r, date)
+    shift = day.get("shift")
+    spans = [{"start": s["start"], "end": s["end"], "overnight": s["end"] <= s["start"]} for s in day["spans"]]
+    out: dict[str, Any] = {"date": date, "status": STATUS_WORK if spans else STATUS_FREE, "spans": spans}
+    if shift and not r["busyOnly"]:
+        out["shift"] = shift["name"]
+        out["code"] = shift["code"]
+    return out
+
+
+def _minutes(clock: str) -> int:
+    return int(clock[:2]) * 60 + int(clock[3:5])
+
+
+def at_school(lst: dict[str, Any], off: list[dict[str, Any]], date: str, minute: int) -> str | None:
+    """When school ends today, while it is on; None otherwise."""
+    day = school_day(lst, off, date)
+    if day["start"] and _minutes(day["start"]) <= minute < _minutes(day["end"]):
+        return day["end"]
+    return None
+
+
+def at_work(lst: dict[str, Any], date: str, minute: int) -> str | None:
+    """When work ends, while it is on (a night shift of yesterday counts until its end); None otherwise."""
+    for span in work_day(lst, add_days(date, -1))["spans"]:
+        if span["overnight"] and minute < _minutes(span["end"]):
+            return span["end"]
+    for span in work_day(lst, date)["spans"]:
+        if _minutes(span["start"]) <= minute and (span["overnight"] or minute < _minutes(span["end"])):
+            return span["end"]
+    return None

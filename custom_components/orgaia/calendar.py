@@ -12,11 +12,12 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator
-from .entity import OrgaiaEntity, active_person_ids, track_dynamic
-from .protocol.agenda import DEFAULT_DURATION, Occurrence
+from .entity import OrgaiaEntity, OrgaiaPlanEntity, active_person_ids, plan_list_ids, track_dynamic
+from .protocol.agenda import DEFAULT_DURATION, Deadline, Occurrence
+from .protocol.plans import school_day
 from .protocol.recur import add_days, date_of
 from .protocol.view import SpaceView, occ_id
-from .summary import calendar_occurrences
+from .summary import calendar_deadlines, calendar_occurrences
 from .util import local_now, to_date, to_datetime
 
 # How far ahead the calendar looks for the next appointment.
@@ -27,6 +28,18 @@ DRIVE_LABELS = {
     "de": ("Hinfahrt", "Rückfahrt", "noch offen"),
     "en": ("Drive there", "Drive back", "nobody yet"),
 }
+
+
+# What a deadline is called in the description, and a released shopping list in the calendar.
+DEADLINE_LABELS = {
+    "de": ("Frist", "Einkaufen"),
+    "en": ("Due", "Shopping"),
+}
+DONE_MARK = "✓ "
+
+
+def _lang(language: str | None) -> str:
+    return (language or "de").split("-")[0].lower()
 
 
 async def async_setup_entry(
@@ -42,6 +55,14 @@ async def async_setup_entry(
         async_add_entities,
         "calendar",
     )
+    track_dynamic(
+        hass,
+        entry,
+        plan_list_ids("timetable"),
+        lambda list_id: [OrgaiaTimetableCalendar(coordinator, list_id)],
+        async_add_entities,
+        "calendar",
+    )
 
 
 def drives(view: SpaceView, occ: Occurrence, language: str | None = None) -> str | None:
@@ -49,7 +70,7 @@ def drives(view: SpaceView, occ: Occurrence, language: str | None = None) -> str
     item = occ.item
     if item["kind"] != "event" or not (item.get("needTo") or item.get("needFrom")):
         return None
-    there, back, nobody = DRIVE_LABELS.get((language or "de").split("-")[0].lower(), DRIVE_LABELS["en"])
+    there, back, nobody = DRIVE_LABELS.get(_lang(language), DRIVE_LABELS["en"])
     raw = view.occs.get(occ_id(item["id"], occ.occ_date)) if occ.occ_date else None
     out = []
     for need, field, label in (("needTo", "driveTo", there), ("needFrom", "driveFrom", back)):
@@ -73,13 +94,15 @@ def to_event(view: SpaceView, occ: Occurrence, language: str | None = None) -> C
         parts.append(item["note"])
     description = "\n\n".join(parts) or None
     location = item.get("location") if isinstance(item.get("location"), str) else None
+    # A planned task that is ticked off reads as done, not as still to do.
+    summary = (DONE_MARK if item["kind"] == "task" and occ.done else "") + item["title"]
     if item.get("allDay"):
         first = date_of(occ.start)
         last = date_of(occ.end) if occ.end else first
         return CalendarEvent(
             start=to_date(first),
             end=to_date(add_days(max(first, last), 1)),
-            summary=item["title"],
+            summary=summary,
             description=description,
             location=location,
             uid=uid,
@@ -88,20 +111,57 @@ def to_event(view: SpaceView, occ: Occurrence, language: str | None = None) -> C
     end = to_datetime(occ.end) if occ.end else start + timedelta(minutes=DEFAULT_DURATION)
     if end <= start:
         end = start + timedelta(minutes=15)
+    return CalendarEvent(start=start, end=end, summary=summary, description=description, location=location, uid=uid)
+
+
+def deadline_event(view: SpaceView, d: Deadline, language: str | None = None) -> CalendarEvent:
+    """A task on the day it is due: the whole day, or a quarter of an hour up to its time."""
+    item = d.item
+    due, shopping = DEADLINE_LABELS.get(_lang(language), DEADLINE_LABELS["en"])
+    trip = bool(item.get("fromTrip"))
+    parts = [f"🛒 {shopping}" if trip else f"⚑ {due}"]
+    names = view.names(item.get("assignees") or [])
+    if names:
+        parts.append("👤 " + ", ".join(names))
+    if item.get("note"):
+        parts.append(item["note"])
+    summary = (DONE_MARK if d.done else "") + (f"{shopping}: {item['title']}" if trip else item["title"])
+    uid = f"due|{item['id']}|{d.date}"
+    if d.time:
+        end = to_datetime(f"{d.date}T{d.time}")
+        return CalendarEvent(
+            start=end - timedelta(minutes=15), end=end, summary=summary, description="\n\n".join(parts), uid=uid
+        )
     return CalendarEvent(
-        start=start, end=end, summary=item["title"], description=description, location=location, uid=uid
+        start=to_date(d.date),
+        end=to_date(add_days(d.date, 1)),
+        summary=summary,
+        description="\n\n".join(parts),
+        uid=uid,
     )
 
 
 def events_between(
-    view: SpaceView, start: datetime, end: datetime, person: str | None = None, language: str | None = None
+    view: SpaceView,
+    start: datetime,
+    end: datetime,
+    person: str | None = None,
+    language: str | None = None,
+    with_deadlines: bool = False,
 ) -> list[CalendarEvent]:
+    """What happens between two moments. With deadlines, also what is only due then."""
     first, last = start.date().isoformat(), end.date().isoformat()
     out = []
     for occ in calendar_occurrences(view, add_days(first, -1), last, person):
         ev = to_event(view, occ, language)
         if ev.end_datetime_local > start and ev.start_datetime_local < end:
             out.append(ev)
+    if with_deadlines:
+        for d in calendar_deadlines(view, add_days(first, -1), last, person):
+            ev = deadline_event(view, d, language)
+            if ev.end_datetime_local > start and ev.start_datetime_local < end:
+                out.append(ev)
+        out.sort(key=lambda e: e.start_datetime_local)
     return out
 
 
@@ -136,4 +196,65 @@ class OrgaiaCalendar(OrgaiaEntity, CalendarEntity):
     async def async_get_events(
         self, hass: HomeAssistant, start_date: datetime, end_date: datetime
     ) -> list[CalendarEvent]:
-        return events_between(self.coordinator.data, start_date, end_date, self.person_id, hass.config.language)
+        return events_between(
+            self.coordinator.data, start_date, end_date, self.person_id, hass.config.language, with_deadlines=True
+        )
+
+
+# A timetable's calendar never looks further than this in one go.
+MAX_LESSON_DAYS = 400
+
+
+def lessons_between(lst: dict, off: list[dict], start: datetime, end: datetime) -> list[CalendarEvent]:
+    """Every lesson of a timetable between two moments, holidays left out."""
+    out: list[CalendarEvent] = []
+    day = add_days(start.date().isoformat(), -1)
+    last = end.date().isoformat()
+    for _ in range(MAX_LESSON_DAYS):
+        if day > last:
+            break
+        for lesson in school_day(lst, off, day)["lessons"]:
+            begins, ends = to_datetime(f"{day}T{lesson['start']}"), to_datetime(f"{day}T{lesson['end']}")
+            if ends <= begins:
+                ends = begins + timedelta(minutes=15)
+            if ends > start and begins < end:
+                out.append(
+                    CalendarEvent(
+                        start=begins,
+                        end=ends,
+                        summary=lesson["subject"],
+                        description=f"{lesson['period']}.",
+                        location=lesson.get("room"),
+                        uid=f"{lst['id']}|{day}|{lesson['period']}",
+                    )
+                )
+        day = add_days(day, 1)
+    return out
+
+
+class OrgaiaTimetableCalendar(OrgaiaPlanEntity, CalendarEntity):
+    """A timetable lesson by lesson, for a day or week view on a dashboard."""
+
+    plan_type = "timetable"
+    _attr_translation_key = "timetable"
+    _attr_icon = "mdi:timetable"
+
+    def __init__(self, coordinator: OrgaiaCoordinator, list_id: str) -> None:
+        super().__init__(coordinator, list_id, "lessons")
+
+    def _between(self, start: datetime, end: datetime) -> list[CalendarEvent]:
+        plan = self.plan
+        if plan is None:
+            return []
+        return lessons_between(plan, self.coordinator.data.meta.get("schoolOff") or [], start, end)
+
+    @property
+    def event(self) -> CalendarEvent | None:
+        now = local_now()
+        events = self._between(now, now + timedelta(days=14))
+        return events[0] if events else None
+
+    async def async_get_events(
+        self, hass: HomeAssistant, start_date: datetime, end_date: datetime
+    ) -> list[CalendarEvent]:
+        return self._between(start_date, end_date)
