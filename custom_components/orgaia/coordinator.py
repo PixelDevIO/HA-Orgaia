@@ -33,6 +33,10 @@ FALLBACK_INTERVAL = timedelta(minutes=15)
 # The whole group is one file: write it at most once a minute, and only when the group changed.
 # Home Assistant writes what is still pending when it stops.
 SAVE_DELAY = 60
+# A live connection that held this long was a real one: the next attempt starts without a long wait.
+LIVE_STABLE = 30.0
+# After the service was out of reach for longer than this, what changed meanwhile counts as old news.
+LATE_AFTER = 15 * 60.0
 
 type OrgaiaConfigEntry = ConfigEntry[OrgaiaCoordinator]
 
@@ -57,6 +61,9 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
         self._view_key: tuple[int, int, str, str] | None = None
         self._view: SpaceView | None = None
         self._saved: tuple[Any, ...] | None = None
+        self._offline_since: float | None = None
+        # True while the entities hear about a first read after a long time without the service.
+        self.late = False
 
     @property
     def status(self) -> str:
@@ -96,6 +103,8 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
         Only on the very first start without anything read yet is there nothing to show.
         """
         self.engine.status = STATUS_OFFLINE
+        if self._offline_since is None:
+            self._offline_since = time.monotonic()
         if not self.engine.cursor and not self.engine.state.get("item"):
             raise UpdateFailed(f"Orgaia not reachable: {err}") from err
         if self.last_update_success:
@@ -103,6 +112,7 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
         return self.build_view()
 
     async def _async_update_data(self) -> SpaceView:
+        self.late = False
         try:
             await self.engine.sync()
         except ApiError as err:
@@ -117,6 +127,8 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
         if self.engine.status == STATUS_REMOVED:
             self._update_issues()
             raise ConfigEntryAuthFailed("removed from the group")
+        self.late = self._offline_since is not None and time.monotonic() - self._offline_since > LATE_AFTER
+        self._offline_since = None
         self._update_issues()
         self._save()
         self.refresh_feeds()
@@ -158,9 +170,10 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
         """Keeps the live connection open. It only says that something changed; the changes are then fetched."""
         delay = 1.0
         while True:
+            opened: float | None = None
             try:
                 ws = await self.engine.api.ws_connect()
-                delay = 1.0
+                opened = time.monotonic()
                 async with ws:
                     # Whatever happened while the connection was down.
                     await self.async_request_refresh()
@@ -170,6 +183,8 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
                         try:
                             event: dict[str, Any] = json.loads(msg.data)
                         except ValueError:
+                            continue
+                        if not isinstance(event, dict):
                             continue
                         if await self.engine.on_event(event):
                             await self.async_request_refresh()
@@ -183,5 +198,12 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
                     delay = 3600.0
             except (aiohttp.ClientError, TimeoutError, OSError) as err:
                 _LOGGER.debug("Live connection lost: %s", err)
+            except Exception:
+                # Anything unexpected must not end live updates until the next restart.
+                _LOGGER.exception("Live connection failed, trying again")
+            # A connection the service closes right away (too many, or refused) does not count as one:
+            # only one that held starts the waiting time over.
+            if opened is not None and time.monotonic() - opened >= LIVE_STABLE:
+                delay = 1.0
             await asyncio.sleep(delay)
             delay = min(delay * 2, 60.0) if delay < 60 else delay

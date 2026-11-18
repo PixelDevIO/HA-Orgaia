@@ -6,6 +6,9 @@ nothing fires for what was already there when Home Assistant started.
 After a short restart (up to ``CATCH_UP``) the group as it was when Home Assistant stopped is the first
 view: what changed meanwhile and appointments that began meanwhile fire once Home Assistant runs, with
 ``late: true``. After a longer break nothing is caught up, so no automation acts on old news.
+
+What changed while the service could not be reached for more than a quarter of an hour fires with
+``late: true`` as well, once it is read.
 """
 
 from __future__ import annotations
@@ -160,6 +163,14 @@ class EventTracker:
         if not self.coordinator.last_update_success:
             return
         view = self.coordinator.data
+        if self.coordinator.late and not self._late:
+            # The service was out of reach for a while: what changed meanwhile is old news.
+            self._late = True
+            try:
+                self._on_update()
+            finally:
+                self._late = False
+            return
         old_tasks, old_entries, old_items, old_appointments, old_persons, old_rounds = (
             self._tasks,
             self._entries,

@@ -65,13 +65,15 @@ class GroupEngine:
         self.synced_at: int | None = data.get("syncedAt")
         # When Home Assistant last stopped with this group, in ms; set only on a clean stop.
         self.stopped_at: int | None = data.get("stoppedAt")
-        self._now = now
-        self.clock = Clock(self.node, now)
+        self.api = Api(session, self.server, self.identity, self.device_id)
+        # The service's time when this machine's clock is far off: a clock a day behind would
+        # otherwise make every change of the others look like it came from the future.
+        self._now = lambda: now() + self.api.clock_offset
+        self.clock = Clock(self.node, self._now)
         for table in self.state.values():
             for doc in table.values():
                 for cell in doc.values():
                     self.clock.observe(cell[0])
-        self.api = Api(session, self.server, self.identity, self.device_id)
         self._listeners: list[Callable[[], None]] = []
         self._version = 0
         self._view: tuple[int, SpaceView] | None = None
@@ -257,6 +259,10 @@ class GroupEngine:
             except (aiohttp.ClientError, TimeoutError):
                 self.status = STATUS_OFFLINE
                 raise
+            if self.status == STATUS_REMOVED and not await self.refresh_space():
+                # Found out while reading: Home Assistant is no longer in the group.
+                self._changed()
+                return True
             self.status = STATUS_OK
             self.synced_at = self._now()
             if changed:

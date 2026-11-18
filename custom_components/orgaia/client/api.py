@@ -14,6 +14,8 @@ from ..protocol import PROTOCOL_VERSION
 from ..protocol.crypto import Identity
 
 REQUEST_TIMEOUT = aiohttp.ClientTimeout(total=30)
+# A clock this far from the service's is taken as wrong, and the service's time is used instead.
+CLOCK_TOLERANCE_MS = 5 * 60 * 1000
 
 
 class ApiError(Exception):
@@ -37,6 +39,8 @@ class Api:
         self._token: str | None = None
         self._expires = 0.0
         self._lock = asyncio.Lock()
+        # What to add to this machine's clock to get the service's time; 0 while the two agree.
+        self.clock_offset = 0
 
     async def _raw(self, method: str, path: str, body: Any = None, token: str | None = None) -> Any:
         headers = {"x-device": self.device_id}
@@ -68,6 +72,10 @@ class Api:
                 return self._token
             challenge = await self._raw("POST", "/v1/auth/challenge", {"signPub": self.identity.sign_pub})
             nonce = challenge["nonce"]
+            service_now = challenge.get("now")
+            if isinstance(service_now, (int, float)) and not isinstance(service_now, bool):
+                offset = int(service_now - time.time() * 1000)
+                self.clock_offset = offset if abs(offset) > CLOCK_TOLERANCE_MS else 0
             body = {
                 "signPub": self.identity.sign_pub,
                 "boxPub": self.identity.box_pub,
@@ -94,12 +102,15 @@ class Api:
     async def ws_connect(self) -> aiohttp.ClientWebSocketResponse:
         """Opens the live connection; it tells which group changed, never what."""
         token = await self.auth_token()
-        url = (
-            ("ws" + self.base[4:] if self.base.startswith("http") else self.base)
-            + "/v1/ws?token="
-            + quote(token, safe="")
-        )
-        return await self._session.ws_connect(url, heartbeat=55, timeout=aiohttp.ClientWSTimeout(ws_close=10))
+        url = ("ws" + self.base[4:] if self.base.startswith("http") else self.base) + "/v1/ws"
+        ws = await self._session.ws_connect(url, heartbeat=55, timeout=aiohttp.ClientWSTimeout(ws_close=10))
+        try:
+            # The token goes in the first message, not in the address, so it ends up in no access log.
+            await ws.send_json({"t": "auth", "token": token})
+        except BaseException:
+            await ws.close()
+            raise
+        return ws
 
 
 def space_path(space_id: str) -> str:

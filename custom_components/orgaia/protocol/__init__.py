@@ -4,4 +4,4 @@ This package does not depend on Home Assistant. It follows Orgaia's TypeScript p
 (packages/protocol and packages/core); tests/vectors/ha-v1.json pins it to them byte for byte.
 """
 
-PROTOCOL_VERSION = 1
+PROTOCOL_VERSION = 2
