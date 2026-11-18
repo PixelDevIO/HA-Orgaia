@@ -245,6 +245,26 @@ view: timetable
 plan: Leonie        # name or id; without it the first timetable
 ```
 
+#### Appearance
+
+Every view has an **Appearance** section in the editor; the timetable, roster and appointments also offer colours of their own:
+
+```yaml
+accent_color: teal         # today, buttons, ticks; one of Home Assistant's colours or any CSS colour
+background_color: '#102030'
+background_opacity: 40     # per cent; 0 shows the dashboard's background through the card
+text_color: white
+fill: 30                   # timetable, roster: how strong the coloured fields are, per cent
+subject_colors:            # timetable
+  Mathe: red
+  Sport: green
+shift_colors:              # roster
+  Nacht: deep-purple
+color_by: kind             # appointments: a coloured bar by person or by kind
+kind_colors:               # event, task, school, work, due, shopping
+  work: orange
+```
+
 Put the card on a dashboard several times for several views. The card is listed among the dashboard resources by the integration itself; after an update of the integration, reload the browser once.
 
 ### Actions
@@ -311,6 +331,6 @@ Home Assistant zählt nicht als Person; pro Gruppe gehen bis zu 3 Integrationen.
 
 **Einkaufslisten:** Die To-do-Entität zeigt in `shopping_state`, ob an der Liste noch geschrieben wird (`draft`), ob sie freigegeben ist (`ready`) oder jemand einkauft (`going`), dazu wer freigegeben hat, bis wann und wer einkauft. Mengen stehen im Titel, später dazugekommene Artikel tragen 🆕.
 
-**Abhaken und eintragen:** Home Assistant liest nur, bis ein Admin in der App unter **Verwalten › Home Assistant** „Darf abhaken und eintragen“ einschaltet. Danach geht alles über die **Orgaia-Karte** (`type: custom:orgaia-card`, sie kommt mit der Integration): **erst antippen, wer man ist, dann abhaken**, Artikel auf die Einkaufsliste setzen, Liste freigeben, „Mache ich“ und „Einkauf fertig“. In der App steht der Name mit dem Zusatz „über Home Assistant“. Nach einer Minute ohne Tippen vergisst die Karte, wer es war; auf dem eigenen Handy kennt sie die angemeldete Person, wenn diese unter **Konfigurieren** zugeordnet ist. Die Karte hat mehrere **Ansichten**, die im Editor gewählt werden: alle Listen, nur Einkauf, nur Aufgaben (auch nur einer Person), **Stundenplan** als Wochenraster, **Dienstplan** und **Termine**; dazu jeweils die passende Quelle (Liste, Plan, Person). Die Standard-To-do-Karten bleiben reine Anzeige. Für Automationen gibt es die Aktionen `orgaia.set_done`, `orgaia.add_article`, `orgaia.add_task`, `orgaia.release_shopping_list`, `orgaia.take_shopping`, `orgaia.finish_shopping` und weitere, jeweils mit `person`.
+**Abhaken und eintragen:** Home Assistant liest nur, bis ein Admin in der App unter **Verwalten › Home Assistant** „Darf abhaken und eintragen“ einschaltet. Danach geht alles über die **Orgaia-Karte** (`type: custom:orgaia-card`, sie kommt mit der Integration): **erst antippen, wer man ist, dann abhaken**, Artikel auf die Einkaufsliste setzen, Liste freigeben, „Mache ich“ und „Einkauf fertig“. In der App steht der Name mit dem Zusatz „über Home Assistant“. Nach einer Minute ohne Tippen vergisst die Karte, wer es war; auf dem eigenen Handy kennt sie die angemeldete Person, wenn diese unter **Konfigurieren** zugeordnet ist. Die Karte hat mehrere **Ansichten**, die im Editor gewählt werden: alle Listen, nur Einkauf, nur Aufgaben (auch nur einer Person), **Stundenplan** als Wochenraster, **Dienstplan** und **Termine**; dazu jeweils die passende Quelle (Liste, Plan, Person). Unter **Aussehen** lassen sich Akzent-, Hintergrund- und Textfarbe, die Deckkraft des Hintergrunds sowie eigene Farben je Fach, Schicht oder Art des Eintrags einstellen. Die Standard-To-do-Karten bleiben reine Anzeige. Für Automationen gibt es die Aktionen `orgaia.set_done`, `orgaia.add_article`, `orgaia.add_task`, `orgaia.release_shopping_list`, `orgaia.take_shopping`, `orgaia.finish_shopping` und weitere, jeweils mit `person`.
 
 **Lizenz:** Apache 2.0 (siehe [LICENSE](LICENSE)). Name und Logo „Orgaia“ sowie App und Dienst sind davon nicht umfasst.
