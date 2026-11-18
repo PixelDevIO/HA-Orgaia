@@ -14,7 +14,7 @@ from pytest_homeassistant_custom_component.common import async_capture_events, a
 from custom_components.orgaia.const import EVENT_ORGAIA
 
 from .fake_service import FakeService
-from .test_init import setup_group
+from .test_init import NOON, setup_group
 
 
 async def test_outage_keeps_the_last_state(hass: HomeAssistant, service: FakeService, freezer) -> None:
@@ -166,6 +166,9 @@ def resolves_to(ip: str):
 
 async def test_subscribed_calendar(hass: HomeAssistant, service: FakeService, freezer, aioclient_mock) -> None:
     """A school calendar the family subscribed to shows in the calendars of the people it is for."""
+    # The group is written at the time the test plays at: changes from a day ahead would not be taken.
+    await hass.config.async_set_time_zone("Europe/Berlin")
+    freezer.move_to(NOON)
     today = dt_util.now().date()
     day = (today + timedelta(days=2)).strftime("%Y%m%d")
     aioclient_mock.get("https://schule.example/kal.ics", text=ICS.format(day=day))
@@ -199,6 +202,9 @@ async def test_subscribed_calendar(hass: HomeAssistant, service: FakeService, fr
 
 async def test_calendar_in_home_network(hass: HomeAssistant, service: FakeService, freezer, aioclient_mock) -> None:
     """A calendar address whose name points into the home network is not fetched."""
+    # The group is written at the time the test plays at: changes from a day ahead would not be taken.
+    await hass.config.async_set_time_zone("Europe/Berlin")
+    freezer.move_to(NOON)
     aioclient_mock.get("https://schule.example/kal.ics", text="")
     service.write(
         "list",

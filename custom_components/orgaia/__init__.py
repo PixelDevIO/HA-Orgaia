@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv, device_registry as dr
@@ -12,11 +14,13 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.util import dt as dt_util
 
+from .board import async_setup_board, group_loaded, notify_boards
 from .client.engine import GroupEngine
-from .const import CONF_SPACE, DOMAIN, STORAGE_VERSION
+from .const import CARD_URL, CONF_SPACE, DOMAIN, STORAGE_VERSION, VERSION
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator, storage_key
 from .entity import active_person_ids, person_device_key
 from .events import EventTracker
+from .services import async_setup_services
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -26,7 +30,23 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    async_setup_services(hass)
+    async_setup_board(hass)
+    await _serve_card(hass)
     return True
+
+
+async def _serve_card(hass: HomeAssistant) -> None:
+    """The Orgaia card comes with the integration: every dashboard can use it without adding a resource."""
+    if hass.http is None:
+        return
+    card = Path(__file__).parent / "www" / "orgaia-card.js"
+    await hass.http.async_register_static_paths([StaticPathConfig(CARD_URL, str(card), False)])
+    if "frontend" in hass.config.components:
+        from homeassistant.components.frontend import add_extra_js_url  # noqa: PLC0415
+
+        # The version in the address makes browsers fetch the card again after an update.
+        add_extra_js_url(hass, f"{CARD_URL}?v={VERSION}")
 
 
 async def _load_engine(hass: HomeAssistant, entry: OrgaiaConfigEntry, store: Store) -> GroupEngine:
@@ -56,6 +76,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: OrgaiaConfigEntry) -> bo
     entry.async_on_unload(hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, coordinator.save_on_stop))
     entry.async_on_unload(coordinator.async_add_listener(lambda: _remove_gone_persons(hass, entry)))
     entry.async_on_unload(entry.add_update_listener(_options_changed))
+    entry.async_on_unload(coordinator.async_add_listener(lambda: notify_boards(hass)))
+    group_loaded(hass, entry, True)
     return True
 
 
@@ -89,6 +111,7 @@ async def async_remove_config_entry_device(
 async def async_unload_entry(hass: HomeAssistant, entry: OrgaiaConfigEntry) -> bool:
     unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unloaded:
+        group_loaded(hass, entry, False)
         coordinator = entry.runtime_data
         await coordinator.store.async_save(coordinator.engine.to_dict())
     return unloaded

@@ -210,5 +210,256 @@
       "shopping_taken": "Somebody took over the shopping",
       "shopping_done": "The shopping is done"
     }
+  },
+  "services": {
+    "set_done": {
+      "name": "Tick off a task",
+      "description": "Ticks a task off in the name of a person of the group, or opens it again. Of a repeating task the day that is due now is ticked off.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Group",
+          "description": "The Orgaia group. Only needed when more than one group is connected."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Who does it: a person of the group by name, or the Home Assistant person assigned to them in the options. The app shows this name."
+        },
+        "item": {
+          "name": "Task",
+          "description": "The task: its title, or its id as the to-do list gives it."
+        },
+        "list": {
+          "name": "List",
+          "description": "The list: its to-do entity or its name."
+        },
+        "done": {
+          "name": "Done",
+          "description": "Off to open the task again."
+        }
+      }
+    },
+    "add_article": {
+      "name": "Put an article on a shopping list",
+      "description": "Adds an article to a shopping list. On a list that was already released it is marked as new.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Group",
+          "description": "The Orgaia group. Only needed when more than one group is connected."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Who does it: a person of the group by name, or the Home Assistant person assigned to them in the options. The app shows this name."
+        },
+        "list": {
+          "name": "List",
+          "description": "The list: its to-do entity or its name."
+        },
+        "title": {
+          "name": "Title",
+          "description": "What it is called."
+        },
+        "quantity": {
+          "name": "Quantity",
+          "description": "How much of it, as free text."
+        }
+      }
+    },
+    "add_task": {
+      "name": "Add a task",
+      "description": "Adds a task to a task list.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Group",
+          "description": "The Orgaia group. Only needed when more than one group is connected."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Who does it: a person of the group by name, or the Home Assistant person assigned to them in the options. The app shows this name."
+        },
+        "list": {
+          "name": "List",
+          "description": "The list: its to-do entity or its name."
+        },
+        "title": {
+          "name": "Title",
+          "description": "What it is called."
+        },
+        "due_date": {
+          "name": "Due",
+          "description": "The day it is due."
+        },
+        "assignees": {
+          "name": "For",
+          "description": "The people it is for, by name."
+        }
+      }
+    },
+    "release_shopping_list": {
+      "name": "Release a shopping list",
+      "description": "Says the shopping list is complete: from now on it is something to do.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Group",
+          "description": "The Orgaia group. Only needed when more than one group is connected."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Who does it: a person of the group by name, or the Home Assistant person assigned to them in the options. The app shows this name."
+        },
+        "list": {
+          "name": "List",
+          "description": "The list: its to-do entity or its name."
+        },
+        "due_date": {
+          "name": "Due",
+          "description": "The day it is due."
+        },
+        "for": {
+          "name": "Asked of",
+          "description": "The people who are asked to shop. Empty means everybody."
+        },
+        "note": {
+          "name": "Note",
+          "description": "A short note for whoever shops."
+        }
+      }
+    },
+    "withdraw_shopping_list": {
+      "name": "Take a release back",
+      "description": "Takes the release back: the shopping list is being written again.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Group",
+          "description": "The Orgaia group. Only needed when more than one group is connected."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Who does it: a person of the group by name, or the Home Assistant person assigned to them in the options. The app shows this name."
+        },
+        "list": {
+          "name": "List",
+          "description": "The list: its to-do entity or its name."
+        }
+      }
+    },
+    "take_shopping": {
+      "name": "Take over the shopping",
+      "description": "\"I'll do it\": the person takes over a released shopping list.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Group",
+          "description": "The Orgaia group. Only needed when more than one group is connected."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Who does it: a person of the group by name, or the Home Assistant person assigned to them in the options. The app shows this name."
+        },
+        "list": {
+          "name": "List",
+          "description": "The list: its to-do entity or its name."
+        }
+      }
+    },
+    "drop_shopping": {
+      "name": "Give the shopping back",
+      "description": "\"Not after all\": the shopping list is open for the others again.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Group",
+          "description": "The Orgaia group. Only needed when more than one group is connected."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Who does it: a person of the group by name, or the Home Assistant person assigned to them in the options. The app shows this name."
+        },
+        "list": {
+          "name": "List",
+          "description": "The list: its to-do entity or its name."
+        }
+      }
+    },
+    "finish_shopping": {
+      "name": "Finish the shopping",
+      "description": "Ends the trip: what was bought leaves the list, what was not stays.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Group",
+          "description": "The Orgaia group. Only needed when more than one group is connected."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Who does it: a person of the group by name, or the Home Assistant person assigned to them in the options. The app shows this name."
+        },
+        "list": {
+          "name": "List",
+          "description": "The list: its to-do entity or its name."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "no_group": {
+      "message": "This Orgaia group is not connected."
+    },
+    "which_group": {
+      "message": "More than one Orgaia group is connected: say which one."
+    },
+    "no_person": {
+      "message": "{person} is no person of the group. Give a name from the group, or a Home Assistant person assigned in the options."
+    },
+    "no_list": {
+      "message": "There is no list {list} in the group."
+    },
+    "no_item": {
+      "message": "There is no task {item} that could be ticked off right now."
+    },
+    "read_only": {
+      "message": "Home Assistant may only read {group}. An admin can allow ticking off and adding in the Orgaia app under Manage › Home Assistant."
+    },
+    "not_a_task": {
+      "message": "Only tasks can be ticked off."
+    },
+    "needs_date": {
+      "message": "This repeating task has no day that is due right now."
+    },
+    "not_assigned": {
+      "message": "Here everybody ticks off their own part, and this person is not among them."
+    },
+    "not_shopping": {
+      "message": "This is no shopping list."
+    },
+    "not_tasks": {
+      "message": "This is no task list."
+    },
+    "empty": {
+      "message": "A title is missing."
+    },
+    "no_release": {
+      "message": "This shopping list is not released: the release is switched off for it."
+    },
+    "nothing_to_buy": {
+      "message": "There is nothing to buy on this list."
+    },
+    "not_released": {
+      "message": "This shopping list has not been released yet."
+    },
+    "write_offline": {
+      "message": "Orgaia could not be reached, so nothing was changed. Please try again."
+    },
+    "write_needs_plus": {
+      "message": "{group} takes no changes right now: Orgaia Plus is missing or the group is over its limits."
+    },
+    "write_removed": {
+      "message": "Home Assistant is no longer connected to {group}."
+    },
+    "write_full": {
+      "message": "{group} is full and takes no changes right now."
+    },
+    "write_update_required": {
+      "message": "This version of the integration is too old for the Orgaia service. Please update it in HACS."
+    },
+    "write_unknown": {
+      "message": "Orgaia did not take the change."
+    }
   }
 }

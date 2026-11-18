@@ -19,7 +19,15 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .client.api import ApiError
-from .client.engine import STATUS_NEEDS_PLUS, STATUS_OFFLINE, STATUS_OK, STATUS_REMOVED, STATUS_UPDATE, GroupEngine
+from .client.engine import (
+    STATUS_NEEDS_PLUS,
+    STATUS_OFFLINE,
+    STATUS_OK,
+    STATUS_REMOVED,
+    STATUS_UPDATE,
+    Change,
+    GroupEngine,
+)
 from .const import DOMAIN
 from .feeds import FeedCache
 from .protocol.feeds import with_feed_items
@@ -142,6 +150,9 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
             return self.build_view()
         self._wanted = False
         try:
+            if not self.live and self.engine.keys:
+                # Without the live connection nobody says that an admin allowed or forbade writing.
+                await self.engine.refresh_space()
             await self.engine.sync()
         except ApiError as err:
             self._update_issues()
@@ -162,6 +173,15 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
         self._save()
         self.refresh_feeds()
         return self.build_view()
+
+    async def write(self, changes: list[Change], person_id: str) -> None:
+        """Makes changes in a person's name and shows them at once. Raises WriteError when it did not work."""
+        try:
+            await self.engine.write(changes, person_id)
+        finally:
+            # Also after a refusal: it may have told that writing is no longer allowed.
+            self.async_set_updated_data(self.build_view())
+            self._save()
 
     @callback
     def save_on_stop(self, _event: Event) -> None:

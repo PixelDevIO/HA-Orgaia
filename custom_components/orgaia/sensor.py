@@ -12,7 +12,7 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .calendar import LOOKAHEAD_DAYS, events_between
+from .calendar import DONE_MARK, LOOKAHEAD_DAYS, events_between
 from .client.engine import STATUS_NEEDS_PLUS, STATUS_OFFLINE, STATUS_OK, STATUS_REMOVED, STATUS_UPDATE
 from .const import MAX_TITLES
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator
@@ -296,7 +296,8 @@ class OrgaiaNextEventSensor(OrgaiaEntity, SensorEntity):
         upcoming = [
             e
             for e in events_between(self.coordinator.data, now, now + timedelta(days=LOOKAHEAD_DAYS))
-            if e.start_datetime_local >= now
+            # What is ticked off already is not what comes next.
+            if e.start_datetime_local >= now and not e.summary.startswith(DONE_MARK)
         ]
         return upcoming[0] if upcoming else None
 

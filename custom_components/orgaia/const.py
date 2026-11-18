@@ -4,7 +4,7 @@ from __future__ import annotations
 
 DOMAIN = "orgaia"
 NAME = "Orgaia"
-VERSION = "0.5.0"
+VERSION = "0.6.0"
 
 CONF_LINK = "link"
 CONF_NAME = "name"
@@ -32,3 +32,6 @@ CONF_PERSONS = "persons"
 
 # Fired on the event bus for automations; also offered as device triggers on the group's device.
 EVENT_ORGAIA = "orgaia_event"
+
+# Where Home Assistant serves the Orgaia card to dashboards.
+CARD_URL = "/orgaia/orgaia-card.js"

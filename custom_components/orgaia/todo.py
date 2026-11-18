@@ -1,6 +1,7 @@
 """To-do lists: one per task and shopping list of the group, and one per person with everything assigned to them.
 
-Read only for now: changes are made in the app.
+They show only: a standard to-do card cannot ask who ticks off. That is what the Orgaia card and the
+actions in services.py are for.
 """
 
 from __future__ import annotations

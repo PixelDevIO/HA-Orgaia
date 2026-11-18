@@ -1,0 +1,167 @@
+set_done:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: orgaia
+    person:
+      required: true
+      example: "Anna"
+      selector:
+        text:
+    item:
+      required: true
+      example: "Müll rausbringen"
+      selector:
+        text:
+    list:
+      example: "todo.familie_einkauf"
+      selector:
+        text:
+    done:
+      default: true
+      selector:
+        boolean:
+add_article:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: orgaia
+    person:
+      required: true
+      example: "Anna"
+      selector:
+        text:
+    list:
+      required: true
+      example: "todo.familie_einkauf"
+      selector:
+        text:
+    title:
+      required: true
+      example: "Milch"
+      selector:
+        text:
+    quantity:
+      example: "2 l"
+      selector:
+        text:
+add_task:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: orgaia
+    person:
+      required: true
+      example: "Anna"
+      selector:
+        text:
+    list:
+      required: true
+      example: "todo.familie_einkauf"
+      selector:
+        text:
+    title:
+      required: true
+      example: "Milch"
+      selector:
+        text:
+    due_date:
+      selector:
+        date:
+    assignees:
+      selector:
+        text:
+          multiple: true
+release_shopping_list:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: orgaia
+    person:
+      required: true
+      example: "Anna"
+      selector:
+        text:
+    list:
+      required: true
+      example: "todo.familie_einkauf"
+      selector:
+        text:
+    due_date:
+      selector:
+        date:
+    for:
+      selector:
+        text:
+          multiple: true
+    note:
+      selector:
+        text:
+withdraw_shopping_list:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: orgaia
+    person:
+      required: true
+      example: "Anna"
+      selector:
+        text:
+    list:
+      required: true
+      example: "todo.familie_einkauf"
+      selector:
+        text:
+take_shopping:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: orgaia
+    person:
+      required: true
+      example: "Anna"
+      selector:
+        text:
+    list:
+      required: true
+      example: "todo.familie_einkauf"
+      selector:
+        text:
+drop_shopping:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: orgaia
+    person:
+      required: true
+      example: "Anna"
+      selector:
+        text:
+    list:
+      required: true
+      example: "todo.familie_einkauf"
+      selector:
+        text:
+finish_shopping:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: orgaia
+    person:
+      required: true
+      example: "Anna"
+      selector:
+        text:
+    list:
+      required: true
+      example: "todo.familie_einkauf"
+      selector:
+        text:
