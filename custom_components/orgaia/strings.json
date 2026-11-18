@@ -54,6 +54,9 @@
     "calendar": {
       "calendar": {
         "name": "Calendar"
+      },
+      "timetable": {
+        "name": "Timetable"
       }
     },
     "todo": {
@@ -143,6 +146,31 @@
             "name": "Person"
           }
         }
+      },
+      "shopping_waiting": {
+        "name": "Shopping waiting",
+        "state_attributes": {
+          "lists": {
+            "name": "Lists"
+          }
+        }
+      },
+      "school_today": {
+        "name": "School today"
+      },
+      "work_today": {
+        "name": "Work today"
+      }
+    },
+    "binary_sensor": {
+      "at_school": {
+        "name": "At school"
+      },
+      "at_work": {
+        "name": "At work"
+      },
+      "school_holidays": {
+        "name": "School holidays"
       }
     }
   },
@@ -177,7 +205,10 @@
       "task_overdue": "A task became overdue",
       "event_created": "An appointment was added",
       "event_changed": "An appointment was changed",
-      "event_starting": "An appointment starts"
+      "event_starting": "An appointment starts",
+      "shopping_released": "A shopping list was released",
+      "shopping_taken": "Somebody took over the shopping",
+      "shopping_done": "The shopping is done"
     }
   }
 }

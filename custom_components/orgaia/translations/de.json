@@ -54,6 +54,9 @@
     "calendar": {
       "calendar": {
         "name": "Kalender"
+      },
+      "timetable": {
+        "name": "Stundenplan"
       }
     },
     "todo": {
@@ -143,6 +146,31 @@
             "name": "Person"
           }
         }
+      },
+      "shopping_waiting": {
+        "name": "Einkauf offen",
+        "state_attributes": {
+          "lists": {
+            "name": "Listen"
+          }
+        }
+      },
+      "school_today": {
+        "name": "Schule heute"
+      },
+      "work_today": {
+        "name": "Arbeit heute"
+      }
+    },
+    "binary_sensor": {
+      "at_school": {
+        "name": "In der Schule"
+      },
+      "at_work": {
+        "name": "Bei der Arbeit"
+      },
+      "school_holidays": {
+        "name": "Schulferien"
       }
     }
   },
@@ -177,7 +205,10 @@
       "task_overdue": "Eine Aufgabe ist überfällig geworden",
       "event_created": "Ein Termin wurde angelegt",
       "event_changed": "Ein Termin wurde geändert",
-      "event_starting": "Ein Termin beginnt"
+      "event_starting": "Ein Termin beginnt",
+      "shopping_released": "Eine Einkaufsliste wurde freigegeben",
+      "shopping_taken": "Jemand hat den Einkauf übernommen",
+      "shopping_done": "Der Einkauf ist erledigt"
     }
   }
 }

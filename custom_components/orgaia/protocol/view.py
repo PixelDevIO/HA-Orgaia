@@ -11,6 +11,7 @@ from typing import Any
 
 from . import plan_read as plans
 from .model import State, plain
+from .shopping import read_trip
 
 RSVP_PREFIX = "rsvp."
 DONE_PREFIX = "done."
@@ -212,6 +213,8 @@ def build_view(space_id: str, kind: str, state: State) -> SpaceView:
             lst["timetable"] = plans.read_timetable(raw)
         elif ltype == "roster":
             lst["roster"] = plans.read_roster(raw)
+        elif ltype == "shopping" and kind == "group":
+            lst.update(read_trip(raw))
         lists.append(lst)
     lists.sort(key=lambda lst: (lst["order"], locale_key(lst["id"])))
     list_by_id = {lst["id"]: lst for lst in lists}

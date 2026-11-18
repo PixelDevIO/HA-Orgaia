@@ -30,8 +30,9 @@ from .entity import person_entity, space_key
 from .protocol.feeds import is_feed_item
 from .protocol.plans import is_plan_item
 from .protocol.recur import add_days
+from .protocol.shopping import Trip
 from .protocol.view import SpaceView
-from .summary import TodoEntry, calendar_occurrences, overdue_entries, todo_entries
+from .summary import TodoEntry, calendar_occurrences, overdue_entries, shopping_trips, todo_entries
 from .util import local_now, minute_of_day, to_datetime
 
 _LOGGER = logging.getLogger(__name__)
@@ -44,6 +45,9 @@ TASK_OVERDUE = "task_overdue"
 EVENT_CREATED = "event_created"
 EVENT_CHANGED = "event_changed"
 EVENT_STARTING = "event_starting"
+SHOPPING_RELEASED = "shopping_released"
+SHOPPING_TAKEN = "shopping_taken"
+SHOPPING_DONE = "shopping_done"
 
 EVENT_TYPES = [
     TASK_CREATED,
@@ -54,6 +58,9 @@ EVENT_TYPES = [
     EVENT_CREATED,
     EVENT_CHANGED,
     EVENT_STARTING,
+    SHOPPING_RELEASED,
+    SHOPPING_TAKEN,
+    SHOPPING_DONE,
 ]
 
 TICK = timedelta(minutes=1)
@@ -73,6 +80,10 @@ def _appointment(item: dict[str, Any]) -> str:
     """What makes an appointment "changed": time, place, title, repetition and who takes part."""
     keys = ("title", "start", "end", "allDay", "location", "repeat", "assignees")
     return json.dumps({k: item.get(k) for k in keys}, sort_keys=True, default=str)
+
+
+def _trip_mark(lst: dict[str, Any], trip: Trip) -> tuple[Any, Any, Any]:
+    return ((trip.ready or {}).get("at"), trip.shopper, (lst.get("lastTrip") or {}).get("at"))
 
 
 def _round(item: dict[str, Any]) -> tuple[Any, Any] | None:
@@ -106,6 +117,8 @@ class EventTracker:
         # Tasks that come back never stay done: each round leaves only `lastDone` behind.
         self._rounds: dict[str, Any] = {}
         self._persons: set[str] = set()
+        # Per shopping list: when it was released, who shops, when the last trip ended.
+        self._trips: dict[str, tuple[Any, Any, Any]] = {}
         self._day = ""
         self._last_tick = local_now()
 
@@ -151,6 +164,7 @@ class EventTracker:
         self._rounds = {i["id"]: _round(i) for i in view.items if i.get("again") and i["kind"] == "task"}
         self._appointments = {i["id"]: _appointment(i) for i in view.items if i["kind"] == "event"}
         self._persons = {p["id"] for p in view.active_persons()}
+        self._trips = {lst["id"]: _trip_mark(lst, trip) for lst, trip in shopping_trips(view)}
 
     def _overdue_now(self, view: SpaceView) -> set[str]:
         now = local_now()
@@ -171,15 +185,17 @@ class EventTracker:
             finally:
                 self._late = False
             return
-        old_tasks, old_entries, old_items, old_appointments, old_persons, old_rounds = (
+        old_tasks, old_entries, old_items, old_appointments, old_persons, old_rounds, old_trips = (
             self._tasks,
             self._entries,
             self._items,
             self._appointments,
             self._persons,
             self._rounds,
+            self._trips,
         )
         self._remember(view)
+        self._check_trips(view, old_trips)
         self._check_rounds(view, old_rounds, old_entries)
         for uid, task in self._tasks.items():
             entry = self._entries[uid]
@@ -212,6 +228,21 @@ class EventTracker:
                 self._fire_appointment(view, EVENT_CHANGED, item)
         self._check_overdue(view)
 
+    def _check_trips(self, view: SpaceView, old: dict[str, tuple[Any, Any, Any]]) -> None:
+        """A shopping list was released, somebody took it over, or the shopping is done."""
+        for lst, trip in shopping_trips(view):
+            before = old.get(lst["id"])
+            if before is None:
+                # A list that is new here says nothing about what happened to it before.
+                continue
+            released, shopper, finished = _trip_mark(lst, trip)
+            if finished and finished != before[2]:
+                self._fire_trip(view, SHOPPING_DONE, lst, trip)
+            if released and released != before[0]:
+                self._fire_trip(view, SHOPPING_RELEASED, lst, trip)
+            if shopper and (shopper != before[1] or released != before[0]):
+                self._fire_trip(view, SHOPPING_TAKEN, lst, trip)
+
     def _check_rounds(self, view: SpaceView, old_rounds: dict[str, Any], old_entries: dict[str, TodoEntry]) -> None:
         """A task that comes back was done (a new `lastDone`) or that was taken back (an older one)."""
         for item_id, mark in self._rounds.items():
@@ -238,9 +269,11 @@ class EventTracker:
         now = local_now()
         view = self.coordinator.data
         # An appointment that began long ago (Home Assistant was busy or the clock jumped) is not "starting".
-        self._fire_starting(now, max(self._last_tick, now - LATE_START))
+        since = max(self._last_tick, now - LATE_START)
+        # "Next appointment" and the calendars' on/off follow the clock, not only changes of the group.
+        changed = self._boundary_passed(view, since, now)
+        self._fire_starting(now, since)
         today = now.date().isoformat()
-        changed = False
         if today != self._day:
             self._day = today
             # Packing tasks, school days and shifts are worked out around today.
@@ -250,6 +283,15 @@ class EventTracker:
         if changed:
             # Counts and lists depend on the time of day too.
             self.coordinator.async_update_listeners()
+
+    def _boundary_passed(self, view: SpaceView, since: datetime, now: datetime) -> bool:
+        """Whether anything in the calendar began or ended after ``since`` and up to ``now``."""
+        for occ in calendar_occurrences(view, add_days(since.date().isoformat(), -1), now.date().isoformat()):
+            if since < to_datetime(occ.start) <= now:
+                return True
+            if occ.end and not occ.item.get("allDay") and since < to_datetime(occ.end) <= now:
+                return True
+        return False
 
     def _fire_starting(self, now: datetime, since: datetime) -> None:
         """Appointments that began after ``since`` and up to ``now``."""
@@ -320,6 +362,43 @@ class EventTracker:
             data["completed_by_entity"] = person_entity(self.entry, e.done_by)
         if assigned is not None:
             data["assigned"], data["assigned_entities"] = self._people(view, assigned)
+        self._fire(data)
+
+    def _fire_trip(self, view: SpaceView, event_type: str, lst: dict[str, Any], trip: Trip) -> None:
+        ready = trip.ready or {}
+        last = lst.get("lastTrip") or {}
+        asked, asked_entities = self._people(view, ready.get("for") or [])
+        data: dict[str, Any] = {
+            **self._base(event_type),
+            "list": lst["name"],
+            "list_id": lst["id"],
+            "list_type": "shopping",
+            "open": trip.open,
+        }
+        if event_type == SHOPPING_DONE:
+            by = view.person_by_id.get(last.get("by") or "")
+            data.update(
+                {
+                    "bought": last.get("n", 0),
+                    "left": last.get("left", 0),
+                    "shopper": by["name"] if by else None,
+                    "shopper_entity": person_entity(self.entry, last.get("by") or ""),
+                }
+            )
+        else:
+            by = view.person_by_id.get(ready.get("by") or "")
+            shopper = view.person_by_id.get(trip.shopper or "")
+            data.update(
+                {
+                    "released_by": by["name"] if by else None,
+                    "due": ready.get("due"),
+                    "note": ready.get("note"),
+                    "assignees": asked,
+                    "assignee_entities": asked_entities,
+                    "shopper": shopper["name"] if shopper else None,
+                    "shopper_entity": person_entity(self.entry, trip.shopper) if trip.shopper else None,
+                }
+            )
         self._fire(data)
 
     def _fire_appointment(

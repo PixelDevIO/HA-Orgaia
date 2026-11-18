@@ -100,6 +100,7 @@ async def test_live_connection_survives_the_unexpected(hass: HomeAssistant, serv
     with (
         patch.object(coordinator.engine.api, "ws_connect", new=connect),
         patch("custom_components.orgaia.coordinator.asyncio.sleep", new=sleep),
+        patch("custom_components.orgaia.coordinator.spread", new=lambda delay: delay),
         pytest.raises(asyncio.CancelledError),
     ):
         await RUN_LIVE(coordinator)
@@ -136,6 +137,7 @@ async def test_connection_closed_at_once_waits_longer_each_time(
     with (
         patch.object(coordinator.engine.api, "ws_connect", new=connect),
         patch("custom_components.orgaia.coordinator.asyncio.sleep", new=sleep),
+        patch("custom_components.orgaia.coordinator.spread", new=lambda delay: delay),
         pytest.raises(asyncio.CancelledError),
     ):
         await RUN_LIVE(coordinator)

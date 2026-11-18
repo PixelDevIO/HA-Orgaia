@@ -5,6 +5,8 @@ Read only for now: changes are made in the app.
 
 from __future__ import annotations
 
+from typing import Any
+
 from homeassistant.components.todo import TodoItem, TodoItemStatus, TodoListEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
@@ -12,7 +14,8 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import COMPLETED_DAYS
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator
-from .entity import OrgaiaEntity, active_person_ids, space_key, track_dynamic
+from .entity import OrgaiaEntity, active_person_ids, person_entity, space_key, track_dynamic
+from .protocol.shopping import trip_of
 from .summary import TodoEntry, todo_entries, todo_lists
 from .util import from_ms, to_date, to_datetime, today
 
@@ -52,6 +55,9 @@ def _description(e: TodoEntry, with_persons: bool = True, list_name: str | None 
         parts.append("📋 " + list_name)
     if with_persons and e.persons:
         parts.append("👤 " + ", ".join(e.persons))
+    if e.late:
+        # Came onto the list after it was released, as the app's mark "new".
+        parts.append("🆕")
     if e.note:
         parts.append(e.note)
     if e.subtasks:
@@ -61,7 +67,7 @@ def _description(e: TodoEntry, with_persons: bool = True, list_name: str | None 
 
 def _item(e: TodoEntry, description: str | None) -> TodoItem:
     return TodoItem(
-        summary=e.title,
+        summary=f"{e.title} ({e.qty})" if e.qty else e.title,
         uid=e.uid,
         status=TodoItemStatus.COMPLETED if e.done else TodoItemStatus.NEEDS_ACTION,
         due=(to_datetime(e.due) if len(e.due) > 10 else to_date(e.due)) if e.due else None,
@@ -72,6 +78,8 @@ def _item(e: TodoEntry, description: str | None) -> TodoItem:
 
 class OrgaiaTodoList(OrgaiaEntity, TodoListEntity):
     _attr_translation_key = "list"
+    # Names and notes stay out of the recorder's database.
+    _unrecorded_attributes = frozenset({"released_by", "for", "note", "shopper", "shopper_entity"})
 
     def __init__(self, coordinator: OrgaiaCoordinator, list_id: str) -> None:
         super().__init__(coordinator, f"list_{list_id}")
@@ -95,6 +103,36 @@ class OrgaiaTodoList(OrgaiaEntity, TodoListEntity):
     def todo_items(self) -> list[TodoItem]:
         entries = todo_entries(self.coordinator.data, today(), COMPLETED_DAYS, list_id=self.list_id)
         return [_item(e, _description(e)) for e in entries]
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """For a shopping list: whether it is still being written, released, or somebody is shopping."""
+        view = self.coordinator.data
+        lst = view.list_by_id.get(self.list_id)
+        if not lst or lst["type"] != "shopping":
+            return None
+        trip = trip_of(view, lst)
+        ready = trip.ready or {}
+        released = from_ms(ready.get("at"))
+        entry = self.coordinator.config_entry
+
+        def name(pid: str | None) -> str | None:
+            return (view.person_by_id.get(pid) or {}).get("name") if pid else None
+
+        return {
+            "list_id": self.list_id,
+            "list_type": "shopping",
+            "shopping_state": trip.state,
+            "open": trip.open,
+            "bought": trip.bought,
+            "released_by": name(ready.get("by")),
+            "released_at": released.isoformat() if released else None,
+            "due": ready.get("due"),
+            "for": view.names(ready.get("for") or []),
+            "note": ready.get("note"),
+            "shopper": name(trip.shopper),
+            "shopper_entity": person_entity(entry, trip.shopper) if trip.shopper else None,
+        }
 
 
 class OrgaiaPersonTodo(OrgaiaEntity, TodoListEntity):
