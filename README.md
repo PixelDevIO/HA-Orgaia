@@ -70,7 +70,7 @@ Titles follow Home Assistant's language (German or English).
 
 ### Subscribed calendars
 
-A calendar the family subscribed to in Orgaia (school, club, waste collection) shows in the group's calendar and in the calendars of the people it is for. Like every phone, Home Assistant fetches it itself, straight from its address, every 6 hours; the entries never go through the Orgaia service and are kept in their own storage file. When a fetch fails, the entries of the last good one stay. They fire `event_starting`, but never `event_created` or `event_changed`.
+A calendar the family subscribed to in Orgaia (school, club, waste collection) shows in the group's calendar and in the calendars of the people it is for. Like every phone, Home Assistant fetches it itself, straight from its address, every 6 hours; the entries never go through the Orgaia service and are kept in their own storage file. When a fetch fails, the entries of the last good one stay. They fire `event_starting`, but never `event_created` or `event_changed`. Only HTTPS addresses on the internet are fetched: an address (or a redirect) that points into the home network, such as the router or `homeassistant.local`, is refused, since anybody in the group can enter one.
 
 ### People in Home Assistant
 

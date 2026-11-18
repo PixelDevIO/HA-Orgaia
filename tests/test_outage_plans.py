@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
+import socket
 from unittest.mock import patch
 
 from homeassistant.config_entries import ConfigEntryState
@@ -154,6 +155,15 @@ ICS = "\r\n".join(
 )
 
 
+def resolves_to(ip: str):
+    """Answer every name lookup with one address, so the tests do not depend on the network they run in."""
+
+    async def lookup(host, port, *args, **kwargs):
+        return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", (ip, port))]
+
+    return lookup
+
+
 async def test_subscribed_calendar(hass: HomeAssistant, service: FakeService, freezer, aioclient_mock) -> None:
     """A school calendar the family subscribed to shows in the calendars of the people it is for."""
     today = dt_util.now().date()
@@ -165,8 +175,9 @@ async def test_subscribed_calendar(hass: HomeAssistant, service: FakeService, fr
         {"name": "Schule", "type": "feed", "url": "webcal://schule.example/kal.ics", "feedFor": ["ben"], "order": 9},
     )
     events = async_capture_events(hass, EVENT_ORGAIA)
-    entry = await setup_group(hass, service, freezer)
-    await hass.async_block_till_done()
+    with patch.object(hass.loop, "getaddrinfo", resolves_to("93.184.215.14")):
+        entry = await setup_group(hass, service, freezer)
+        await hass.async_block_till_done()
     when = (today + timedelta(days=2)).isoformat()
     got = await hass.services.async_call(
         "calendar",
@@ -184,3 +195,17 @@ async def test_subscribed_calendar(hass: HomeAssistant, service: FakeService, fr
     await hass.async_block_till_done()
     assert not [e for e in events if e.data.get("title") == "Wandertag"]
     assert aioclient_mock.call_count == 1
+
+
+async def test_calendar_in_home_network(hass: HomeAssistant, service: FakeService, freezer, aioclient_mock) -> None:
+    """A calendar address whose name points into the home network is not fetched."""
+    aioclient_mock.get("https://schule.example/kal.ics", text="")
+    service.write(
+        "list",
+        "feed1",
+        {"name": "Schule", "type": "feed", "url": "webcal://schule.example/kal.ics", "feedFor": ["ben"], "order": 9},
+    )
+    with patch.object(hass.loop, "getaddrinfo", resolves_to("192.168.178.1")):
+        await setup_group(hass, service, freezer)
+        await hass.async_block_till_done()
+    assert aioclient_mock.call_count == 0

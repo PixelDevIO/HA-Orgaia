@@ -13,8 +13,10 @@ from __future__ import annotations
 import calendar
 from dataclasses import dataclass, field, replace
 from datetime import UTC, date, datetime, timedelta, tzinfo
+import ipaddress
 import re
 from typing import Any
+from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo
 
 MAX_OCCURRENCES = 2000
@@ -498,8 +500,45 @@ def parse_ics(text: str, start: str, end: str, local: tzinfo) -> list[FeedEvent]
 
 
 def feed_url(raw: str) -> str | None:
-    """``webcal://`` is how many sites link calendars for subscribing; it is plain HTTPS underneath."""
-    v = re.sub(r"^webcals?://", "https://", raw.strip(), flags=re.IGNORECASE)
-    if not re.match(r"^https?://[^\s/]+\.[^\s]+", v, flags=re.IGNORECASE):
+    """Only HTTPS: ``webcal://`` and ``http://`` become ``https://``. Never an address in the home network."""
+    v = re.sub(r"^(webcals?|https?)://", "https://", raw.strip(), flags=re.IGNORECASE)
+    if not re.match(r"^https://[^\s/]+\.[^\s]+", v, flags=re.IGNORECASE):
         return None
-    return v
+    try:
+        host = (urlsplit(v).hostname or "").lower()
+    except ValueError:
+        return None
+    return None if is_private_host(host) else v
+
+
+_LOCAL_SUFFIXES = (
+    ".localhost",
+    ".local",
+    ".lan",
+    ".home",
+    ".internal",
+    ".intranet",
+    ".corp",
+    ".home.arpa",
+    ".fritz.box",
+)
+
+
+def is_private_host(host: str) -> bool:
+    """Names and addresses inside a home network or on the machine itself, as the app's ``isPrivateHost``."""
+    h = host.strip("[]").rstrip(".").lower()
+    if "." not in h and ":" not in h:
+        return True
+    if h in ("localhost", "fritz.box", "speedport.ip") or h.endswith(_LOCAL_SUFFIXES):
+        return True
+    try:
+        return is_private_ip(ipaddress.ip_address(h))
+    except ValueError:
+        return False
+
+
+def is_private_ip(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
+    """Not a public internet address: private, loopback, link-local, carrier-grade NAT, multicast, reserved."""
+    if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped:
+        ip = ip.ipv4_mapped
+    return not ip.is_global or ip.is_multicast
