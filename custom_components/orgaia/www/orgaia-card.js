@@ -5,6 +5,9 @@
  * tick off. The app shows that name with the note "via Home Assistant". After a while without a tap
  * the card forgets who it was, so the next one at the display does not tick off in somebody else's name.
  *
+ * One card, several views: all lists, only the shopping, only the tasks, a timetable as a week grid,
+ * the rosters side by side, or what is coming up. The editor picks the view and where it reads from.
+ *
  * It comes with the Orgaia integration; no build step, no dependencies.
  */
 
@@ -45,6 +48,49 @@ const TEXT = {
     showDone: 'Show done tasks',
     addTasks: 'Allow adding tasks',
     forget: 'Forget who it was after (seconds)',
+    view: 'View',
+    viewLists: 'All lists',
+    viewShopping: 'Shopping',
+    viewTasks: 'Tasks',
+    viewTimetable: 'Timetable',
+    viewRoster: 'Roster',
+    viewAgenda: 'Appointments',
+    lists: 'Lists (empty: all)',
+    person: 'Only of this person (empty: everybody)',
+    plan: 'Timetable (empty: the first one)',
+    plans: 'Rosters (empty: all)',
+    layout: 'Layout',
+    layoutWeek: 'Whole week',
+    layoutDay: 'One day',
+    showPack: 'Show what to pack',
+    showRooms: 'Show rooms',
+    days: 'Days ahead',
+    startAt: 'Starts',
+    startToday: 'Today',
+    startWeek: 'On Monday',
+    showPlans: 'Show school and work',
+    showDeadlines: 'Show what is due',
+    showPersons: 'Show who it is for',
+    max: 'At most this many entries (0: all)',
+    ask: 'Who are you?',
+    askAuto: 'Take the signed-in user when known',
+    askAlways: 'Always ask',
+    thisWeek: 'This week',
+    nextWeek: 'Next week',
+    weekAB: 'Week {week}',
+    noTimetable: 'No timetable in this group.',
+    noRoster: 'No roster in this group.',
+    noLessons: 'No lessons entered.',
+    noSchool: 'No school',
+    holidays: 'Holidays',
+    free: 'off',
+    packToday: 'Pack today',
+    nothingAhead: 'Nothing in the next {n} days.',
+    allDay: 'all day',
+    due: 'due',
+    shopping: 'Shopping',
+    room: 'Room {room}',
+    more: '{n} more',
   },
   de: {
     who: 'Wer bist du?',
@@ -82,6 +128,49 @@ const TEXT = {
     showDone: 'Erledigte Aufgaben zeigen',
     addTasks: 'Aufgaben anlegen erlauben',
     forget: 'Vergessen, wer es war, nach (Sekunden)',
+    view: 'Ansicht',
+    viewLists: 'Alle Listen',
+    viewShopping: 'Einkauf',
+    viewTasks: 'Aufgaben',
+    viewTimetable: 'Stundenplan',
+    viewRoster: 'Dienstplan',
+    viewAgenda: 'Termine',
+    lists: 'Listen (leer: alle)',
+    person: 'Nur von dieser Person (leer: alle)',
+    plan: 'Stundenplan (leer: der erste)',
+    plans: 'Dienstpläne (leer: alle)',
+    layout: 'Darstellung',
+    layoutWeek: 'Ganze Woche',
+    layoutDay: 'Ein Tag',
+    showPack: 'Zeigen, was einzupacken ist',
+    showRooms: 'Räume zeigen',
+    days: 'Tage im Voraus',
+    startAt: 'Beginnt',
+    startToday: 'Heute',
+    startWeek: 'Am Montag',
+    showPlans: 'Schule und Arbeit zeigen',
+    showDeadlines: 'Fälliges zeigen',
+    showPersons: 'Zeigen, für wen es ist',
+    max: 'Höchstens so viele Einträge (0: alle)',
+    ask: 'Wer bist du?',
+    askAuto: 'Angemeldeten Nutzer nehmen, wenn bekannt',
+    askAlways: 'Immer fragen',
+    thisWeek: 'Diese Woche',
+    nextWeek: 'Nächste Woche',
+    weekAB: '{week}-Woche',
+    noTimetable: 'In dieser Gruppe gibt es keinen Stundenplan.',
+    noRoster: 'In dieser Gruppe gibt es keinen Dienstplan.',
+    noLessons: 'Keine Stunden eingetragen.',
+    noSchool: 'Keine Schule',
+    holidays: 'Ferien',
+    free: 'frei',
+    packToday: 'Heute einpacken',
+    nothingAhead: 'Nichts in den nächsten {n} Tagen.',
+    allDay: 'ganztägig',
+    due: 'fällig',
+    shopping: 'Einkauf',
+    room: 'Raum {room}',
+    more: '{n} weitere',
   },
 };
 
@@ -92,8 +181,89 @@ const colorOf = (i) => COLORS[(((i || 0) % COLORS.length) + COLORS.length) % COL
 const esc = (s) =>
   String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
+const VIEWS = ['lists', 'shopping', 'tasks', 'timetable', 'roster', 'agenda'];
+const viewOf = (config) => (VIEWS.includes(config && config.view) ? config.view : 'lists');
+const textsFor = (hass) => TEXT[((hass && hass.language) || 'en').slice(0, 2)] || TEXT.en;
+/** A choice from the editor: an id or a name, one or several, or a line separated by commas. */
+const wanted = (x) =>
+  (Array.isArray(x) ? x : typeof x === 'string' ? x.split(',') : []).map((v) => String(v).trim().toLowerCase()).filter(Boolean);
+const among = (all, choice) => {
+  const w = wanted(choice);
+  return w.length ? all.filter((x) => w.includes(x.id.toLowerCase()) || w.includes(x.name.trim().toLowerCase())) : all;
+};
+const addDays = (ymd, n) => {
+  const d = new Date(ymd + 'T12:00:00');
+  d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+/** A colour of its own for every subject or shift, the same one each time. */
+const hueOf = (text) => {
+  let h = 0;
+  for (const ch of String(text)) h = (h * 31 + ch.codePointAt(0)) % 360;
+  return h;
+};
+
+/*
+ * One connection per group, however many cards show it. What came last is kept, so a card that is
+ * put on the dashboard shows something at once, and the editor knows the lists and plans to offer.
+ */
+const GROUPS = new Map();
+
+function watch(hass, entry, listener) {
+  const key = entry || '';
+  let group = GROUPS.get(key);
+  if (!group) {
+    group = { data: null, listeners: new Set(), pending: null };
+    GROUPS.set(key, group);
+  }
+  group.listeners.add(listener);
+  if (group.data) listener(group.data);
+  if (!group.pending) {
+    const msg = { type: 'orgaia/board/subscribe' };
+    if (entry) msg.entry_id = entry;
+    const pending = hass.connection.subscribeMessage((data) => {
+      // A group that is being loaded again is back in a moment: keep what is known.
+      if (data.status === 'not_loaded' && group.data && group.data.lists) return;
+      group.data = data;
+      group.listeners.forEach((f) => f(data));
+    }, msg);
+    group.pending = pending;
+    pending.catch(() => {
+      if (group.pending === pending) group.pending = null;
+      group.listeners.forEach((f) => f({ status: 'not_loaded' }));
+    });
+  }
+  return () => {
+    group.listeners.delete(listener);
+    // A dashboard that draws again takes its cards off and puts them back: do not hang up for that.
+    setTimeout(() => {
+      if (group.listeners.size || !group.pending) return;
+      const pending = group.pending;
+      group.pending = null;
+      pending.then((off) => off()).catch(() => undefined);
+    }, 2000);
+  };
+}
+
+/** What is known of a group right now, asking for it when nothing is: the editor needs it for its choices. */
+function known(hass, entry) {
+  const group = GROUPS.get(entry || '');
+  if (group && group.data && group.data.lists) return Promise.resolve(group.data);
+  return new Promise((resolve) => {
+    let off = null;
+    const done = (data) => {
+      clearTimeout(timer);
+      if (off) off();
+      else setTimeout(() => off && off(), 0);
+      resolve(data && data.lists ? data : null);
+    };
+    const timer = setTimeout(() => done(null), 3000);
+    off = watch(hass, entry, done);
+  });
+}
+
 const STYLE = `
-  :host { display: block; }
+  :host { display: block; container-type: inline-size; }
   ha-card { padding: 12px 16px 16px; }
   h1 { font-size: 1.25rem; font-weight: 500; margin: 4px 0 12px; }
   h2 { font-size: 1rem; font-weight: 500; margin: 0; flex: 1; min-width: 0; overflow-wrap: anywhere; }
@@ -149,6 +319,52 @@ const STYLE = `
   details { margin-top: 4px; }
   summary { cursor: pointer; color: var(--secondary-text-color); font-size: 0.875rem; min-height: 32px; }
   .error { color: var(--error-color); font-size: 0.875rem; margin: 8px 0 0; scroll-margin: 80px; }
+  .btn.small { min-height: 32px; padding: 0 10px; font-size: 0.8125rem; }
+  .weeks { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tt, .rs { display: grid; gap: 4px; align-items: stretch; }
+  .dayhead { text-align: center; font-weight: 500; padding: 4px 2px; border-radius: 8px; min-width: 0; overflow-wrap: anywhere; }
+  .dayhead .sub, .when .sub { display: block; font-weight: 400; }
+  .dayhead.today, .when.today { background: var(--primary-color); color: var(--text-primary-color, #fff); }
+  .dayhead.today .sub, .when.today .sub { color: inherit; opacity: 0.85; }
+  .tt .when, .rs .when { grid-column: 1; padding: 4px 6px 4px 2px; font-variant-numeric: tabular-nums; border-radius: 8px; }
+  .rs .when { padding: 6px 8px; align-self: stretch; }
+  .rs .monday { margin-top: 10px; }
+  .cell { min-width: 0; min-height: 40px; border-radius: 8px; display: flex; }
+  .tt .cell.today { background: color-mix(in srgb, var(--primary-color) 8%, transparent); }
+  .lesson, .shift {
+    flex: 1; min-width: 0; box-sizing: border-box; padding: 4px 6px; border-radius: 8px; overflow-wrap: anywhere; hyphens: auto;
+    background: hsl(var(--h) 65% 50% / 0.16); border-left: 3px solid hsl(var(--h) 55% 45%);
+    display: flex; flex-direction: column; justify-content: center; font-size: 0.875rem; line-height: 1.2;
+  }
+  .lesson.live, .shift.live, .ev.live .when { outline: 2px solid var(--primary-color); outline-offset: 1px; }
+  .shift { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 2px 6px; }
+  .code { font-weight: 700; min-width: 1.5em; text-align: center; }
+  .shift .sub { flex-basis: 100%; }
+  .cell.free { align-items: center; padding: 0 8px; color: var(--secondary-text-color); font-size: 0.875rem; }
+  .off {
+    border-radius: 8px; display: grid; place-items: center; text-align: center; padding: 4px; min-width: 0; overflow-wrap: anywhere;
+    color: var(--secondary-text-color); font-size: 0.875rem;
+    background: repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in srgb, var(--secondary-text-color) 12%, transparent) 6px 12px);
+  }
+  .slot { display: flex; gap: 8px; align-items: stretch; margin-top: 4px; }
+  .slot .when { flex: none; width: 5.5rem; font-variant-numeric: tabular-nums; }
+  .pack { margin: 12px 0 0; font-size: 0.875rem; }
+  h3 { font-size: 0.875rem; font-weight: 500; margin: 14px 0 4px; color: var(--secondary-text-color); }
+  h3:first-of-type { margin-top: 4px; }
+  h3.today { color: var(--primary-color); }
+  .ev { display: flex; gap: 10px; align-items: flex-start; min-height: 40px; }
+  .ev .when { flex: none; width: 6.25rem; padding: 2px 4px; margin-top: 8px; border-radius: 6px; font-variant-numeric: tabular-nums; font-size: 0.875rem; color: var(--secondary-text-color); }
+  .ev .text { padding: 9px 0; }
+  .ev.school .name, .ev.work .name { color: var(--secondary-text-color); }
+  .ev.done .name { text-decoration: line-through; color: var(--secondary-text-color); }
+  @container (max-width: 520px) {
+    .tt { gap: 3px; }
+    .tt .when { padding: 4px 2px 4px 0; font-size: 0.875rem; }
+    .tt .lesson { padding: 4px 3px 4px 4px; border-left-width: 2px; font-size: 0.75rem; overflow-wrap: normal; hyphens: none; }
+    .tt .lesson span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tt .dayhead { font-size: 0.875rem; }
+    .ev .when { width: 5.5rem; }
+  }
   @media (prefers-reduced-motion: reduce) { .who.ask .chip { animation: none; } }
 `;
 
@@ -161,6 +377,7 @@ class OrgaiaCard extends HTMLElement {
     this._config = {};
     this._data = null;
     this._who = null;
+    this._week = null;
     this._chosen = false;
     this._busy = new Set();
     this._drafts = {};
@@ -176,28 +393,19 @@ class OrgaiaCard extends HTMLElement {
     });
   }
 
-  static getStubConfig() {
-    return {};
+  /** Asking for the group first means the editor that opens next can offer its lists and plans. */
+  static async getStubConfig(hass) {
+    if (hass) await known(hass, undefined);
+    return { view: 'lists' };
   }
 
-  static getConfigForm() {
-    return {
-      schema: [
-        { name: 'entry', selector: { config_entry: { integration: 'orgaia' } } },
-        { name: 'title', selector: { text: {} } },
-        { name: 'show_done', selector: { boolean: {} } },
-        { name: 'add_tasks', selector: { boolean: {} } },
-        { name: 'forget_after', selector: { number: { min: 0, max: 3600, mode: 'box' } } },
-      ],
-      computeLabel: (schema, hass) => {
-        const t = TEXT[(hass && hass.language || 'en').slice(0, 2)] || TEXT.en;
-        return { entry: t.entry, title: t.title, show_done: t.showDone, add_tasks: t.addTasks, forget_after: t.forget }[schema.name];
-      },
-    };
+  static getConfigElement() {
+    return document.createElement('orgaia-card-editor');
   }
 
   setConfig(config) {
     const before = this._config.entry;
+    if (viewOf(config) !== viewOf(this._config)) this._week = null;
     this._config = config || {};
     if (before !== this._config.entry && this._unsub) {
       this._unsubscribe();
@@ -229,7 +437,7 @@ class OrgaiaCard extends HTMLElement {
   }
 
   getGridOptions() {
-    return { columns: 12, min_columns: 6, min_rows: 3 };
+    return { columns: viewOf(this._config) === 'timetable' && this._config.layout !== 'day' ? 'full' : 12, min_columns: 6, min_rows: 2 };
   }
 
   get _t() {
@@ -242,21 +450,21 @@ class OrgaiaCard extends HTMLElement {
 
   _subscribe() {
     if (this._unsub || !this._hass || !this.isConnected) return;
-    const msg = { type: 'orgaia/board/subscribe' };
-    if (this._config.entry) msg.entry_id = this._config.entry;
-    const pending = this._hass.connection.subscribeMessage((data) => this._onData(data), msg);
-    this._unsub = pending;
-    pending.catch(() => {
-      if (this._unsub === pending) this._unsub = null;
-      this._data = { status: 'not_loaded' };
-      this._render();
-    });
+    this._unsub = watch(this._hass, this._config.entry, (data) => this._onData(data));
+    // The lesson or shift that is on right now moves with the clock.
+    this._clock = setInterval(() => this._tick(), 60000);
   }
 
   _unsubscribe() {
-    const pending = this._unsub;
+    const off = this._unsub;
     this._unsub = null;
-    if (pending) pending.then((off) => off()).catch(() => undefined);
+    clearInterval(this._clock);
+    if (off) off();
+  }
+
+  _tick() {
+    const view = viewOf(this._config);
+    if (view === 'timetable' || view === 'roster' || view === 'agenda') this._render();
   }
 
   _onData(data) {
@@ -312,11 +520,19 @@ class OrgaiaCard extends HTMLElement {
   }
 
   _lists() {
-    const all = (this._data && this._data.lists) || [];
-    const only = this._config.lists;
-    if (!Array.isArray(only) || !only.length) return all;
-    const wanted = only.map((x) => String(x).trim().toLowerCase());
-    return all.filter((l) => wanted.includes(l.id.toLowerCase()) || wanted.includes(l.name.trim().toLowerCase()));
+    const view = viewOf(this._config);
+    let all = (this._data && this._data.lists) || [];
+    if (view === 'shopping') all = all.filter((l) => l.type === 'shopping');
+    if (view === 'tasks') all = all.filter((l) => l.type !== 'shopping');
+    return among(all, this._config.lists);
+  }
+
+  /** In the tasks view, optionally only what one person has to do. */
+  _entries(list) {
+    const only = wanted(this._config.person)[0];
+    if (!only || list.type === 'shopping') return list.entries;
+    const person = ((this._data && this._data.persons) || []).find((p) => p.id.toLowerCase() === only || p.name.trim().toLowerCase() === only);
+    return person ? list.entries.filter((e) => (e.assignees || []).includes(person.id)) : list.entries;
   }
 
   _checked(e) {
@@ -374,8 +590,9 @@ class OrgaiaCard extends HTMLElement {
   _list(list) {
     const t = this._t;
     const shop = list.type === 'shopping';
-    const open = list.entries.filter((e) => !e.done);
-    const done = list.entries.filter((e) => e.done);
+    const entries = this._entries(list);
+    const open = entries.filter((e) => !e.done);
+    const done = entries.filter((e) => e.done);
     const trip = this._trip(list) || { state: '', buttons: '' };
     let body = open.map((e) => this._row(list, e)).join('');
     if (!open.length) body = `<p class="hint">${esc(shop ? (done.length ? '' : t.emptyShop) : t.empty)}</p>`;
@@ -395,6 +612,182 @@ class OrgaiaCard extends HTMLElement {
     return `<section class="list"><div class="head"><h2>${esc(list.name)}</h2>${trip.buttons}</div>${trip.state}${body}${rest}${form}</section>`;
   }
 
+  _day(ymd, long) {
+    return new Date(ymd + 'T12:00:00').toLocaleDateString((this._hass && this._hass.language) || undefined, long ? { weekday: 'long', day: 'numeric', month: 'numeric' } : { weekday: 'short' });
+  }
+
+  _short(ymd) {
+    return new Date(ymd + 'T12:00:00').toLocaleDateString((this._hass && this._hass.language) || undefined, { day: 'numeric', month: 'numeric' });
+  }
+
+  _now() {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  }
+
+  _badge(id) {
+    const p = this._person(id);
+    return p ? `<span class="dot" style="--c:${colorOf(p.color)}"></span>${esc(p.name)}` : '';
+  }
+
+  /** A timetable: the week as a grid of periods and days, or one day as a list. */
+  _timetable() {
+    const t = this._t;
+    const data = this._data;
+    const plans = data.timetables || [];
+    if (!plans.length) return `<p class="hint">${esc(t.noTimetable)}</p>`;
+    const mine = plans.find((p) => p.person && p.person === data.me);
+    const plan = (wanted(this._config.plan).length ? among(plans, this._config.plan)[0] : mine) || plans[0];
+    const today = data.today;
+    const now = this._now();
+    const rooms = this._config.show_rooms !== false;
+    const school = (d) => d.status === 'school';
+    // Friday afternoon nobody wants to see the week that is over.
+    const left = plan.weeks[0].days.some((d) => school(d) && (d.date > today || (d.date === today && d.end > now)));
+    const auto = !left && plan.weeks[1] && plan.weeks[1].days.some(school) ? 1 : 0;
+    const at = this._week == null ? auto : Math.min(this._week, plan.weeks.length - 1);
+    const week = plan.weeks[at];
+    const owner = plan.person ? this._badge(plan.person) : '';
+    const ab = week.days.find((d) => d.week);
+    let head = `<div class="head"><h2>${esc(plan.name)}${owner && this._name(plan.person) !== plan.name ? ` <span class="sub">${owner}</span>` : ''}</h2>`;
+    const cell = (l, live) =>
+      `<div class="lesson${live ? ' live' : ''}" style="--h:${hueOf(l.subject)}" title="${esc(l.subject)}${l.room ? ', ' + esc(l.room) : ''}"><span class="name">${esc(l.subject)}</span>${rooms && l.room ? `<span class="sub">${esc(l.room)}</span>` : ''}</div>`;
+    const pack = week.days.find((d) => d.date === today);
+    const foot = this._config.show_pack !== false && pack && pack.pack.length ? `<p class="pack"><b>${esc(t.packToday)}:</b> ${esc(pack.pack.join(', '))}</p>` : '';
+
+    if (this._config.layout === 'day') {
+      const all = plan.weeks.flatMap((w) => w.days);
+      const day = all.find((d) => school(d) && (d.date > today || (d.date === today && d.end > now))) || all.find((d) => d.date === today);
+      head += `<span class="sub">${esc(this._date(day.date))}${day.week ? ' · ' + esc(this._say('weekAB', { week: day.week })) : ''}</span></div>`;
+      const rows = day.lessons
+        .map((l) => {
+          const live = day.date === today && l.start <= now && now < l.end;
+          return `<div class="slot${live ? ' live' : ''}"><span class="when">${esc(l.period)}.<br><span class="sub">${esc(l.start)}–${esc(l.end)}</span></span>${cell(l, live)}</div>`;
+        })
+        .join('');
+      const none = day.status === 'holiday' ? day.holiday || t.holidays : t.noSchool;
+      return head + (rows || `<p class="hint">${esc(none)}</p>`) + foot;
+    }
+
+    const used = plan.weeks.flatMap((w) => w.days);
+    const last = Math.max(0, ...used.flatMap((d) => d.lessons.map((l) => l.period)));
+    if (!last) return head + `</div><p class="hint">${esc(t.noLessons)}</p>`;
+    const weekend = [5, 6].filter((i) => plan.weeks.some((w) => w.days[i].lessons.length));
+    const cols = [0, 1, 2, 3, 4, ...weekend];
+    head += `<span class="weeks" role="group">${plan.weeks
+      .map((w, i) => `<button class="btn small${i === at ? ' main' : ''}" aria-pressed="${i === at}" data-act="week" data-week="${i}">${esc(i ? t.nextWeek : t.thisWeek)}</button>`)
+      .join('')}</span></div>`;
+    if (ab) head += `<p class="state">${esc(this._say('weekAB', { week: ab.week }))}</p>`;
+    let grid = `<div class="tt" role="table" style="grid-template-columns: minmax(2.75rem, max-content) repeat(${cols.length}, minmax(0, 1fr))">`;
+    grid += '<div class="corner"></div>';
+    cols.forEach((i, c) => {
+      const d = week.days[i];
+      grid += `<div class="dayhead${d.date === today ? ' today' : ''}" style="grid-column:${c + 2}">${esc(this._day(d.date))}<span class="sub">${esc(this._short(d.date))}</span></div>`;
+    });
+    for (let n = 1; n <= last; n++) {
+      const p = plan.periods[n - 1] || {};
+      grid += `<div class="when" style="grid-row:${n + 1}">${n}.<span class="sub">${esc(p.start || '')}</span></div>`;
+    }
+    cols.forEach((i, c) => {
+      const d = week.days[i];
+      const col = `grid-column:${c + 2}`;
+      if (d.status === 'holiday') {
+        grid += `<div class="off${d.date === today ? ' today' : ''}" style="${col};grid-row:2 / span ${last}"><span>${esc(d.holiday || t.holidays)}</span></div>`;
+        return;
+      }
+      for (let n = 1; n <= last; n++) {
+        const l = d.lessons.find((x) => x.period === n);
+        const live = l && d.date === today && l.start <= now && now < l.end;
+        grid += `<div class="cell${d.date === today ? ' today' : ''}" style="${col};grid-row:${n + 1}">${l ? cell(l, live) : ''}</div>`;
+      }
+    });
+    return head + grid + '</div>' + foot;
+  }
+
+  /** Rosters: the days down, the people across. */
+  _roster() {
+    const t = this._t;
+    const data = this._data;
+    const all = data.rosters || [];
+    if (!all.length) return `<p class="hint">${esc(t.noRoster)}</p>`;
+    const plans = among(all, this._config.plans);
+    if (!plans.length) return `<p class="hint">${esc(t.noRoster)}</p>`;
+    const count = Math.min(14, Math.max(1, Number(this._config.days) || 7));
+    const first = this._config.start === 'week' ? plans[0].days[0].date : data.today;
+    const dates = Array.from({ length: count }, (_, i) => addDays(first, i));
+    const now = this._now();
+    let grid = `<div class="rs" role="table" style="grid-template-columns: max-content repeat(${plans.length}, minmax(0, 1fr))">`;
+    grid += '<div class="corner"></div>';
+    plans.forEach((p, c) => {
+      grid += `<div class="dayhead" style="grid-column:${c + 2}">${p.person ? this._badge(p.person) : esc(p.name)}</div>`;
+    });
+    dates.forEach((date, r) => {
+      const today = date === data.today;
+      const monday = new Date(date + 'T12:00:00').getDay() === 1 && r > 0;
+      const cls = `${today ? ' today' : ''}${monday ? ' monday' : ''}`;
+      grid += `<div class="when${cls}" style="grid-row:${r + 2}">${esc(this._day(date))}<span class="sub">${esc(this._short(date))}</span></div>`;
+      plans.forEach((p, c) => {
+        const d = p.days.find((x) => x.date === date);
+        const place = `grid-column:${c + 2};grid-row:${r + 2}`;
+        if (!d || !d.spans.length) {
+          grid += `<div class="cell free${cls}" style="${place}">${esc(d && d.shift ? d.shift : t.free)}</div>`;
+          return;
+        }
+        const live = today && d.spans.some((s) => s.start <= now && (s.overnight || now < s.end));
+        const times = d.spans.map((s) => `${esc(s.start)}–${esc(s.end)}`).join(', ');
+        const code = d.code ? `<span class="code">${esc(d.code)}</span>` : '';
+        grid += `<div class="cell${cls}" style="${place}"><div class="shift${live ? ' live' : ''}" style="--h:${hueOf(d.shift || times)}">${code}<span class="name">${esc(d.shift || times)}</span>${d.shift ? `<span class="sub">${times}</span>` : ''}</div></div>`;
+      });
+    });
+    return grid + '</div>';
+  }
+
+  /** What is coming up, day by day. */
+  _agenda() {
+    const t = this._t;
+    const data = this._data;
+    const days = Math.min(31, Math.max(1, Number(this._config.days) || 7));
+    const last = addDays(data.today, days - 1);
+    const only = wanted(this._config.person)[0];
+    const person = only ? data.persons.find((p) => p.id.toLowerCase() === only || p.name.trim().toLowerCase() === only) : null;
+    const now = `${data.today}T${this._now()}`;
+    let rows = (data.agenda || []).filter((r) => {
+      if (r.start.slice(0, 10) > last) return false;
+      if (this._config.show_plans === false && (r.kind === 'school' || r.kind === 'work')) return false;
+      if (this._config.show_deadlines === false && (r.kind === 'due' || r.kind === 'shopping')) return false;
+      if (person && !(r.persons || []).includes(person.id)) return false;
+      // What is over today makes room for what is still to come.
+      return r.all_day || (r.end || r.start) >= now || r.start.slice(0, 10) > data.today;
+    });
+    const max = Number(this._config.max) || 0;
+    const hidden = max > 0 && rows.length > max ? rows.length - max : 0;
+    if (hidden) rows = rows.slice(0, max);
+    if (!rows.length) return `<p class="hint">${esc(this._say('nothingAhead', { n: days }))}</p>`;
+    let html = '';
+    let day = '';
+    for (const r of rows) {
+      // Something that began before today is shown under today.
+      const date = r.start.slice(0, 10) < data.today ? data.today : r.start.slice(0, 10);
+      if (date !== day) {
+        day = date;
+        const near = date === data.today ? t.today : date === addDays(data.today, 1) ? t.tomorrow : '';
+        html += `<h3${date === data.today ? ' class="today"' : ''}>${near ? esc(near) + ' · ' : ''}${esc(this._day(date, true))}</h3>`;
+      }
+      const live = !r.all_day && r.start <= now && (r.end || r.start) > now;
+      let when = r.all_day ? t.allDay : r.start.slice(11, 16);
+      if (!r.all_day && r.end && r.kind !== 'due') when += `–${r.end.slice(11, 16)}`;
+      if (r.all_day && r.end && r.end.slice(0, 10) > date) when = `${this._say('until', { date: this._short(r.end.slice(0, 10)) })}`;
+      const sub = [];
+      if (r.kind === 'due') sub.push(esc(t.due));
+      if (r.kind === 'shopping') sub.push(esc(t.shopping));
+      if (r.location) sub.push(esc(r.location));
+      if (this._config.show_persons !== false && (r.persons || []).length) sub.push(r.persons.map((id) => this._badge(id)).filter(Boolean).join(' '));
+      html += `<div class="ev ${esc(r.kind)}${live ? ' live' : ''}${r.done ? ' done' : ''}"><span class="when">${esc(when)}</span><div class="text"><span class="name">${esc(r.title)}</span>${sub.length ? `<div class="sub">${sub.join(' · ')}</div>` : ''}</div></div>`;
+    }
+    if (hidden) html += `<p class="hint">${esc(this._say('more', { n: hidden }))}</p>`;
+    return html;
+  }
+
   _render() {
     if (!this._hass) return;
     const t = this._t;
@@ -407,6 +800,9 @@ class OrgaiaCard extends HTMLElement {
     let html = `<style>${STYLE}</style><ha-card>${title ? `<h1>${esc(title)}</h1>` : ''}`;
     if (!data || !data.lists) {
       html += `<p class="hint">${esc(data ? t.notLoaded : '…')}</p>`;
+    } else if (['timetable', 'roster', 'agenda'].includes(viewOf(this._config))) {
+      if (data.status === 'offline') html += `<p class="hint warn">${esc(t.offline)}</p>`;
+      html += this[`_${viewOf(this._config)}`]();
     } else {
       if (data.status === 'offline') html += `<p class="hint warn">${esc(t.offline)}</p>`;
       if (!data.can_write) {
@@ -474,6 +870,9 @@ class OrgaiaCard extends HTMLElement {
       this._error = '';
       this._touch();
       this._render();
+    } else if (act === 'week') {
+      this._week = Number(el.dataset.week);
+      this._render();
     } else if (act === 'tick') {
       if (this._busy.has(el.dataset.uid)) return;
       this._call('set_done', { item: el.dataset.uid, done: el.dataset.done === '1' }, el.dataset.uid);
@@ -503,14 +902,171 @@ class OrgaiaCard extends HTMLElement {
   }
 }
 
+/*
+ * The editor: first the view, then only what that view can be told. The lists, plans and people on
+ * offer are those of the group; while they are not known yet, a name can be typed instead.
+ */
+class OrgaiaCardEditor extends HTMLElement {
+  constructor() {
+    super();
+    this._config = {};
+    this._data = null;
+    this._asked = undefined;
+  }
+
+  setConfig(config) {
+    this._config = config || {};
+    this._load();
+    this._render();
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    this._load();
+    this._render();
+  }
+
+  /** Home Assistant's own form is fetched with its editors; this makes sure it is there. */
+  async connectedCallback() {
+    if (!customElements.get('ha-form') && window.loadCardHelpers) {
+      try {
+        const helpers = await window.loadCardHelpers();
+        const card = await helpers.createCardElement({ type: 'entities', entities: [] });
+        if (card && card.constructor.getConfigElement) await card.constructor.getConfigElement();
+      } catch (err) {
+        // The form may still arrive on its own.
+      }
+    }
+    this._render();
+  }
+
+  _load() {
+    const entry = this._config.entry || '';
+    if (!this._hass || this._asked === entry) return;
+    this._asked = entry;
+    known(this._hass, this._config.entry).then((data) => {
+      if (this._asked !== entry) return;
+      this._data = data;
+      this._render();
+    });
+  }
+
+  _schema() {
+    const t = textsFor(this._hass);
+    const data = this._data || {};
+    const view = viewOf(this._config);
+    const pick = (name, items, multiple) =>
+      items && items.length
+        ? { name, selector: { select: { mode: 'dropdown', multiple: !!multiple, options: items.map((x) => ({ value: x.id, label: x.label || x.name })) } } }
+        : { name, selector: { text: {} } };
+    const named = (plans) => (plans || []).map((p) => {
+      const owner = (data.persons || []).find((x) => x.id === p.person);
+      return { id: p.id, label: owner && owner.name !== p.name ? `${p.name} (${owner.name})` : p.name };
+    });
+    const choice = (name, values) => ({ name, selector: { select: { mode: 'dropdown', options: values.map(([value, label]) => ({ value, label })) } } });
+    const flag = (name) => ({ name, selector: { boolean: {} } });
+    const number = (name, min, max) => ({ name, selector: { number: { min, max, mode: 'box' } } });
+    const schema = [
+      { name: 'view', required: true, selector: { select: { mode: 'dropdown', options: VIEWS.map((v) => ({ value: v, label: t['view' + v[0].toUpperCase() + v.slice(1)] })) } } },
+      { name: 'entry', selector: { config_entry: { integration: 'orgaia' } } },
+      { name: 'title', selector: { text: {} } },
+    ];
+    const lists = data.lists || [];
+    if (view === 'lists' || view === 'shopping' || view === 'tasks') {
+      const fit = view === 'shopping' ? lists.filter((l) => l.type === 'shopping') : view === 'tasks' ? lists.filter((l) => l.type !== 'shopping') : lists;
+      schema.push(pick('lists', fit, true));
+      if (view === 'tasks') schema.push(pick('person', data.persons, false));
+      if (view !== 'shopping') schema.push(flag('show_done'), flag('add_tasks'));
+      schema.push(choice('ask', [['auto', t.askAuto], ['always', t.askAlways]]), number('forget_after', 0, 3600));
+    } else if (view === 'timetable') {
+      schema.push(pick('plan', named(data.timetables), false), choice('layout', [['week', t.layoutWeek], ['day', t.layoutDay]]), flag('show_rooms'), flag('show_pack'));
+    } else if (view === 'roster') {
+      schema.push(pick('plans', named(data.rosters), true), number('days', 1, 14), choice('start', [['today', t.startToday], ['week', t.startWeek]]));
+    } else {
+      schema.push(number('days', 1, 31), pick('person', data.persons, false), flag('show_plans'), flag('show_deadlines'), flag('show_persons'), number('max', 0, 100));
+    }
+    return schema;
+  }
+
+  /** What the form shows where nothing was set: the card's own defaults. */
+  _shown() {
+    const c = this._config;
+    const view = viewOf(c);
+    const shown = { ...c, view };
+    const fill = (key, value) => {
+      if (shown[key] == null) shown[key] = value;
+    };
+    if (view === 'timetable') {
+      fill('layout', 'week');
+      fill('show_rooms', true);
+      fill('show_pack', true);
+    } else if (view === 'roster') {
+      fill('days', 7);
+      fill('start', 'today');
+    } else if (view === 'agenda') {
+      fill('days', 7);
+      fill('show_plans', true);
+      fill('show_deadlines', true);
+      fill('show_persons', true);
+    } else {
+      fill('ask', 'auto');
+      fill('forget_after', 60);
+    }
+    return shown;
+  }
+
+  _label(field) {
+    const t = textsFor(this._hass);
+    const key = {
+      view: 'view', entry: 'entry', title: 'title', lists: 'lists', person: 'person', show_done: 'showDone', add_tasks: 'addTasks',
+      ask: 'ask', forget_after: 'forget', plan: 'plan', layout: 'layout', show_rooms: 'showRooms', show_pack: 'showPack', plans: 'plans',
+      days: 'days', start: 'startAt', show_plans: 'showPlans', show_deadlines: 'showDeadlines', show_persons: 'showPersons', max: 'max',
+    }[field.name];
+    return t[key] || field.name;
+  }
+
+  _changed(ev) {
+    ev.stopPropagation();
+    const before = viewOf(this._config);
+    const value = { ...ev.detail.value };
+    // Another view reads from other places: what was chosen for the old one does not carry over.
+    if (viewOf(value) !== before) for (const key of Object.keys(value)) if (!['view', 'entry', 'title'].includes(key)) delete value[key];
+    for (const key of Object.keys(value)) {
+      const v = value[key];
+      if (v == null || v === '' || (Array.isArray(v) && !v.length)) delete value[key];
+    }
+    if (value.ask === 'auto') delete value.ask;
+    const config = { type: this._config.type || 'custom:orgaia-card', ...value };
+    this._config = config;
+    this.dispatchEvent(new CustomEvent('config-changed', { detail: { config }, bubbles: true, composed: true }));
+    this._load();
+    this._render();
+  }
+
+  _render() {
+    if (!this._hass || !this.isConnected) return;
+    if (!this._form) {
+      this._form = document.createElement('ha-form');
+      this._form.computeLabel = (field) => this._label(field);
+      this._form.addEventListener('value-changed', (ev) => this._changed(ev));
+      this.appendChild(this._form);
+    }
+    this._form.hass = this._hass;
+    this._form.data = this._shown();
+    this._form.schema = this._schema();
+  }
+}
+
+if (!customElements.get('orgaia-card-editor')) customElements.define('orgaia-card-editor', OrgaiaCardEditor);
+
 if (!customElements.get('orgaia-card')) {
   customElements.define('orgaia-card', OrgaiaCard);
   window.customCards = window.customCards || [];
   window.customCards.push({
     type: 'orgaia-card',
     name: 'Orgaia',
-    description: 'Lists of an Orgaia group: tap who you are, then tick off, add articles and take over the shopping.',
-    preview: false,
+    description: 'An Orgaia group: lists to tick off, the shopping, tasks, a timetable, rosters or what is coming up. The view is chosen in the editor.',
+    preview: true,
     documentationURL: 'https://github.com/PixelDevIO/HA-Orgaia#orgaia-card',
   });
 }
