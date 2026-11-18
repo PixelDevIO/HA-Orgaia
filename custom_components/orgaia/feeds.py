@@ -9,9 +9,12 @@ of the last good fetch stay.
 from __future__ import annotations
 
 import asyncio
+import ipaddress
 import logging
+import socket
 import time
 from typing import Any
+from urllib.parse import urljoin, urlsplit
 
 import aiohttp
 from homeassistant.core import HomeAssistant
@@ -20,7 +23,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN, STORAGE_VERSION
-from .protocol.ics import FeedEvent, feed_url, parse_ics
+from .protocol.ics import FeedEvent, feed_url, is_private_ip, parse_ics
 from .protocol.recur import add_days
 from .protocol.view import SpaceView
 
@@ -33,6 +36,7 @@ PAST_DAYS = 62
 AHEAD_DAYS = 400
 MAX_BYTES = 3 * 1024 * 1024
 TIMEOUT = aiohttp.ClientTimeout(total=30)
+MAX_REDIRECTS = 5
 
 
 class FeedCache:
@@ -121,13 +125,26 @@ class FeedCache:
             return None, "address"
         session = async_get_clientsession(self.hass)
         try:
-            # No cookies, no referrer: the school's server learns only that a calendar asked.
-            async with session.get(
-                url, timeout=TIMEOUT, headers={"accept": "text/calendar, text/plain, */*"}, allow_redirects=True
-            ) as res:
-                if res.status != 200:
-                    return None, f"status {res.status}"
-                body = await res.content.read(MAX_BYTES + 1)
+            # Redirects are followed by hand, so that none leads into the home network.
+            for _ in range(MAX_REDIRECTS + 1):
+                if not await self._public(url):
+                    return None, "address"
+                # No cookies, no referrer: the school's server learns only that a calendar asked.
+                async with session.get(
+                    url, timeout=TIMEOUT, headers={"accept": "text/calendar, text/plain, */*"}, allow_redirects=False
+                ) as res:
+                    if res.status in (301, 302, 303, 307, 308) and res.headers.get("location"):
+                        nxt = feed_url(urljoin(url, res.headers["location"]))
+                        if not nxt:
+                            return None, "address"
+                        url = nxt
+                        continue
+                    if res.status != 200:
+                        return None, f"status {res.status}"
+                    body = await res.content.read(MAX_BYTES + 1)
+                    break
+            else:
+                return None, "status redirects"
         except (aiohttp.ClientError, TimeoutError) as err:
             _LOGGER.debug("Calendar %s not reachable: %s", url, err)
             return None, "network"
@@ -141,3 +158,20 @@ class FeedCache:
             parse_ics, text, add_days(today, -PAST_DAYS), add_days(today, AHEAD_DAYS), dt_util.get_default_time_zone()
         )
         return events, None
+
+    async def _public(self, url: str) -> bool:
+        """Whether every address the host name stands for is on the internet, not in the home network."""
+        host = urlsplit(url).hostname or ""
+        try:
+            infos = await self.hass.loop.getaddrinfo(host, 443, type=socket.SOCK_STREAM)
+        except OSError:
+            # Not resolvable: the request fails on its own.
+            return True
+        for info in infos:
+            try:
+                if is_private_ip(ipaddress.ip_address(info[4][0].split("%")[0])):
+                    _LOGGER.warning("Calendar address %s points into the local network; not fetched", host)
+                    return False
+            except ValueError:
+                return False
+        return True
