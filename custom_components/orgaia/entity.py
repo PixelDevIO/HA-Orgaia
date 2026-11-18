@@ -29,6 +29,16 @@ def person_entity(entry: OrgaiaConfigEntry, person_id: str) -> str | None:
     return (entry.options.get(CONF_PERSONS) or {}).get(person_id) or None
 
 
+def group_device_name(coordinator: OrgaiaCoordinator) -> str:
+    """The group's name as Orgaia has it now, so a rename in the app reaches Home Assistant."""
+    return coordinator.data.name or coordinator.config_entry.title
+
+
+def person_device_name(coordinator: OrgaiaCoordinator, person_id: str) -> str:
+    person = coordinator.data.person_by_id.get(person_id) or {}
+    return f"{person.get('name') or person_id} ({group_device_name(coordinator)})"
+
+
 class OrgaiaEntity(CoordinatorEntity[OrgaiaCoordinator]):
     _attr_has_entity_name = True
 
@@ -40,18 +50,17 @@ class OrgaiaEntity(CoordinatorEntity[OrgaiaCoordinator]):
             self._attr_unique_id = f"{space_key(entry)}_{key}"
             self._attr_device_info = DeviceInfo(
                 identifiers={(DOMAIN, space_key(entry))},
-                name=entry.title,
+                name=group_device_name(coordinator),
                 manufacturer=NAME,
                 model="Gruppe",
                 sw_version=VERSION,
                 entry_type=DeviceEntryType.SERVICE,
             )
         else:
-            person = coordinator.data.person_by_id.get(person_id) or {}
             self._attr_unique_id = f"{person_device_key(entry, person_id)}_{key}"
             self._attr_device_info = DeviceInfo(
                 identifiers={(DOMAIN, person_device_key(entry, person_id))},
-                name=f"{person.get('name') or person_id} ({entry.title})",
+                name=person_device_name(coordinator, person_id),
                 manufacturer=NAME,
                 model="Person",
                 sw_version=VERSION,

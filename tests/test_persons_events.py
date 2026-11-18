@@ -221,3 +221,25 @@ async def test_no_catch_up_after_long_break(hass: HomeAssistant, service: FakeSe
     entry = await setup_group(hass, service, freezer)
     events = await _restart(hass, entry, service, freezer, timedelta(hours=2))
     assert [e.data["type"] for e in events if e.data["type"] == "task_completed"] == []
+
+
+async def test_renames_follow(hass: HomeAssistant, service: FakeService, freezer) -> None:
+    """A group, person or list renamed in the app shows its new name; entity ids stay."""
+    entry = await setup_group(hass, service, freezer)
+    service.write("meta", "space", {"name": "Fiebigs"})
+    service.write("person", "ben", {"name": "Benno"})
+    service.write("list", "shop", {"name": "Wocheneinkauf"})
+    await refresh(hass, entry)
+
+    registry = dr.async_get(hass)
+    assert registry.async_get_device(identifiers={(DOMAIN, SPACE)}).name == "Fiebigs"
+    assert registry.async_get_device(identifiers={(DOMAIN, f"{SPACE}_ben")}).name == "Benno (Fiebigs)"
+    assert hass.states.get("sensor.ben_familie_open_tasks").attributes["friendly_name"] == "Benno (Fiebigs) Open tasks"
+    assert hass.states.get("todo.familie_einkauf").attributes["friendly_name"] == "Fiebigs Wocheneinkauf"
+
+    # A name set by hand in Home Assistant stays.
+    ben = registry.async_get_device(identifiers={(DOMAIN, f"{SPACE}_ben")})
+    registry.async_update_device(ben.id, name_by_user="Unser Ben")
+    service.write("person", "ben", {"name": "Ben"})
+    await refresh(hass, entry)
+    assert hass.states.get("sensor.ben_familie_open_tasks").attributes["friendly_name"] == "Unser Ben Open tasks"
