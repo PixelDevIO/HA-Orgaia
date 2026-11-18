@@ -22,6 +22,9 @@ _PREFIXES = (RSVP_PREFIX, DONE_PREFIX, VOTE_PREFIX, COMMENT_PREFIX)
 _PUNCT = {"_": 0, "-": 1}
 
 
+SCHOOL_OFF_PREFIX = "schoolOff."
+
+
 def locale_key(text: str) -> tuple[tuple[int, ...], tuple[int, ...]]:
     """Sorts ids and names like JavaScript's localeCompare: letters by their base first, lower case before upper."""
     primary: list[int] = []
@@ -144,8 +147,20 @@ def build_view(space_id: str, kind: str, state: State) -> SpaceView:
     )
     if "teams" in meta:
         meta["teams"] = teams
-    if meta.get("schoolOff"):
-        meta["schoolOff"] = plans.read_school_off(meta["schoolOff"])
+    # School holidays: the older list in one field, and one field per holiday since then (that one wins).
+    own: dict[str, Any] = {}
+    for key in [k for k in meta if k.startswith(SCHOOL_OFF_PREFIX)]:
+        value = meta.pop(key)
+        if isinstance(value, dict):
+            own[key[len(SCHOOL_OFF_PREFIX) :]] = {**value, "id": key[len(SCHOOL_OFF_PREFIX) :]}
+    if meta.get("schoolOff") or own:
+        raw_off = meta.get("schoolOff")
+        legacy = (
+            [o for o in raw_off if not (isinstance(o, dict) and o.get("id") in own)]
+            if isinstance(raw_off, list)
+            else []
+        )
+        meta["schoolOff"] = plans.read_school_off([*legacy, *own.values()])
 
     persons: list[dict[str, Any]] = []
     for pid, doc in state.get("person", {}).items():
