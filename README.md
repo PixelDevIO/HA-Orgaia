@@ -208,7 +208,7 @@ Who ticked off must be known, also at a display on the wall that belongs to nobo
 
 ### Orgaia card
 
-The card comes with the integration; no resource has to be added. In the dashboard, add a card and pick **Orgaia**, or:
+The card comes with the integration; no resource has to be added by hand. In the dashboard, add a card and pick **Orgaia**, or:
 
 ```yaml
 type: custom:orgaia-card
@@ -225,6 +225,27 @@ ask: always                # ask even when the signed-in user is known
 **First tap who you are, then tick off.** Without a name nothing happens. On a personal phone the card knows who is signed in, when that user's person is assigned under **Configure** (see *People in Home Assistant*); on a shared display everybody taps their name, and after a minute without a tap the card forgets it again. On a shopping list the card adds articles (with a quantity), releases the list, and offers "I'll do it", "Not after all" and "Shopping done". Where everybody ticks off their own part ("each for themselves"), the tick is the chosen person's own.
 
 Anybody at the display can tap any name: the card keeps track of who did what among people who trust each other; it is no lock.
+
+#### Views
+
+One card, several views. The editor first asks for the **view** and then offers only what that view can be told, with the group's lists, plans and people to choose from:
+
+| `view` | Shows | Options |
+| --- | --- | --- |
+| `lists` (default) | all lists, to tick off and add to | `lists`, `show_done`, `add_tasks`, `ask`, `forget_after` |
+| `shopping` | only the shopping lists | `lists`, `ask`, `forget_after` |
+| `tasks` | only the task lists | `lists`, `person` (only what is assigned to them), `show_done`, `add_tasks` |
+| `timetable` | a timetable as a week grid, this week and the next, with the lesson that is on and what to pack today | `plan`, `layout: week \| day`, `show_rooms`, `show_pack` |
+| `roster` | rosters side by side, day by day | `plans`, `days` (1–14), `start: today \| week` |
+| `agenda` | what is coming up, day by day | `days` (1–31), `person`, `show_plans`, `show_deadlines`, `show_persons`, `max` |
+
+```yaml
+type: custom:orgaia-card
+view: timetable
+plan: Leonie        # name or id; without it the first timetable
+```
+
+Put the card on a dashboard several times for several views. The card is listed among the dashboard resources by the integration itself; after an update of the integration, reload the browser once.
 
 ### Actions
 
@@ -290,6 +311,6 @@ Home Assistant zählt nicht als Person; pro Gruppe gehen bis zu 3 Integrationen.
 
 **Einkaufslisten:** Die To-do-Entität zeigt in `shopping_state`, ob an der Liste noch geschrieben wird (`draft`), ob sie freigegeben ist (`ready`) oder jemand einkauft (`going`), dazu wer freigegeben hat, bis wann und wer einkauft. Mengen stehen im Titel, später dazugekommene Artikel tragen 🆕.
 
-**Abhaken und eintragen:** Home Assistant liest nur, bis ein Admin in der App unter **Verwalten › Home Assistant** „Darf abhaken und eintragen“ einschaltet. Danach geht alles über die **Orgaia-Karte** (`type: custom:orgaia-card`, sie kommt mit der Integration): **erst antippen, wer man ist, dann abhaken**, Artikel auf die Einkaufsliste setzen, Liste freigeben, „Mache ich“ und „Einkauf fertig“. In der App steht der Name mit dem Zusatz „über Home Assistant“. Nach einer Minute ohne Tippen vergisst die Karte, wer es war; auf dem eigenen Handy kennt sie die angemeldete Person, wenn diese unter **Konfigurieren** zugeordnet ist. Die Standard-To-do-Karten bleiben reine Anzeige. Für Automationen gibt es die Aktionen `orgaia.set_done`, `orgaia.add_article`, `orgaia.add_task`, `orgaia.release_shopping_list`, `orgaia.take_shopping`, `orgaia.finish_shopping` und weitere, jeweils mit `person`.
+**Abhaken und eintragen:** Home Assistant liest nur, bis ein Admin in der App unter **Verwalten › Home Assistant** „Darf abhaken und eintragen“ einschaltet. Danach geht alles über die **Orgaia-Karte** (`type: custom:orgaia-card`, sie kommt mit der Integration): **erst antippen, wer man ist, dann abhaken**, Artikel auf die Einkaufsliste setzen, Liste freigeben, „Mache ich“ und „Einkauf fertig“. In der App steht der Name mit dem Zusatz „über Home Assistant“. Nach einer Minute ohne Tippen vergisst die Karte, wer es war; auf dem eigenen Handy kennt sie die angemeldete Person, wenn diese unter **Konfigurieren** zugeordnet ist. Die Karte hat mehrere **Ansichten**, die im Editor gewählt werden: alle Listen, nur Einkauf, nur Aufgaben (auch nur einer Person), **Stundenplan** als Wochenraster, **Dienstplan** und **Termine**; dazu jeweils die passende Quelle (Liste, Plan, Person). Die Standard-To-do-Karten bleiben reine Anzeige. Für Automationen gibt es die Aktionen `orgaia.set_done`, `orgaia.add_article`, `orgaia.add_task`, `orgaia.release_shopping_list`, `orgaia.take_shopping`, `orgaia.finish_shopping` und weitere, jeweils mit `person`.
 
 **Lizenz:** Apache 2.0 (siehe [LICENSE](LICENSE)). Name und Logo „Orgaia“ sowie App und Dienst sind davon nicht umfasst.

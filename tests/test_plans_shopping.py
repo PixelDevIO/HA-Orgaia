@@ -9,6 +9,7 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import async_capture_events, async_fire_time_changed
 
+from custom_components.orgaia.board import board
 from custom_components.orgaia.const import DOMAIN, EVENT_ORGAIA
 
 from .fake_service import SPACE, FakeService
@@ -188,3 +189,69 @@ async def test_reads_less_while_the_live_connection_stands(hass: HomeAssistant, 
     freezer.tick(timedelta(minutes=61))
     await coordinator.async_refresh()
     assert reads() == before + 2
+
+
+async def test_board_views(hass: HomeAssistant, service: FakeService, freezer) -> None:
+    """What the card's timetable, roster and agenda views are drawn from."""
+    # 17 November 2026 is a Tuesday.
+    entry = await setup_group(hass, service, freezer)
+    service.write(
+        "list",
+        "tt",
+        {
+            "name": "Stundenplan Ben",
+            "type": "timetable",
+            "order": 3,
+            "ttFor": "ben",
+            "subj.ma": {"name": "Mathe", "room": "R12"},
+            "subj.sp": {"name": "Sport", "things": ["Sportzeug"]},
+            "les.2.1": "ma",
+            "les.2.2": "ma",
+            "les.3.1": "sp",
+        },
+    )
+    service.write(
+        "list",
+        "rs",
+        {
+            "name": "Schichten Anna",
+            "type": "roster",
+            "order": 4,
+            "rsFor": "anna",
+            "mode": "shifts",
+            "shift.f": {"name": "Früh", "code": "F", "start": "06:00", "end": "14:00"},
+            "shift.n": {"name": "Nacht", "code": "N", "start": "22:00", "end": "06:00"},
+            "d.2026-11-17": "f",
+            "d.2026-11-19": "n",
+        },
+    )
+    service.write("meta", "space", {"schoolOff.h1": {"name": "Brückentag", "from": "2026-11-27", "to": "2026-11-27"}})
+    await refresh(hass, entry)
+    got = board(entry.runtime_data.data, "2026-11-17")
+
+    (plan,) = got["timetables"]
+    assert plan["name"] == "Stundenplan Ben" and plan["person"] == "ben" and len(plan["periods"]) >= 2
+    this, following = plan["weeks"]
+    assert this["start"] == "2026-11-16" and following["start"] == "2026-11-23"
+    assert [d["status"] for d in this["days"]] == ["free", "school", "school", "free", "free", "free", "free"]
+    tuesday = this["days"][1]
+    assert [(x["period"], x["subject"], x.get("room")) for x in tuesday["lessons"]] == [
+        (1, "Mathe", "R12"),
+        (2, "Mathe", "R12"),
+    ]
+    assert tuesday["pack"] == ["Sportzeug"] and this["days"][2]["pack"] == []
+    assert following["days"][4]["status"] == "holiday" and following["days"][4]["holiday"] == "Brückentag"
+
+    (roster,) = got["rosters"]
+    assert roster["person"] == "anna" and len(roster["days"]) == 28 and roster["days"][0]["date"] == "2026-11-16"
+    early, night = roster["days"][1], roster["days"][3]
+    assert (early["shift"], early["code"], early["spans"][0]["start"]) == ("Früh", "F", "06:00")
+    assert night["spans"][0]["overnight"] is True and roster["days"][2]["status"] == "free"
+
+    agenda = got["agenda"]
+    assert [r["start"] for r in agenda] == sorted(r["start"] for r in agenda)
+    kinds = {r["kind"] for r in agenda}
+    assert {"school", "work", "event"} <= kinds
+    school = next(r for r in agenda if r["kind"] == "school")
+    assert school["persons"] == ["ben"] and school["start"].startswith("2026-11-17T")
+    assert all(r["start"][:10] >= "2026-11-17" or r.get("end", "")[:10] >= "2026-11-17" for r in agenda)

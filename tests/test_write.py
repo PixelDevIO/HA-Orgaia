@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
+from homeassistant.setup import async_setup_component
 import pytest
 
 from custom_components.orgaia.client.engine import WriteError
-from custom_components.orgaia.const import CONF_PERSONS, DOMAIN
+from custom_components.orgaia.const import CARD_URL, CONF_PERSONS, DOMAIN, VERSION
 
 from .fake_service import FakeService, fill_group
 from .test_engine import joined
@@ -188,3 +189,18 @@ async def test_board_for_the_card(
     assert seen == ["not_loaded", "ok"]
     assert board["title"] == "Familie" and board["me"] == "ben"
     assert board["title"] == "Familie" and board["me"] == "ben"
+
+
+async def test_card_is_a_dashboard_resource(hass: HomeAssistant, service: FakeService, freezer) -> None:
+    """The card picker finds the card: it is listed once, under the address of this version."""
+    assert await async_setup_component(hass, "lovelace", {})
+    resources = hass.data["lovelace"].resources
+    await resources.async_load()
+    resources.loaded = True
+    # Left over from an older version, and once more by hand.
+    await resources.async_create_item({"res_type": "module", "url": f"{CARD_URL}?v=0.6.0"})
+    await resources.async_create_item({"res_type": "module", "url": CARD_URL})
+    await resources.async_create_item({"res_type": "module", "url": "/local/other-card.js"})
+    await setup_group(hass, service, freezer)
+    urls = sorted(r["url"] for r in resources.async_items())
+    assert urls == ["/local/other-card.js", f"{CARD_URL}?v={VERSION}"]

@@ -2,7 +2,8 @@
   "domain": "orgaia",
   "name": "Orgaia",
   "after_dependencies": [
-    "frontend"
+    "frontend",
+    "lovelace"
   ],
   "codeowners": [
     "@PixelDevIO"
@@ -17,5 +18,5 @@
   "iot_class": "cloud_push",
   "issue_tracker": "https://github.com/PixelDevIO/HA-Orgaia/issues",
   "requirements": [],
-  "version": "0.6.0"
+  "version": "0.7.0"
 }

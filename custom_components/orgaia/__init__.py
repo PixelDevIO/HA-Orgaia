@@ -42,11 +42,41 @@ async def _serve_card(hass: HomeAssistant) -> None:
         return
     card = Path(__file__).parent / "www" / "orgaia-card.js"
     await hass.http.async_register_static_paths([StaticPathConfig(CARD_URL, str(card), False)])
+    # The version in the address makes browsers fetch the card again after an update.
+    url = f"{CARD_URL}?v={VERSION}"
+    if await _register_resource(hass, url):
+        return
     if "frontend" in hass.config.components:
         from homeassistant.components.frontend import add_extra_js_url  # noqa: PLC0415
 
-        # The version in the address makes browsers fetch the card again after an update.
-        add_extra_js_url(hass, f"{CARD_URL}?v={VERSION}")
+        add_extra_js_url(hass, url)
+
+
+async def _register_resource(hass: HomeAssistant, url: str) -> bool:
+    """Lists the card among the dashboard resources, where the card picker finds it for sure.
+
+    Dashboards whose resources are written in YAML cannot be added to; the card is then loaded with the frontend.
+    """
+    lovelace = hass.data.get("lovelace")
+    resources = getattr(lovelace, "resources", None)
+    if resources is None or getattr(lovelace, "resource_mode", None) != "storage":
+        return False
+    try:
+        if not resources.loaded:
+            await resources.async_load()
+            resources.loaded = True
+        mine = [r for r in resources.async_items() if str(r.get("url", "")).split("?")[0] == CARD_URL]
+        if not mine:
+            await resources.async_create_item({"res_type": "module", "url": url})
+        for i, r in enumerate(mine):
+            if i:
+                await resources.async_delete_item(r["id"])
+            elif r["url"] != url:
+                await resources.async_update_item(r["id"], {"res_type": "module", "url": url})
+    except Exception:  # noqa: BLE001 - the card is a convenience; the integration works without it
+        _LOGGER.warning("Could not list the Orgaia card among the dashboard resources", exc_info=True)
+        return False
+    return True
 
 
 async def _load_engine(hass: HomeAssistant, entry: OrgaiaConfigEntry, store: Store) -> GroupEngine:
