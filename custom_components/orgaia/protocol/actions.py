@@ -10,7 +10,7 @@ from collections.abc import Callable
 from typing import Any
 
 from .recur import add_days, add_months, days_between, parse_ymd
-from .shopping import STATE_OFF, TAKE_PREFIX, has_gate, trip_of
+from .shopping import AISLES, STATE_OFF, TAKE_PREFIX, has_gate, trip_of
 from .view import DONE_PREFIX, SpaceView, each_done, occ_id
 
 # One kind of entity, its id and the fields to set.
@@ -118,7 +118,11 @@ def set_done(
     if repeat:
         out.append(("occ", occ_id(item["id"], occ_date or ""), {"done": mark}))
     else:
-        out.append(("item", item["id"], {"done": mark}))
+        fields: dict[str, Any] = {"done": mark}
+        if done and item.get("missed"):
+            # Got it after all.
+            fields["missed"] = None
+        out.append(("item", item["id"], fields))
     return out
 
 
@@ -153,7 +157,7 @@ def add_article(
     )
     if existing:
         # Something still open on the list is not new just because somebody put it on again.
-        fields = {"done": None, "qty": amount or existing.get("qty") or None, "order": now}
+        fields = {"done": None, "missed": None, "qty": amount or existing.get("qty") or None, "order": now}
         return [("item", existing["id"], {**fields, **(late if existing.get("done") else {})})]
     fields = {"kind": "task", "createdAt": now, "createdBy": person, "listId": list_id, "title": clean, "order": now}
     if amount:
@@ -252,6 +256,87 @@ def finish_trip(view: SpaceView, list_id: str, person: str, now: int) -> list[Ch
     items = [i for i in view.items if i["listId"] == list_id]
     bought = [i for i in items if i.get("done")]
     out: list[Change] = [("item", i["id"], {"deleted": True, "deletedAt": None}) for i in bought]
-    last = {"by": person, "at": now, "n": len(bought), "left": len(items) - len(bought)}
+    missed = sum(1 for i in items if not i.get("done") and i.get("missed"))
+    last: dict[str, Any] = {"by": person, "at": now, "n": len(bought), "left": len(items) - len(bought)}
+    if missed:
+        last["missed"] = missed
+    last["from"] = lst["ready"]["by"]
     out.append(("list", list_id, {"ready": None, "lastTrip": last}))
+    return out
+
+
+def _article(view: SpaceView, item: dict[str, Any]) -> dict[str, Any]:
+    lst = view.list_by_id.get(item.get("listId") or "")
+    if not lst or lst["type"] != "shopping":
+        raise ActionError("not_shopping")
+    return lst
+
+
+def set_missed(view: SpaceView, item: dict[str, Any], missed: bool, person: str, now: int) -> list[Change]:
+    """Whoever is out shopping marks an article as not there; it stays on the list for next time."""
+    _article(view, item)
+    return [("item", item["id"], {"missed": {"by": person, "at": now} if missed else None})]
+
+
+def set_quantity(view: SpaceView, item: dict[str, Any], qty: str | None) -> list[Change]:
+    """A new quantity for an article; empty for none."""
+    _article(view, item)
+    amount = qty.strip()[:40] if isinstance(qty, str) and qty.strip() else None
+    return [("item", item["id"], {"qty": amount})]
+
+
+def set_aisle(view: SpaceView, item: dict[str, Any], aisle: str | None) -> list[Change]:
+    """Sorts an article into an aisle by hand; the group remembers it for next time."""
+    _article(view, item)
+    if aisle is not None and aisle not in AISLES:
+        raise ActionError("no_aisle")
+    return [("item", item["id"], {"aisle": aisle})]
+
+
+def add_articles(
+    view: SpaceView,
+    list_id: str,
+    articles: list[dict[str, Any]],
+    person: str,
+    now: int,
+    new_id: Callable[[], str],
+) -> list[Change]:
+    """Several articles at once, each as :func:`add_article`; one already open stays as it is."""
+    out: list[Change] = []
+    seen: set[str] = set()
+    for n, a in enumerate(articles):
+        key = " ".join(str(a.get("title") or "").split()).casefold()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        existing = next(
+            (i for i in view.items if i["listId"] == list_id and i["title"].casefold() == key and not i.get("done")),
+            None,
+        )
+        if existing and not a.get("qty"):
+            continue
+        out.extend(add_article(view, list_id, a["title"], a.get("qty"), person, now + n, new_id))
+    if not out and not seen:
+        raise ActionError("empty")
+    return out
+
+
+def apply_shop_set(
+    view: SpaceView, list_id: str, set_id: str, person: str, now: int, new_id: Callable[[], str]
+) -> list[Change]:
+    """Puts a fixed purchase ("Wocheneinkauf") on the list. Articles already open there stay as they are."""
+    lst = view.list_by_id.get(list_id)
+    if not lst or lst["type"] != "shopping":
+        raise ActionError("not_shopping")
+    chosen = next(
+        (x for x in lst.get("sets") or [] if x["id"] == set_id or x["name"].casefold() == set_id.casefold()), None
+    )
+    if not chosen:
+        raise ActionError("no_set")
+    open_titles = {i["title"].strip().lower() for i in view.items if i["listId"] == list_id and not i.get("done")}
+    out: list[Change] = []
+    for n, a in enumerate(chosen["items"]):
+        if a["title"].lower() in open_titles:
+            continue
+        out.extend(add_article(view, list_id, a["title"], a.get("qty"), person, now + n, new_id))
     return out

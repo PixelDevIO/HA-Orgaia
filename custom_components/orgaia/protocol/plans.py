@@ -27,11 +27,14 @@ class PlanLabels:
     pack: str = "{thing} einpacken"
     school: str = "Schule"
     work: str = "Arbeit"
+    exam: str = "Klassenarbeit {subject}"
+    learn: str = "Für {subject} lernen"
+    standby: str = "Bereitschaft"
 
 
 LABELS = {
-    "de": PlanLabels("{thing} einpacken", "Schule", "Arbeit"),
-    "en": PlanLabels("Pack {thing}", "School", "Work"),
+    "de": PlanLabels("{thing} einpacken", "Schule", "Arbeit", "Klassenarbeit {subject}", "Für {subject} lernen", "Bereitschaft"),
+    "en": PlanLabels("Pack {thing}", "School", "Work", "{subject} test", "Study for {subject}", "On call"),
 }
 
 
@@ -98,6 +101,64 @@ def things_of(tt: dict[str, Any], wd: int, week: str | None) -> dict[str, dict[s
     return out
 
 
+def lessons_on_day(tt: dict[str, Any], date: str) -> list[dict[str, Any]]:
+    """The lessons of a day as they really are, with a single day that differs taken into account."""
+    ex = next((d for d in tt.get("days") or [] if d["date"] == date), None)
+    if ex and ex.get("free"):
+        return []
+    all_ = lessons_of(tt, weekday(date), week_of(tt, date))
+    if not ex:
+        return all_
+    return [x for x in all_ if ex.get("from", 1) <= x["n"] <= ex.get("to", 99)]
+
+
+def things_on_day(tt: dict[str, Any], date: str) -> dict[str, dict[str, Any]]:
+    """What has to come along on a date, with a single day that differs taken into account."""
+    ex = next((d for d in tt.get("days") or [] if d["date"] == date), None)
+    wd = weekday(date)
+    if not ex:
+        return things_of(tt, wd, week_of(tt, date))
+    out: dict[str, dict[str, Any]] = {}
+
+    def add(name: str, lesson: str | None = None) -> None:
+        key = thing_key(name)
+        if not key:
+            return
+        cur = out.get(key) or {"name": name.strip(), "lessons": []}
+        if lesson and lesson not in cur["lessons"]:
+            cur["lessons"].append(lesson)
+        out[key] = cur
+
+    if not ex.get("free"):
+        for lesson in lessons_on_day(tt, date):
+            for thing in lesson["subject"]["things"]:
+                add(thing, lesson["subject"]["name"])
+        for thing in tt["dayThings"].get(wd, []):
+            add(thing)
+    for thing in ex.get("things") or []:
+        add(thing)
+    return out
+
+
+def timetable_holds(tt: dict[str, Any], date: str) -> bool:
+    """Whether the timetable holds on a date (a half-year has a first and a last day)."""
+    return (not tt.get("validFrom") or date >= tt["validFrom"]) and (not tt.get("validUntil") or date <= tt["validUntil"])
+
+
+def school_day_of(tt: dict[str, Any], date: str) -> dict[str, Any] | None:
+    """The single day that differs on a date, if one was entered."""
+    return next((d for d in tt.get("days") or [] if d["date"] == date), None)
+
+
+def _start_from(base: str, step: int, start: str | None) -> str:
+    """The first date of a series that starts at ``base`` every ``step`` weeks, moved on to begin at ``start``."""
+    if not start or start <= base:
+        return base
+    weeks = math.ceil(days_between(week_start(base), week_start(start)) / 7 / step) * step
+    moved = add_days(base, weeks * 7)
+    return start if moved == week_start(start) else moved
+
+
 def _pack_back(tt: dict[str, Any], wd: int) -> int:
     return 3 if wd == 1 and tt["packMon"] == "fri" else 1
 
@@ -139,6 +200,11 @@ def timetable_items(
                     if lesson not in cur["lessons"]:
                         cur["lessons"].append(lesson)
                 pack[pid] = cur
+    # A half-year: packing begins the day before its first school day and ends before the first one after it.
+    valid_from, valid_until = tt.get("validFrom"), tt.get("validUntil")
+    pack_from = add_days(valid_from, -_pack_back(tt, weekday(valid_from))) if valid_from else None
+    after = add_days(valid_until, 1) if valid_until else None
+    pack_until = add_days(after, -_pack_back(tt, weekday(after)) - 1) if after else None
     for pid, p in pack.items():
         week = "A" if pid.endswith("~A") else "B" if pid.endswith("~B") else None
         item: dict[str, Any] = {
@@ -147,12 +213,14 @@ def timetable_items(
             "kind": "task",
             "title": labels.pack.replace("{thing}", p["name"]),
             "assignees": list(who),
-            "dueDate": _series_base(tt, week),
+            "dueDate": _start_from(_series_base(tt, week), 2 if week else 1, pack_from),
         }
         if tt["packTime"]:
             item["dueTime"] = tt["packTime"]
             item["remind"] = 0
         item["repeat"] = {"freq": "week", "interval": 2 if week else 1, "days": sorted(p["days"])}
+        if pack_until:
+            item["repeat"]["until"] = pack_until
         item["fromTimetable"] = lst["id"]
         item["forLessons"] = p["lessons"]
         items.append(item)
@@ -176,8 +244,11 @@ def timetable_items(
                 cur["days"].append(wd)
                 school[sid] = cur
     for sid, s in school.items():
-        base = _series_base(tt, s["week"])
+        base = _start_from(_series_base(tt, s["week"]), 2 if s["week"] else 1, valid_from)
         s["days"].sort()
+        repeat: dict[str, Any] = {"freq": "week", "interval": 2 if s["week"] else 1, "days": list(s["days"])}
+        if valid_until:
+            repeat["until"] = valid_until
         items.append(
             {
                 "id": sid,
@@ -187,14 +258,109 @@ def timetable_items(
                 "assignees": list(who),
                 "start": f"{base}T{s['start']}",
                 "end": f"{base}T{s['end']}",
-                "repeat": {"freq": "week", "interval": 2 if s["week"] else 1, "days": list(s["days"])},
+                "repeat": repeat,
                 "fromTimetable": lst["id"],
             }
         )
 
-    # Holidays: no school, nothing to pack for it. Only around today.
     skips: list[tuple[str, str]] = []
     first, last = add_days(today, -14), add_days(today, 400)
+
+    # Single days that differ: what is no longer needed is not packed, what is new is packed once, and
+    # the school day keeps only its periods. A day in the holidays or outside the half-year stays as it is.
+    for ex in tt.get("days") or []:
+        d = ex["date"]
+        if d < first or d > last or holiday_on(off, d) or not timetable_holds(tt, d):
+            continue
+        wd = weekday(d)
+        week = week_of(tt, d)
+        usual = things_of(tt, wd, week)
+        now = things_on_day(tt, d)
+        pack_on_date = add_days(d, -_pack_back(tt, wd))
+        for key in usual:
+            if key not in now:
+                skips.append((pack_id_on(key, wd, week)[0], pack_on_date))
+        for key, t in now.items():
+            if key in usual:
+                continue
+            once: dict[str, Any] = {
+                "id": f"{TT_PREFIX}{lst['id']}~o{_fnv(key)}~{d}",
+                "listId": lst["id"],
+                "kind": "task",
+                "title": labels.pack.replace("{thing}", t["name"]),
+                "assignees": list(who),
+                "dueDate": pack_on_date,
+            }
+            if tt["packTime"]:
+                once["dueTime"] = tt["packTime"]
+                once["remind"] = 0
+            # One date only, but as a series, so that it is ticked off like every other packing task.
+            once["repeat"] = {"freq": "day", "interval": 1, "until": pack_on_date}
+            once["fromTimetable"] = lst["id"]
+            if t["lessons"]:
+                once["forLessons"] = t["lessons"]
+            items.append(once)
+        if tt["noCal"]:
+            continue
+        for sid, s in school.items():
+            if wd in s["days"] and s["week"] == (week if tt["abStart"] else None):
+                skips.append((sid, d))
+        ls = lessons_on_day(tt, d)
+        if not ls:
+            continue
+        changed: dict[str, Any] = {
+            "id": f"{TT_PREFIX}{lst['id']}~x{d}",
+            "listId": lst["id"],
+            "kind": "event",
+            "title": labels.school,
+            "assignees": list(who),
+            "start": f"{d}T{ls[0]['start']}",
+            "end": f"{d}T{max(x['end'] for x in ls)}",
+            "fromTimetable": lst["id"],
+        }
+        if ex.get("note"):
+            changed["note"] = ex["note"]
+        items.append(changed)
+
+    # Class tests: in the calendar at the subject's lesson that day, and a task to learn on the days before.
+    for e in tt.get("exams") or []:
+        if e["date"] < first or e["date"] > last:
+            continue
+        subject = next((x for x in tt["subjects"] if x["id"] == e["subjectId"]), None)
+        if not subject:
+            continue
+        lesson = next((x for x in lessons_on_day(tt, e["date"]) if x["subject"]["id"] == subject["id"]), None)
+        test: dict[str, Any] = {
+            "id": f"{TT_PREFIX}{lst['id']}~e{e['id']}",
+            "listId": lst["id"],
+            "kind": "event",
+            "title": labels.exam.replace("{subject}", subject["name"]),
+            "assignees": list(who),
+            "start": f"{e['date']}T{lesson['start']}" if lesson else e["date"],
+            "end": f"{e['date']}T{lesson['end']}" if lesson else e["date"],
+        }
+        if not lesson:
+            test["allDay"] = True
+        if e.get("note"):
+            test["note"] = e["note"]
+        test["fromTimetable"] = lst["id"]
+        items.append(test)
+        if e["learn"] > 0:
+            items.append(
+                {
+                    "id": f"{TT_PREFIX}{lst['id']}~l{e['id']}",
+                    "listId": lst["id"],
+                    "kind": "task",
+                    "title": labels.learn.replace("{subject}", subject["name"]),
+                    "assignees": list(who),
+                    "dueDate": add_days(e["date"], -e["learn"]),
+                    "repeat": {"freq": "day", "interval": 1, "until": add_days(e["date"], -1)},
+                    "fromTimetable": lst["id"],
+                    "forLessons": [subject["name"]],
+                }
+            )
+
+    # Holidays: no school, nothing to pack for it. Only around today.
     for o in off:
         if o["to"] < first or o["from"] > last:
             continue
@@ -297,13 +463,20 @@ def roster_items(
         day = work_on(r, date)
         shift = day.get("shift")
         for i, span in enumerate(day["spans"]):
+            standby = bool(shift and shift.get("standby"))
             item = {
                 **base(),
                 "id": f"{RS_PREFIX}{lst['id']}~d{date}" + (f"~{i}" if i else ""),
-                "title": labels.work if r["busyOnly"] or not shift else shift["name"],
+                "title": labels.standby
+                if standby and r["busyOnly"]
+                else labels.work
+                if r["busyOnly"] or not shift
+                else shift["name"],
             }
             if shift and not r["busyOnly"]:
                 item["shiftCode"] = shift["code"]
+            if standby:
+                item["standby"] = True
             item["start"] = f"{date}T{span['start']}"
             item["end"] = f"{_end_date(date, span)}T{span['end']}"
             items.append(item)
@@ -323,15 +496,17 @@ def with_plan_items(view: SpaceView, labels: PlanLabels, today: str) -> SpaceVie
     extra: list[dict[str, Any]] = []
     skips: list[tuple[str, str]] = []
     off = view.meta.get("schoolOff") or []
+    # All timetables first, then all rosters, as the app adds them.
     for lst in view.lists:
         if lst["type"] == "timetable" and lst.get("timetable"):
             items, sk = timetable_items(lst, off, labels, today)
-        elif lst["type"] == "roster" and lst.get("roster"):
+            extra.extend(items)
+            skips.extend(sk)
+    for lst in view.lists:
+        if lst["type"] == "roster" and lst.get("roster"):
             items, sk = roster_items(lst, labels, today)
-        else:
-            continue
-        extra.extend(items)
-        skips.extend(sk)
+            extra.extend(items)
+            skips.extend(sk)
     if not extra:
         return view
     occs = dict(view.occs)
@@ -350,6 +525,7 @@ STATUS_SCHOOL = "school"
 STATUS_WORK = "work"
 STATUS_FREE = "free"
 STATUS_HOLIDAY = "holiday"
+STATUS_STANDBY = "standby"
 
 
 def holiday_on(off: list[dict[str, Any]], date: str) -> dict[str, Any] | None:
@@ -363,11 +539,16 @@ def next_holiday(off: list[dict[str, Any]], date: str) -> dict[str, Any] | None:
 
 
 def school_day(lst: dict[str, Any], off: list[dict[str, Any]], date: str) -> dict[str, Any]:
-    """A timetable on one day: the lessons with their subjects, from when to when, or why there is no school."""
+    """A timetable on one day: the lessons with their subjects, from when to when, or why there is no school.
+
+    A single day that differs (free, shorter) counts, and a half-year timetable outside its dates has none.
+    """
     tt = lst["timetable"]
     week = week_of(tt, date)
     holiday = holiday_on(off, date)
-    lessons = [] if holiday else lessons_of(tt, weekday(date), week)
+    holds = timetable_holds(tt, date)
+    ex = school_day_of(tt, date)
+    lessons = [] if holiday or not holds else lessons_on_day(tt, date)
     out: dict[str, Any] = {
         "date": date,
         "status": STATUS_HOLIDAY if holiday else STATUS_SCHOOL if lessons else STATUS_FREE,
@@ -388,9 +569,46 @@ def school_day(lst: dict[str, Any], off: list[dict[str, Any]], date: str) -> dic
         out["week"] = week
     if holiday and holiday["name"]:
         out["holiday"] = holiday["name"]
+    if ex and not holiday and holds:
+        out["changed"] = True
+        if ex.get("note"):
+            out["note"] = ex["note"]
+    exams = [
+        e for e in tt.get("exams") or [] if e["date"] == date and any(x["id"] == e["subjectId"] for x in tt["subjects"])
+    ]
+    if exams:
+        out["exams"] = [
+            {
+                "subject": next(x["name"] for x in tt["subjects"] if x["id"] == e["subjectId"]),
+                **({"note": e["note"]} if e.get("note") else {}),
+            }
+            for e in exams
+        ]
     if lessons:
         out["start"] = lessons[0]["start"]
         out["end"] = max(lesson["end"] for lesson in lessons)
+    return out
+
+
+def exams_ahead(lst: dict[str, Any], date: str, days: int = 14) -> list[dict[str, Any]]:
+    """Class tests from a date on, for a few days: date, subject, note, and whether to learn today."""
+    tt = lst["timetable"]
+    last = add_days(date, days)
+    out = []
+    for e in tt.get("exams") or []:
+        if e["date"] < date or e["date"] > last:
+            continue
+        subject = next((x for x in tt["subjects"] if x["id"] == e["subjectId"]), None)
+        if not subject:
+            continue
+        out.append(
+            {
+                "date": e["date"],
+                "subject": subject["name"],
+                **({"note": e["note"]} if e.get("note") else {}),
+                "learn_today": e["learn"] > 0 and add_days(e["date"], -e["learn"]) <= date < e["date"],
+            }
+        )
     return out
 
 
@@ -401,9 +619,9 @@ def pack_on(lst: dict[str, Any], off: list[dict[str, Any]], date: str) -> list[s
     for ahead in (1, 3):
         target = add_days(date, ahead)
         wd = weekday(target)
-        if _pack_back(tt, wd) != ahead or holiday_on(off, target):
+        if _pack_back(tt, wd) != ahead or holiday_on(off, target) or not timetable_holds(tt, target):
             continue
-        for key, thing in things_of(tt, wd, week_of(tt, target)).items():
+        for key, thing in things_on_day(tt, target).items():
             out.setdefault(key, thing["name"])
     return list(out.values())
 
@@ -414,11 +632,37 @@ def work_day(lst: dict[str, Any], date: str) -> dict[str, Any]:
     day = work_on(r, date)
     shift = day.get("shift")
     spans = [{"start": s["start"], "end": s["end"], "overnight": s["end"] <= s["start"]} for s in day["spans"]]
-    out: dict[str, Any] = {"date": date, "status": STATUS_WORK if spans else STATUS_FREE, "spans": spans}
+    standby = bool(spans and shift and shift.get("standby"))
+    out: dict[str, Any] = {
+        "date": date,
+        "status": STATUS_STANDBY if standby else STATUS_WORK if spans else STATUS_FREE,
+        "spans": spans,
+    }
     if shift and not r["busyOnly"]:
         out["shift"] = shift["name"]
         out["code"] = shift["code"]
+    if standby:
+        out["standby"] = True
     return out
+
+
+def span_minutes(span: dict[str, str]) -> int:
+    d = _minutes(span["end"]) - _minutes(span["start"])
+    return d if d > 0 else d + 24 * 60
+
+
+def work_minutes(r: dict[str, Any], start: str, end: str) -> int:
+    """Minutes of work from ``start`` to ``end`` (both included), on call left out."""
+    total = 0
+    d = start
+    guard = 0
+    while d <= end and guard < 400:
+        day = work_on(r, d)
+        if not (day.get("shift") or {}).get("standby"):
+            total += sum(span_minutes(x) for x in day["spans"])
+        d = add_days(d, 1)
+        guard += 1
+    return total
 
 
 def _minutes(clock: str) -> int:
@@ -433,12 +677,28 @@ def at_school(lst: dict[str, Any], off: list[dict[str, Any]], date: str, minute:
     return None
 
 
-def at_work(lst: dict[str, Any], date: str, minute: int) -> str | None:
-    """When work ends, while it is on (a night shift of yesterday counts until its end); None otherwise."""
-    for span in work_day(lst, add_days(date, -1))["spans"]:
-        if span["overnight"] and minute < _minutes(span["end"]):
-            return span["end"]
-    for span in work_day(lst, date)["spans"]:
-        if _minutes(span["start"]) <= minute and (span["overnight"] or minute < _minutes(span["end"])):
-            return span["end"]
+def _on_span(lst: dict[str, Any], date: str, minute: int, standby: bool) -> str | None:
+    before = work_day(lst, add_days(date, -1))
+    if bool(before.get("standby")) == standby:
+        for span in before["spans"]:
+            if span["overnight"] and minute < _minutes(span["end"]):
+                return span["end"]
+    day = work_day(lst, date)
+    if bool(day.get("standby")) == standby:
+        for span in day["spans"]:
+            if _minutes(span["start"]) <= minute and (span["overnight"] or minute < _minutes(span["end"])):
+                return span["end"]
     return None
+
+
+def at_work(lst: dict[str, Any], date: str, minute: int) -> str | None:
+    """When work ends, while it is on (a night shift of yesterday counts until its end); None otherwise.
+
+    On call is not work: it has :func:`on_call`.
+    """
+    return _on_span(lst, date, minute, False)
+
+
+def on_call(lst: dict[str, Any], date: str, minute: int) -> str | None:
+    """When being on call ends, while it is on; None otherwise."""
+    return _on_span(lst, date, minute, True)

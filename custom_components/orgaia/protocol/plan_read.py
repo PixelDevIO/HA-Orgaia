@@ -5,6 +5,8 @@ Another member could send anything, so every field is checked.
 
 from __future__ import annotations
 
+from datetime import date
+import math
 import re
 from typing import Any
 
@@ -17,6 +19,8 @@ WEEK_PREFIX = "wk."
 SHIFT_PREFIX = "shift."
 ROSTER_DAY_PREFIX = "d."
 ROSTER_OFF_PREFIX = "off."
+SCHOOL_DAY_PREFIX = "ex."
+EXAM_PREFIX = "exam."
 
 TT_PREFIX = "tt~"
 RS_PREFIX = "rs~"
@@ -45,6 +49,32 @@ DEFAULT_PERIODS = [
 
 def _is_date(x: Any) -> bool:
     return isinstance(x, str) and _DATE.fullmatch(x) is not None
+
+
+def _real_date(x: Any) -> bool:
+    """A date that exists: "2026-11-31" has the right shape, but Python could not count with it."""
+    if not _is_date(x):
+        return False
+    try:
+        date.fromisoformat(x)
+    except ValueError:
+        return False
+    return True
+
+
+def _period(x: Any) -> int | None:
+    return x if isinstance(x, int) and not isinstance(x, bool) and 1 <= x <= 12 else None
+
+
+def _learn_days(x: Any) -> int:
+    """Days of learning before a test, 0 to 14; anything else is none."""
+    if not isinstance(x, (int, float)) or isinstance(x, bool) or not x >= 0:
+        return 0
+    return 14 if math.isinf(x) else min(14, math.floor(x))
+
+
+def _text(x: Any, limit: int) -> str | None:
+    return x.strip()[:limit] if isinstance(x, str) and x.strip() else None
 
 
 def _things(x: Any) -> list[str]:
@@ -112,8 +142,44 @@ def read_timetable(raw: dict[str, Any]) -> dict[str, Any]:
     subjects: list[dict[str, Any]] = []
     cells: dict[str, str] = {}
     day_things: dict[int, list[str]] = {}
+    days: list[dict[str, Any]] = []
+    exams: list[dict[str, Any]] = []
     for k, v in raw.items():
-        if k.startswith(SUBJECT_PREFIX):
+        if k.startswith(SCHOOL_DAY_PREFIX):
+            # One school day that differs: free, only some periods, extra things to bring.
+            when = k[len(SCHOOL_DAY_PREFIX) :]
+            if not _real_date(when) or not isinstance(v, dict):
+                continue
+            day: dict[str, Any] = {"date": when}
+            if v.get("free") is True:
+                day["free"] = True
+            for field in ("from", "to"):
+                n = _period(v.get(field))
+                if n:
+                    day[field] = n
+            note = _text(v.get("note"), 120)
+            if note:
+                day["note"] = note
+            extra = _things(v.get("things"))[:10]
+            if extra:
+                day["things"] = extra
+            if len(day) > 1:
+                days.append(day)
+        elif k.startswith(EXAM_PREFIX):
+            if not isinstance(v, dict) or not isinstance(v.get("subjectId"), str) or not _real_date(v.get("date")):
+                continue
+            learn = v.get("learn")
+            exam: dict[str, Any] = {
+                "id": k[len(EXAM_PREFIX) :],
+                "subjectId": v["subjectId"],
+                "date": v["date"],
+                "learn": _learn_days(learn),
+            }
+            note = _text(v.get("note"), 120)
+            if note:
+                exam["note"] = note
+            exams.append(exam)
+        elif k.startswith(SUBJECT_PREFIX):
             if not isinstance(v, dict) or not isinstance(v.get("name"), str) or v.get("deleted"):
                 continue
             subject = {"id": k[len(SUBJECT_PREFIX) :], "name": v["name"], "things": _things(v.get("things"))}
@@ -139,6 +205,10 @@ def read_timetable(raw: dict[str, Any]) -> dict[str, Any]:
         "packMon": "fri" if raw.get("packMon") == "fri" else "sun",
         "packTime": pack_time if isinstance(pack_time, str) and _TIME.fullmatch(pack_time) else None,
         "noCal": raw.get("noCal") is True,
+        "days": sorted(days, key=lambda d: d["date"]),
+        "exams": sorted(exams, key=lambda e: e["date"]),
+        "validFrom": raw["ttFrom"] if _real_date(raw.get("ttFrom")) else None,
+        "validUntil": raw["ttUntil"] if _real_date(raw.get("ttUntil")) else None,
     }
 
 
@@ -182,6 +252,8 @@ def read_roster(raw: dict[str, Any]) -> dict[str, Any]:
             }
             if _is_clock(v.get("start")) and _is_clock(v.get("end")) and v["start"] != v["end"]:
                 shift["start"], shift["end"] = v["start"], v["end"]
+            if v.get("standby") is True:
+                shift["standby"] = True
             shifts.append(shift)
         elif k.startswith(ROSTER_DAY_PREFIX):
             date = k[len(ROSTER_DAY_PREFIX) :]
@@ -208,4 +280,5 @@ def read_roster(raw: dict[str, Any]) -> dict[str, Any]:
         "off": off,
         "busyOnly": raw.get("busyOnly") is True,
         "noCal": raw.get("noCal") is True,
+        "eve": raw.get("eve") is True,
     }

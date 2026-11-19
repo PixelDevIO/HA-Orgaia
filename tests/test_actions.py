@@ -182,7 +182,7 @@ def test_shopping_from_release_to_done() -> None:
     g.apply(actions.set_done(g.view, g.item("new1"), True, None, "ben", NOW + 30, TODAY))
     g.apply(actions.finish_trip(g.view, "shop", "ben", NOW + 40))
     lst = g.view.list_by_id["shop"]
-    assert "ready" not in lst and lst["lastTrip"] == {"by": "ben", "at": NOW + 40, "n": 1, "left": 2}
+    assert "ready" not in lst and lst["lastTrip"] == {"by": "ben", "at": NOW + 40, "n": 1, "left": 2, "from": "anna"}
     assert sorted(i["title"] for i in g.view.items if i["listId"] == "shop") == ["Brot", "Eier"]
 
     g.apply(actions.release_list(g.view, "shop", "anna", NOW + 50))

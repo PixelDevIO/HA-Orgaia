@@ -617,6 +617,122 @@
      "ts": "0mubbsqso000vecnode1",
      "by": "author",
      "k": "item",
+     "e": "i15",
+     "set": {
+      "listId": "lEinkauf",
+      "kind": "task",
+      "title": "Hafermilch",
+      "createdAt": 1790000000021
+     }
+    },
+    {
+     "id": "op26",
+     "ts": "0mubbsrkg000vecnode1",
+     "by": "author",
+     "k": "item",
+     "e": "i16",
+     "set": {
+      "listId": "lEinkauf",
+      "kind": "task",
+      "title": "Käsekuchen",
+      "aisle": "bakery",
+      "createdAt": 1790000000022
+     }
+    },
+    {
+     "id": "op27",
+     "ts": "0mubbssc8000vecnode1",
+     "by": "author",
+     "k": "item",
+     "e": "i17",
+     "set": {
+      "listId": "lEinkauf",
+      "kind": "task",
+      "title": "Gouda",
+      "missed": {
+       "by": "pB",
+       "at": 1790000000040
+      },
+      "createdAt": 1790000000023
+     }
+    },
+    {
+     "id": "op28",
+     "ts": "0mubbst40000vecnode1",
+     "by": "author",
+     "k": "item",
+     "e": "i18",
+     "set": {
+      "listId": "lEinkauf",
+      "kind": "task",
+      "title": "Spezialtee",
+      "aisle": "drinks",
+      "deleted": true,
+      "deletedAt": 1790000000000,
+      "createdAt": 1790000000002
+     }
+    },
+    {
+     "id": "op29",
+     "ts": "0mubbstvs000vecnode1",
+     "by": "author",
+     "k": "item",
+     "e": "i19",
+     "set": {
+      "listId": "lEinkauf",
+      "kind": "task",
+      "title": "spezialtee ",
+      "createdAt": 1790000000024
+     }
+    },
+    {
+     "id": "op30",
+     "ts": "0mubbsunk000vecnode1",
+     "by": "author",
+     "k": "item",
+     "e": "i20",
+     "set": {
+      "listId": "lEinkauf",
+      "kind": "task",
+      "title": "Batterien",
+      "aisle": "nonsense",
+      "createdAt": 1790000000025
+     }
+    },
+    {
+     "id": "op31",
+     "ts": "0mubbsvfc000vecnode1",
+     "by": "author",
+     "k": "list",
+     "e": "lEinkauf",
+     "set": {
+      "lastTrip": {
+       "by": "pB",
+       "at": 1790000000050,
+       "n": 4,
+       "left": 2,
+       "missed": 1,
+       "from": "pA"
+      },
+      "set.w1": {
+       "name": "Wocheneinkauf",
+       "items": [
+        {
+         "title": "Milch",
+         "qty": "2"
+        },
+        {
+         "title": "Brot"
+        }
+       ]
+      }
+     }
+    },
+    {
+     "id": "op32",
+     "ts": "0mubbsw74000vecnode1",
+     "by": "author",
+     "k": "item",
      "e": "r1",
      "set": {
       "listId": "lHaus",
@@ -636,8 +752,8 @@
      }
     },
     {
-     "id": "op26",
-     "ts": "0mubbsrkg000vecnode1",
+     "id": "op33",
+     "ts": "0mubbswyw000vecnode1",
      "by": "author",
      "k": "item",
      "e": "r2",
@@ -662,8 +778,8 @@
      }
     },
     {
-     "id": "op27",
-     "ts": "0mubbssc8000vecnode1",
+     "id": "op34",
+     "ts": "0mubbsxqo000vecnode1",
      "by": "author",
      "k": "item",
      "e": "r3",
@@ -683,8 +799,8 @@
      }
     },
     {
-     "id": "op28",
-     "ts": "0mubbst40000vecnode1",
+     "id": "op35",
+     "ts": "0mubbsyig000vecnode1",
      "by": "author",
      "k": "item",
      "e": "r4",
@@ -702,8 +818,8 @@
      }
     },
     {
-     "id": "op29",
-     "ts": "0mubbstvs000vecnode1",
+     "id": "op36",
+     "ts": "0mubbsza8000vecnode1",
      "by": "author",
      "k": "occ",
      "e": "r1|2026-11-16",
@@ -715,8 +831,8 @@
      }
     },
     {
-     "id": "op30",
-     "ts": "0mubbsunk000vecnode1",
+     "id": "op37",
+     "ts": "0mubbt020000vecnode1",
      "by": "author",
      "k": "occ",
      "e": "r1|2026-11-17",
@@ -727,8 +843,8 @@
      }
     },
     {
-     "id": "op31",
-     "ts": "0mubbsvfc000vecnode1",
+     "id": "op38",
+     "ts": "0mubbt0ts000vecnode1",
      "by": "author",
      "k": "occ",
      "e": "r2|2026-11-18",
@@ -737,8 +853,8 @@
      }
     },
     {
-     "id": "op32",
-     "ts": "0mubbsw74000vecnode1",
+     "id": "op39",
+     "ts": "0mubbt1lk000vecnode1",
      "by": "author",
      "k": "occ",
      "e": "r2|2026-11-16",
@@ -749,8 +865,8 @@
      }
     },
     {
-     "id": "op33",
-     "ts": "0mubbswyw000vecnode1",
+     "id": "op40",
+     "ts": "0mubbt2dc000vecnode1",
      "by": "author",
      "k": "item",
      "e": "e1",
@@ -768,8 +884,8 @@
      }
     },
     {
-     "id": "op34",
-     "ts": "0mubbsxqo000vecnode1",
+     "id": "op41",
+     "ts": "0mubbt354000vecnode1",
      "by": "author",
      "k": "item",
      "e": "e2",
@@ -785,8 +901,8 @@
      }
     },
     {
-     "id": "op35",
-     "ts": "0mubbsyig000vecnode1",
+     "id": "op42",
+     "ts": "0mubbt3ww000vecnode1",
      "by": "author",
      "k": "item",
      "e": "e3",
@@ -812,8 +928,8 @@
      }
     },
     {
-     "id": "op36",
-     "ts": "0mubbsza8000vecnode1",
+     "id": "op43",
+     "ts": "0mubbt4oo000vecnode1",
      "by": "author",
      "k": "occ",
      "e": "e3|2026-11-25",
@@ -822,7 +938,7 @@
      }
     },
     {
-     "id": "op37",
+     "id": "op44",
      "ts": "0mubc2xb4000vecnode2",
      "by": "author",
      "k": "item",
@@ -832,7 +948,7 @@
      }
     },
     {
-     "id": "op37",
+     "id": "op44",
      "ts": "0mubbs7i9000vecnode3",
      "by": "author",
      "k": "item",
@@ -1001,6 +1117,17 @@
        "ts": "0mubbscwo000vecnode1",
        "v": 1
       },
+      "lastTrip": {
+       "ts": "0mubbsvfc000vecnode1",
+       "v": {
+        "by": "pB",
+        "at": 1790000000050,
+        "n": 4,
+        "left": 2,
+        "missed": 1,
+        "from": "pA"
+       }
+      },
       "name": {
        "ts": "0mubbscwo000vecnode1",
        "v": "Einkauf"
@@ -1008,6 +1135,21 @@
       "order": {
        "ts": "0mubbscwo000vecnode1",
        "v": 2
+      },
+      "set.w1": {
+       "ts": "0mubbsvfc000vecnode1",
+       "v": {
+        "name": "Wocheneinkauf",
+        "items": [
+         {
+          "title": "Milch",
+          "qty": "2"
+         },
+         {
+          "title": "Brot"
+         }
+        ]
+       }
       },
       "type": {
        "ts": "0mubbscwo000vecnode1",
@@ -1097,118 +1239,118 @@
     "item": {
      "e1": {
       "assignees": {
-       "ts": "0mubbswyw000vecnode1",
+       "ts": "0mubbt2dc000vecnode1",
        "v": [
         "pC"
        ]
       },
       "createdAt": {
-       "ts": "0mubbswyw000vecnode1",
+       "ts": "0mubbt2dc000vecnode1",
        "v": 1790000000018
       },
       "end": {
-       "ts": "0mubbswyw000vecnode1",
+       "ts": "0mubbt2dc000vecnode1",
        "v": "2026-11-18T10:15"
       },
       "kind": {
-       "ts": "0mubbswyw000vecnode1",
+       "ts": "0mubbt2dc000vecnode1",
        "v": "event"
       },
       "listId": {
-       "ts": "0mubbswyw000vecnode1",
+       "ts": "0mubbt2dc000vecnode1",
        "v": "lHaus"
       },
       "location": {
-       "ts": "0mubbswyw000vecnode1",
+       "ts": "0mubbt2dc000vecnode1",
        "v": "Praxis"
       },
       "start": {
-       "ts": "0mubbswyw000vecnode1",
+       "ts": "0mubbt2dc000vecnode1",
        "v": "2026-11-18T09:30"
       },
       "title": {
-       "ts": "0mubbswyw000vecnode1",
+       "ts": "0mubbt2dc000vecnode1",
        "v": "Zahnarzt"
       }
      },
      "e2": {
       "allDay": {
-       "ts": "0mubbsxqo000vecnode1",
+       "ts": "0mubbt354000vecnode1",
        "v": true
       },
       "createdAt": {
-       "ts": "0mubbsxqo000vecnode1",
+       "ts": "0mubbt354000vecnode1",
        "v": 1790000000019
       },
       "end": {
-       "ts": "0mubbsxqo000vecnode1",
+       "ts": "0mubbt354000vecnode1",
        "v": "2026-12-27T00:00"
       },
       "everyone": {
-       "ts": "0mubbsxqo000vecnode1",
+       "ts": "0mubbt354000vecnode1",
        "v": true
       },
       "kind": {
-       "ts": "0mubbsxqo000vecnode1",
+       "ts": "0mubbt354000vecnode1",
        "v": "event"
       },
       "listId": {
-       "ts": "0mubbsxqo000vecnode1",
+       "ts": "0mubbt354000vecnode1",
        "v": "lHaus"
       },
       "start": {
-       "ts": "0mubbsxqo000vecnode1",
+       "ts": "0mubbt354000vecnode1",
        "v": "2026-12-20T00:00"
       },
       "title": {
-       "ts": "0mubbsxqo000vecnode1",
+       "ts": "0mubbt354000vecnode1",
        "v": "Urlaub"
       }
      },
      "e3": {
       "assignees": {
-       "ts": "0mubbsyig000vecnode1",
+       "ts": "0mubbt3ww000vecnode1",
        "v": [
         "pA",
         "pB"
        ]
       },
       "createdAt": {
-       "ts": "0mubbsyig000vecnode1",
+       "ts": "0mubbt3ww000vecnode1",
        "v": 1790000000020
       },
       "end": {
-       "ts": "0mubbsyig000vecnode1",
+       "ts": "0mubbt3ww000vecnode1",
        "v": "2026-11-04T21:00"
       },
       "kind": {
-       "ts": "0mubbsyig000vecnode1",
+       "ts": "0mubbt3ww000vecnode1",
        "v": "event"
       },
       "listId": {
-       "ts": "0mubbsyig000vecnode1",
+       "ts": "0mubbt3ww000vecnode1",
        "v": "lHaus"
       },
       "repeat": {
-       "ts": "0mubbsyig000vecnode1",
+       "ts": "0mubbt3ww000vecnode1",
        "v": {
         "freq": "week",
         "interval": 1
        }
       },
       "rsvp.pB": {
-       "ts": "0mubbsyig000vecnode1",
+       "ts": "0mubbt3ww000vecnode1",
        "v": {
         "a": "no",
         "at": 1790000000030
        }
       },
       "start": {
-       "ts": "0mubbsyig000vecnode1",
+       "ts": "0mubbt3ww000vecnode1",
        "v": "2026-11-04T19:00"
       },
       "title": {
-       "ts": "0mubbsyig000vecnode1",
+       "ts": "0mubbt3ww000vecnode1",
        "v": "Chor"
       }
      },
@@ -1388,6 +1530,119 @@
        "v": "Brot"
       }
      },
+     "i15": {
+      "createdAt": {
+       "ts": "0mubbsqso000vecnode1",
+       "v": 1790000000021
+      },
+      "kind": {
+       "ts": "0mubbsqso000vecnode1",
+       "v": "task"
+      },
+      "listId": {
+       "ts": "0mubbsqso000vecnode1",
+       "v": "lEinkauf"
+      },
+      "title": {
+       "ts": "0mubbsqso000vecnode1",
+       "v": "Hafermilch"
+      }
+     },
+     "i16": {
+      "aisle": {
+       "ts": "0mubbsrkg000vecnode1",
+       "v": "bakery"
+      },
+      "createdAt": {
+       "ts": "0mubbsrkg000vecnode1",
+       "v": 1790000000022
+      },
+      "kind": {
+       "ts": "0mubbsrkg000vecnode1",
+       "v": "task"
+      },
+      "listId": {
+       "ts": "0mubbsrkg000vecnode1",
+       "v": "lEinkauf"
+      },
+      "title": {
+       "ts": "0mubbsrkg000vecnode1",
+       "v": "Käsekuchen"
+      }
+     },
+     "i17": {
+      "createdAt": {
+       "ts": "0mubbssc8000vecnode1",
+       "v": 1790000000023
+      },
+      "kind": {
+       "ts": "0mubbssc8000vecnode1",
+       "v": "task"
+      },
+      "listId": {
+       "ts": "0mubbssc8000vecnode1",
+       "v": "lEinkauf"
+      },
+      "missed": {
+       "ts": "0mubbssc8000vecnode1",
+       "v": {
+        "by": "pB",
+        "at": 1790000000040
+       }
+      },
+      "title": {
+       "ts": "0mubbssc8000vecnode1",
+       "v": "Gouda"
+      }
+     },
+     "i18": {
+      "aisle": {
+       "ts": "0mubbst40000vecnode1",
+       "v": "drinks"
+      },
+      "createdAt": {
+       "ts": "0mubbst40000vecnode1",
+       "v": 1790000000002
+      },
+      "deleted": {
+       "ts": "0mubbst40000vecnode1",
+       "v": true
+      },
+      "deletedAt": {
+       "ts": "0mubbst40000vecnode1",
+       "v": 1790000000000
+      },
+      "kind": {
+       "ts": "0mubbst40000vecnode1",
+       "v": "task"
+      },
+      "listId": {
+       "ts": "0mubbst40000vecnode1",
+       "v": "lEinkauf"
+      },
+      "title": {
+       "ts": "0mubbst40000vecnode1",
+       "v": "Spezialtee"
+      }
+     },
+     "i19": {
+      "createdAt": {
+       "ts": "0mubbstvs000vecnode1",
+       "v": 1790000000024
+      },
+      "kind": {
+       "ts": "0mubbstvs000vecnode1",
+       "v": "task"
+      },
+      "listId": {
+       "ts": "0mubbstvs000vecnode1",
+       "v": "lEinkauf"
+      },
+      "title": {
+       "ts": "0mubbstvs000vecnode1",
+       "v": "spezialtee "
+      }
+     },
      "i2": {
       "assignees": {
        "ts": "0mubbsgrk000vecnode1",
@@ -1427,6 +1682,28 @@
       "title": {
        "ts": "0mubbsgrk000vecnode1",
        "v": "Steuer"
+      }
+     },
+     "i20": {
+      "aisle": {
+       "ts": "0mubbsunk000vecnode1",
+       "v": "nonsense"
+      },
+      "createdAt": {
+       "ts": "0mubbsunk000vecnode1",
+       "v": 1790000000025
+      },
+      "kind": {
+       "ts": "0mubbsunk000vecnode1",
+       "v": "task"
+      },
+      "listId": {
+       "ts": "0mubbsunk000vecnode1",
+       "v": "lEinkauf"
+      },
+      "title": {
+       "ts": "0mubbsunk000vecnode1",
+       "v": "Batterien"
       }
      },
      "i3": {
@@ -1641,30 +1918,30 @@
      },
      "r1": {
       "createdAt": {
-       "ts": "0mubbsqso000vecnode1",
+       "ts": "0mubbsw74000vecnode1",
        "v": 1790000000014
       },
       "dueDate": {
-       "ts": "0mubbsqso000vecnode1",
+       "ts": "0mubbsw74000vecnode1",
        "v": "2026-11-01"
       },
       "kind": {
-       "ts": "0mubbsqso000vecnode1",
+       "ts": "0mubbsw74000vecnode1",
        "v": "task"
       },
       "listId": {
-       "ts": "0mubbsqso000vecnode1",
+       "ts": "0mubbsw74000vecnode1",
        "v": "lHaus"
       },
       "repeat": {
-       "ts": "0mubbsqso000vecnode1",
+       "ts": "0mubbsw74000vecnode1",
        "v": {
         "freq": "day",
         "interval": 1
        }
       },
       "rotation": {
-       "ts": "0mubbsqso000vecnode1",
+       "ts": "0mubbsw74000vecnode1",
        "v": [
         "pA",
         "pB",
@@ -1672,35 +1949,35 @@
        ]
       },
       "title": {
-       "ts": "0mubbsqso000vecnode1",
+       "ts": "0mubbsw74000vecnode1",
        "v": "Spülmaschine"
       }
      },
      "r2": {
       "assignees": {
-       "ts": "0mubbsrkg000vecnode1",
+       "ts": "0mubbswyw000vecnode1",
        "v": [
         "pB"
        ]
       },
       "createdAt": {
-       "ts": "0mubbsrkg000vecnode1",
+       "ts": "0mubbswyw000vecnode1",
        "v": 1790000000015
       },
       "end": {
-       "ts": "0mubbsrkg000vecnode1",
+       "ts": "0mubbswyw000vecnode1",
        "v": "2026-11-02T19:00"
       },
       "kind": {
-       "ts": "0mubbsrkg000vecnode1",
+       "ts": "0mubbswyw000vecnode1",
        "v": "task"
       },
       "listId": {
-       "ts": "0mubbsrkg000vecnode1",
+       "ts": "0mubbswyw000vecnode1",
        "v": "lHaus"
       },
       "repeat": {
-       "ts": "0mubbsrkg000vecnode1",
+       "ts": "0mubbswyw000vecnode1",
        "v": {
         "freq": "week",
         "interval": 1,
@@ -1711,68 +1988,68 @@
        }
       },
       "start": {
-       "ts": "0mubbsrkg000vecnode1",
+       "ts": "0mubbswyw000vecnode1",
        "v": "2026-11-02T18:00"
       },
       "title": {
-       "ts": "0mubbsrkg000vecnode1",
+       "ts": "0mubbswyw000vecnode1",
        "v": "Sport"
       }
      },
      "r3": {
       "assignees": {
-       "ts": "0mubbssc8000vecnode1",
+       "ts": "0mubbsxqo000vecnode1",
        "v": [
         "pA"
        ]
       },
       "createdAt": {
-       "ts": "0mubbssc8000vecnode1",
+       "ts": "0mubbsxqo000vecnode1",
        "v": 1790000000016
       },
       "dueDate": {
-       "ts": "0mubbssc8000vecnode1",
+       "ts": "0mubbsxqo000vecnode1",
        "v": "2026-01-31"
       },
       "kind": {
-       "ts": "0mubbssc8000vecnode1",
+       "ts": "0mubbsxqo000vecnode1",
        "v": "task"
       },
       "listId": {
-       "ts": "0mubbssc8000vecnode1",
+       "ts": "0mubbsxqo000vecnode1",
        "v": "lHaus"
       },
       "repeat": {
-       "ts": "0mubbssc8000vecnode1",
+       "ts": "0mubbsxqo000vecnode1",
        "v": {
         "freq": "month",
         "interval": 1
        }
       },
       "title": {
-       "ts": "0mubbssc8000vecnode1",
+       "ts": "0mubbsxqo000vecnode1",
        "v": "Miete"
       }
      },
      "r4": {
       "createdAt": {
-       "ts": "0mubbst40000vecnode1",
+       "ts": "0mubbsyig000vecnode1",
        "v": 1790000000017
       },
       "dueDate": {
-       "ts": "0mubbst40000vecnode1",
+       "ts": "0mubbsyig000vecnode1",
        "v": "2026-11-03"
       },
       "kind": {
-       "ts": "0mubbst40000vecnode1",
+       "ts": "0mubbsyig000vecnode1",
        "v": "task"
       },
       "listId": {
-       "ts": "0mubbst40000vecnode1",
+       "ts": "0mubbsyig000vecnode1",
        "v": "lHaus"
       },
       "repeat": {
-       "ts": "0mubbst40000vecnode1",
+       "ts": "0mubbsyig000vecnode1",
        "v": {
         "freq": "week",
         "interval": 2,
@@ -1780,7 +2057,7 @@
        }
       },
       "title": {
-       "ts": "0mubbst40000vecnode1",
+       "ts": "0mubbsyig000vecnode1",
        "v": "Kurs"
       }
      }
@@ -1789,13 +2066,13 @@
     "occ": {
      "e3|2026-11-25": {
       "skip": {
-       "ts": "0mubbsza8000vecnode1",
+       "ts": "0mubbt4oo000vecnode1",
        "v": true
       }
      },
      "r1|2026-11-16": {
       "done": {
-       "ts": "0mubbstvs000vecnode1",
+       "ts": "0mubbsza8000vecnode1",
        "v": {
         "by": "pB",
         "at": 1790000000020
@@ -1804,7 +2081,7 @@
      },
      "r1|2026-11-17": {
       "assignees": {
-       "ts": "0mubbsunk000vecnode1",
+       "ts": "0mubbt020000vecnode1",
        "v": [
         "pC"
        ]
@@ -1812,21 +2089,21 @@
      },
      "r2|2026-11-16": {
       "end": {
-       "ts": "0mubbsw74000vecnode1",
+       "ts": "0mubbt1lk000vecnode1",
        "v": "2026-11-16T18:30"
       },
       "start": {
-       "ts": "0mubbsw74000vecnode1",
+       "ts": "0mubbt1lk000vecnode1",
        "v": "2026-11-16T17:00"
       },
       "title": {
-       "ts": "0mubbsw74000vecnode1",
+       "ts": "0mubbt1lk000vecnode1",
        "v": "Sport (Halle B)"
       }
      },
      "r2|2026-11-18": {
       "skip": {
-       "ts": "0mubbsvfc000vecnode1",
+       "ts": "0mubbt0ts000vecnode1",
        "v": true
       }
      }
@@ -3169,6 +3446,101 @@
       ]
      },
      {
+      "id": "i15",
+      "listId": "lEinkauf",
+      "kind": "task",
+      "title": "Hafermilch",
+      "note": null,
+      "assignees": [],
+      "done": false,
+      "doneBy": null,
+      "dueDate": null,
+      "dueTime": null,
+      "start": null,
+      "end": null,
+      "allDay": false,
+      "repeats": false,
+      "overdue": false,
+      "current": null,
+      "occurrences": []
+     },
+     {
+      "id": "i16",
+      "listId": "lEinkauf",
+      "kind": "task",
+      "title": "Käsekuchen",
+      "note": null,
+      "assignees": [],
+      "done": false,
+      "doneBy": null,
+      "dueDate": null,
+      "dueTime": null,
+      "start": null,
+      "end": null,
+      "allDay": false,
+      "repeats": false,
+      "overdue": false,
+      "current": null,
+      "occurrences": []
+     },
+     {
+      "id": "i17",
+      "listId": "lEinkauf",
+      "kind": "task",
+      "title": "Gouda",
+      "note": null,
+      "assignees": [],
+      "done": false,
+      "doneBy": null,
+      "dueDate": null,
+      "dueTime": null,
+      "start": null,
+      "end": null,
+      "allDay": false,
+      "repeats": false,
+      "overdue": false,
+      "current": null,
+      "occurrences": []
+     },
+     {
+      "id": "i19",
+      "listId": "lEinkauf",
+      "kind": "task",
+      "title": "spezialtee ",
+      "note": null,
+      "assignees": [],
+      "done": false,
+      "doneBy": null,
+      "dueDate": null,
+      "dueTime": null,
+      "start": null,
+      "end": null,
+      "allDay": false,
+      "repeats": false,
+      "overdue": false,
+      "current": null,
+      "occurrences": []
+     },
+     {
+      "id": "i20",
+      "listId": "lEinkauf",
+      "kind": "task",
+      "title": "Batterien",
+      "note": null,
+      "assignees": [],
+      "done": false,
+      "doneBy": null,
+      "dueDate": null,
+      "dueTime": null,
+      "start": null,
+      "end": null,
+      "allDay": false,
+      "repeats": false,
+      "overdue": false,
+      "current": null,
+      "occurrences": []
+     },
+     {
       "id": "i1",
       "listId": "lHaus",
       "kind": "task",
@@ -3678,7 +4050,10 @@
    "labels": {
     "pack": "{thing} einpacken",
     "school": "Schule",
-    "work": "Arbeit"
+    "work": "Arbeit",
+    "exam": "Klassenarbeit {subject}",
+    "learn": "Für {subject} lernen",
+    "standby": "Bereitschaft"
    },
    "state": {
     "meta": {
@@ -3766,35 +4141,63 @@
     "list": {
      "lBusy": {
       "busyOnly": {
-       "ts": "0mubbscwo000vecnode1",
+       "ts": "0mubbsdog000vecnode1",
        "v": true
       },
       "color": {
-       "ts": "0mubbscwo000vecnode1",
+       "ts": "0mubbsdog000vecnode1",
        "v": 7
       },
       "d.2026-11-17": {
-       "ts": "0mubbscwo000vecnode1",
+       "ts": "0mubbsdog000vecnode1",
        "v": "f"
       },
+      "d.2026-11-18": {
+       "ts": "0mubbsdog000vecnode1",
+       "v": "b"
+      },
+      "d.2026-11-19": {
+       "ts": "0mubbsdog000vecnode1",
+       "v": "c"
+      },
       "mode": {
-       "ts": "0mubbscwo000vecnode1",
+       "ts": "0mubbsdog000vecnode1",
        "v": "shifts"
       },
       "name": {
-       "ts": "0mubbscwo000vecnode1",
+       "ts": "0mubbsdog000vecnode1",
        "v": "Nur belegt"
       },
       "order": {
-       "ts": "0mubbscwo000vecnode1",
+       "ts": "0mubbsdog000vecnode1",
        "v": 5
       },
       "rsFor": {
-       "ts": "0mubbscwo000vecnode1",
+       "ts": "0mubbsdog000vecnode1",
        "v": "pC"
       },
+      "shift.b": {
+       "ts": "0mubbsdog000vecnode1",
+       "v": {
+        "name": "Bereit",
+        "code": "B",
+        "start": "08:00",
+        "end": "12:00",
+        "standby": "yes"
+       }
+      },
+      "shift.c": {
+       "ts": "0mubbsdog000vecnode1",
+       "v": {
+        "name": "Bereit 2",
+        "code": "C",
+        "start": "13:00",
+        "end": "15:00",
+        "standby": true
+       }
+      },
       "shift.f": {
-       "ts": "0mubbscwo000vecnode1",
+       "ts": "0mubbsdog000vecnode1",
        "v": {
         "name": "Früh",
         "code": "F",
@@ -3803,37 +4206,101 @@
        }
       },
       "type": {
-       "ts": "0mubbscwo000vecnode1",
+       "ts": "0mubbsdog000vecnode1",
        "v": "roster"
+      }
+     },
+     "lHalf": {
+      "color": {
+       "ts": "0mubbsalc000vecnode1",
+       "v": 9
+      },
+      "les.1.1": {
+       "ts": "0mubbsalc000vecnode1",
+       "v": "h1"
+      },
+      "les.3.2": {
+       "ts": "0mubbsalc000vecnode1",
+       "v": "h2"
+      },
+      "les.5.1": {
+       "ts": "0mubbsalc000vecnode1",
+       "v": "h1"
+      },
+      "name": {
+       "ts": "0mubbsalc000vecnode1",
+       "v": "Zweites Halbjahr"
+      },
+      "order": {
+       "ts": "0mubbsalc000vecnode1",
+       "v": 7
+      },
+      "packTime": {
+       "ts": "0mubbsalc000vecnode1",
+       "v": "18:30"
+      },
+      "subj.h1": {
+       "ts": "0mubbsalc000vecnode1",
+       "v": {
+        "name": "Bio",
+        "things": [
+         "Kittel"
+        ]
+       }
+      },
+      "subj.h2": {
+       "ts": "0mubbsalc000vecnode1",
+       "v": {
+        "name": "Sport",
+        "things": [
+         "Sportzeug"
+        ]
+       }
+      },
+      "ttFor": {
+       "ts": "0mubbsalc000vecnode1",
+       "v": "pC"
+      },
+      "ttFrom": {
+       "ts": "0mubbsalc000vecnode1",
+       "v": "2026-11-18"
+      },
+      "ttUntil": {
+       "ts": "0mubbsalc000vecnode1",
+       "v": "2026-12-11"
+      },
+      "type": {
+       "ts": "0mubbsalc000vecnode1",
+       "v": "timetable"
       }
      },
      "lOff": {
       "color": {
-       "ts": "0mubbsdog000vecnode1",
+       "ts": "0mubbseg8000vecnode1",
        "v": 8
       },
       "mode": {
-       "ts": "0mubbsdog000vecnode1",
+       "ts": "0mubbseg8000vecnode1",
        "v": "week"
       },
       "name": {
-       "ts": "0mubbsdog000vecnode1",
+       "ts": "0mubbseg8000vecnode1",
        "v": "Kein Kalender"
       },
       "noCal": {
-       "ts": "0mubbsdog000vecnode1",
+       "ts": "0mubbseg8000vecnode1",
        "v": true
       },
       "order": {
-       "ts": "0mubbsdog000vecnode1",
+       "ts": "0mubbseg8000vecnode1",
        "v": 6
       },
       "type": {
-       "ts": "0mubbsdog000vecnode1",
+       "ts": "0mubbseg8000vecnode1",
        "v": "roster"
       },
       "wk.1": {
-       "ts": "0mubbsdog000vecnode1",
+       "ts": "0mubbseg8000vecnode1",
        "v": [
         {
          "start": "08:00",
@@ -3844,51 +4311,69 @@
      },
      "lShift": {
       "color": {
-       "ts": "0mubbsc4w000vecnode1",
+       "ts": "0mubbscwo000vecnode1",
        "v": 6
       },
       "d.2025-01-01": {
-       "ts": "0mubbsc4w000vecnode1",
+       "ts": "0mubbscwo000vecnode1",
        "v": "f"
       },
       "d.2026-11-17": {
-       "ts": "0mubbsc4w000vecnode1",
+       "ts": "0mubbscwo000vecnode1",
        "v": "f"
       },
       "d.2026-11-18": {
-       "ts": "0mubbsc4w000vecnode1",
+       "ts": "0mubbscwo000vecnode1",
        "v": "n"
       },
       "d.2026-11-19": {
-       "ts": "0mubbsc4w000vecnode1",
+       "ts": "0mubbscwo000vecnode1",
        "v": "u"
       },
       "d.2026-11-20": {
-       "ts": "0mubbsc4w000vecnode1",
+       "ts": "0mubbscwo000vecnode1",
        "v": "gone"
       },
       "d.2026-11-21": {
-       "ts": "0mubbsc4w000vecnode1",
+       "ts": "0mubbscwo000vecnode1",
        "v": "09:00-12:00"
       },
+      "d.2026-11-22": {
+       "ts": "0mubbscwo000vecnode1",
+       "v": "b"
+      },
+      "eve": {
+       "ts": "0mubbscwo000vecnode1",
+       "v": true
+      },
       "mode": {
-       "ts": "0mubbsc4w000vecnode1",
+       "ts": "0mubbscwo000vecnode1",
        "v": "shifts"
       },
       "name": {
-       "ts": "0mubbsc4w000vecnode1",
+       "ts": "0mubbscwo000vecnode1",
        "v": "Dienste Anna"
       },
       "order": {
-       "ts": "0mubbsc4w000vecnode1",
+       "ts": "0mubbscwo000vecnode1",
        "v": 4
       },
       "rsFor": {
-       "ts": "0mubbsc4w000vecnode1",
+       "ts": "0mubbscwo000vecnode1",
        "v": "pA"
       },
+      "shift.b": {
+       "ts": "0mubbscwo000vecnode1",
+       "v": {
+        "name": "Rufdienst",
+        "code": "R",
+        "start": "18:00",
+        "end": "08:00",
+        "standby": true
+       }
+      },
       "shift.f": {
-       "ts": "0mubbsc4w000vecnode1",
+       "ts": "0mubbscwo000vecnode1",
        "v": {
         "name": "Früh",
         "code": "F",
@@ -3897,7 +4382,7 @@
        }
       },
       "shift.n": {
-       "ts": "0mubbsc4w000vecnode1",
+       "ts": "0mubbscwo000vecnode1",
        "v": {
         "name": "Nacht",
         "code": "n",
@@ -3906,14 +4391,14 @@
        }
       },
       "shift.u": {
-       "ts": "0mubbsc4w000vecnode1",
+       "ts": "0mubbscwo000vecnode1",
        "v": {
         "name": "Urlaub",
         "code": "U"
        }
       },
       "type": {
-       "ts": "0mubbsc4w000vecnode1",
+       "ts": "0mubbscwo000vecnode1",
        "v": "roster"
       }
      },
@@ -3932,6 +4417,77 @@
         "Trinkflasche",
         "sportzeug"
        ]
+      },
+      "ex.2026-11-19": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": {
+        "from": 2,
+        "things": [
+         "Brotdose",
+         "Sportzeug"
+        ]
+       }
+      },
+      "ex.2026-11-20": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": {
+        "free": true
+       }
+      },
+      "ex.2026-11-24": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": {
+        "free": true
+       }
+      },
+      "ex.2026-11-30": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": {
+        "note": "Ausflug",
+        "things": [
+         "Regenjacke"
+        ]
+       }
+      },
+      "ex.2026-12-01": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": {
+        "to": 1,
+        "note": "Hitzefrei"
+       }
+      },
+      "exam.x1": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": {
+        "subjectId": "s2",
+        "date": "2026-12-01",
+        "learn": 3,
+        "note": "Bruchrechnen"
+       }
+      },
+      "exam.x2": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": {
+        "subjectId": "s3",
+        "date": "2026-11-18",
+        "learn": 0
+       }
+      },
+      "exam.x3": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": {
+        "subjectId": "gone",
+        "date": "2026-11-19",
+        "learn": 2
+       }
+      },
+      "exam.x4": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": {
+        "subjectId": "s1",
+        "date": "bad",
+        "learn": 2
+       }
       },
       "les.1.1": {
        "ts": "0mubbs9tk000vecnode1",
@@ -4057,27 +4613,27 @@
      },
      "lTT2": {
       "color": {
-       "ts": "0mubbsalc000vecnode1",
+       "ts": "0mubbsbd4000vecnode1",
        "v": 4
       },
       "les.3.1": {
-       "ts": "0mubbsalc000vecnode1",
+       "ts": "0mubbsbd4000vecnode1",
        "v": "x"
       },
       "name": {
-       "ts": "0mubbsalc000vecnode1",
+       "ts": "0mubbsbd4000vecnode1",
        "v": "Ohne Kalender"
       },
       "noCal": {
-       "ts": "0mubbsalc000vecnode1",
+       "ts": "0mubbsbd4000vecnode1",
        "v": true
       },
       "order": {
-       "ts": "0mubbsalc000vecnode1",
+       "ts": "0mubbsbd4000vecnode1",
        "v": 2
       },
       "subj.x": {
-       "ts": "0mubbsalc000vecnode1",
+       "ts": "0mubbsbd4000vecnode1",
        "v": {
         "name": "Musik",
         "things": [
@@ -4086,33 +4642,33 @@
        }
       },
       "type": {
-       "ts": "0mubbsalc000vecnode1",
+       "ts": "0mubbsbd4000vecnode1",
        "v": "timetable"
       }
      },
      "lWeek": {
       "color": {
-       "ts": "0mubbsbd4000vecnode1",
+       "ts": "0mubbsc4w000vecnode1",
        "v": 5
       },
       "d.2026-11-18": {
-       "ts": "0mubbsbd4000vecnode1",
+       "ts": "0mubbsc4w000vecnode1",
        "v": "10:00-14:00"
       },
       "d.2026-11-19": {
-       "ts": "0mubbsbd4000vecnode1",
+       "ts": "0mubbsc4w000vecnode1",
        "v": ""
       },
       "mode": {
-       "ts": "0mubbsbd4000vecnode1",
+       "ts": "0mubbsc4w000vecnode1",
        "v": "week"
       },
       "name": {
-       "ts": "0mubbsbd4000vecnode1",
+       "ts": "0mubbsc4w000vecnode1",
        "v": "Arbeit Anna"
       },
       "off.u1": {
-       "ts": "0mubbsbd4000vecnode1",
+       "ts": "0mubbsc4w000vecnode1",
        "v": {
         "name": "Urlaub",
         "from": "2026-11-25",
@@ -4120,19 +4676,19 @@
        }
       },
       "order": {
-       "ts": "0mubbsbd4000vecnode1",
+       "ts": "0mubbsc4w000vecnode1",
        "v": 3
       },
       "rsFor": {
-       "ts": "0mubbsbd4000vecnode1",
+       "ts": "0mubbsc4w000vecnode1",
        "v": "pA"
       },
       "type": {
-       "ts": "0mubbsbd4000vecnode1",
+       "ts": "0mubbsc4w000vecnode1",
        "v": "roster"
       },
       "wk.1": {
-       "ts": "0mubbsbd4000vecnode1",
+       "ts": "0mubbsc4w000vecnode1",
        "v": [
         {
          "start": "08:00",
@@ -4141,7 +4697,7 @@
        ]
       },
       "wk.2": {
-       "ts": "0mubbsbd4000vecnode1",
+       "ts": "0mubbsc4w000vecnode1",
        "v": [
         {
          "start": "08:00",
@@ -4154,7 +4710,7 @@
        ]
       },
       "wk.3": {
-       "ts": "0mubbsbd4000vecnode1",
+       "ts": "0mubbsc4w000vecnode1",
        "v": [
         {
          "start": "08:00",
@@ -4163,7 +4719,7 @@
        ]
       },
       "wk.5": {
-       "ts": "0mubbsbd4000vecnode1",
+       "ts": "0mubbsc4w000vecnode1",
        "v": [
         {
          "start": "22:00",
@@ -4178,7 +4734,7 @@
     "occ": {
      "tt~lTT~s08000935|2026-11-30": {
       "note": {
-       "ts": "0mubbseg8000vecnode1",
+       "ts": "0mubbsf80000vecnode1",
        "v": "nur ein Feld"
       }
      }
@@ -4210,6 +4766,10 @@
     {
      "id": "lOff",
      "type": "roster"
+    },
+    {
+     "id": "lHalf",
+     "type": "timetable"
     }
    ],
    "items": [
@@ -4541,6 +5101,143 @@
      "fromTimetable": "lTT"
     },
     {
+     "id": "tt~lTT~o1rk3833~2026-11-19",
+     "listId": "lTT",
+     "kind": "task",
+     "title": "Brotdose einpacken",
+     "assignees": [
+      "pC"
+     ],
+     "dueDate": "2026-11-18",
+     "dueTime": "19:00",
+     "remind": 0,
+     "repeat": {
+      "freq": "day",
+      "interval": 1,
+      "until": "2026-11-18"
+     },
+     "fromTimetable": "lTT"
+    },
+    {
+     "id": "tt~lTT~o4wf44o~2026-11-19",
+     "listId": "lTT",
+     "kind": "task",
+     "title": "Sportzeug einpacken",
+     "assignees": [
+      "pC"
+     ],
+     "dueDate": "2026-11-18",
+     "dueTime": "19:00",
+     "remind": 0,
+     "repeat": {
+      "freq": "day",
+      "interval": 1,
+      "until": "2026-11-18"
+     },
+     "fromTimetable": "lTT"
+    },
+    {
+     "id": "tt~lTT~x2026-11-19",
+     "listId": "lTT",
+     "kind": "event",
+     "title": "Schule",
+     "assignees": [
+      "pC"
+     ],
+     "start": "2026-11-19T11:45",
+     "end": "2026-11-19T12:30",
+     "fromTimetable": "lTT"
+    },
+    {
+     "id": "tt~lTT~oawhn3w~2026-11-30",
+     "listId": "lTT",
+     "kind": "task",
+     "title": "Regenjacke einpacken",
+     "assignees": [
+      "pC"
+     ],
+     "dueDate": "2026-11-27",
+     "dueTime": "19:00",
+     "remind": 0,
+     "repeat": {
+      "freq": "day",
+      "interval": 1,
+      "until": "2026-11-27"
+     },
+     "fromTimetable": "lTT"
+    },
+    {
+     "id": "tt~lTT~x2026-11-30",
+     "listId": "lTT",
+     "kind": "event",
+     "title": "Schule",
+     "assignees": [
+      "pC"
+     ],
+     "start": "2026-11-30T08:00",
+     "end": "2026-11-30T09:35",
+     "fromTimetable": "lTT",
+     "note": "Ausflug"
+    },
+    {
+     "id": "tt~lTT~x2026-12-01",
+     "listId": "lTT",
+     "kind": "event",
+     "title": "Schule",
+     "assignees": [
+      "pC"
+     ],
+     "start": "2026-12-01T08:00",
+     "end": "2026-12-01T08:45",
+     "fromTimetable": "lTT",
+     "note": "Hitzefrei"
+    },
+    {
+     "id": "tt~lTT~ex2",
+     "listId": "lTT",
+     "kind": "event",
+     "title": "Klassenarbeit Kunst",
+     "assignees": [
+      "pC"
+     ],
+     "start": "2026-11-18",
+     "end": "2026-11-18",
+     "allDay": true,
+     "fromTimetable": "lTT"
+    },
+    {
+     "id": "tt~lTT~ex1",
+     "listId": "lTT",
+     "kind": "event",
+     "title": "Klassenarbeit Mathe",
+     "assignees": [
+      "pC"
+     ],
+     "start": "2026-12-01T08:00",
+     "end": "2026-12-01T08:45",
+     "note": "Bruchrechnen",
+     "fromTimetable": "lTT"
+    },
+    {
+     "id": "tt~lTT~lx1",
+     "listId": "lTT",
+     "kind": "task",
+     "title": "Für Mathe lernen",
+     "assignees": [
+      "pC"
+     ],
+     "dueDate": "2026-11-28",
+     "repeat": {
+      "freq": "day",
+      "interval": 1,
+      "until": "2026-11-30"
+     },
+     "fromTimetable": "lTT",
+     "forLessons": [
+      "Mathe"
+     ]
+    },
+    {
      "id": "tt~lTT2~p1v5wa2w",
      "listId": "lTT2",
      "kind": "task",
@@ -4558,6 +5255,96 @@
      "forLessons": [
       "Musik"
      ]
+    },
+    {
+     "id": "tt~lHalf~pdtk2js",
+     "listId": "lHalf",
+     "kind": "task",
+     "title": "Kittel einpacken",
+     "assignees": [
+      "pC"
+     ],
+     "dueDate": "2026-11-17",
+     "dueTime": "18:30",
+     "remind": 0,
+     "repeat": {
+      "freq": "week",
+      "interval": 1,
+      "days": [
+       0,
+       4
+      ],
+      "until": "2026-12-10"
+     },
+     "fromTimetable": "lHalf",
+     "forLessons": [
+      "Bio"
+     ]
+    },
+    {
+     "id": "tt~lHalf~p4wf44o",
+     "listId": "lHalf",
+     "kind": "task",
+     "title": "Sportzeug einpacken",
+     "assignees": [
+      "pC"
+     ],
+     "dueDate": "2026-11-17",
+     "dueTime": "18:30",
+     "remind": 0,
+     "repeat": {
+      "freq": "week",
+      "interval": 1,
+      "days": [
+       2
+      ],
+      "until": "2026-12-10"
+     },
+     "fromTimetable": "lHalf",
+     "forLessons": [
+      "Sport"
+     ]
+    },
+    {
+     "id": "tt~lHalf~s07550840",
+     "listId": "lHalf",
+     "kind": "event",
+     "title": "Schule",
+     "assignees": [
+      "pC"
+     ],
+     "start": "2026-11-18T07:55",
+     "end": "2026-11-18T08:40",
+     "repeat": {
+      "freq": "week",
+      "interval": 1,
+      "days": [
+       1,
+       5
+      ],
+      "until": "2026-12-11"
+     },
+     "fromTimetable": "lHalf"
+    },
+    {
+     "id": "tt~lHalf~s08450930",
+     "listId": "lHalf",
+     "kind": "event",
+     "title": "Schule",
+     "assignees": [
+      "pC"
+     ],
+     "start": "2026-11-18T08:45",
+     "end": "2026-11-18T09:30",
+     "repeat": {
+      "freq": "week",
+      "interval": 1,
+      "days": [
+       3
+      ],
+      "until": "2026-12-11"
+     },
+     "fromTimetable": "lHalf"
     },
     {
      "listId": "lWeek",
@@ -4687,6 +5474,20 @@
      "end": "2026-11-21T12:00"
     },
     {
+     "listId": "lShift",
+     "kind": "event",
+     "assignees": [
+      "pA"
+     ],
+     "fromRoster": "lShift",
+     "id": "rs~lShift~d2026-11-22",
+     "title": "Rufdienst",
+     "shiftCode": "R",
+     "standby": true,
+     "start": "2026-11-22T18:00",
+     "end": "2026-11-23T08:00"
+    },
+    {
      "listId": "lBusy",
      "kind": "event",
      "assignees": [
@@ -4697,17 +5498,62 @@
      "title": "Arbeit",
      "start": "2026-11-17T06:00",
      "end": "2026-11-17T14:00"
+    },
+    {
+     "listId": "lBusy",
+     "kind": "event",
+     "assignees": [
+      "pC"
+     ],
+     "fromRoster": "lBusy",
+     "id": "rs~lBusy~d2026-11-18",
+     "title": "Arbeit",
+     "start": "2026-11-18T08:00",
+     "end": "2026-11-18T12:00"
+    },
+    {
+     "listId": "lBusy",
+     "kind": "event",
+     "assignees": [
+      "pC"
+     ],
+     "fromRoster": "lBusy",
+     "id": "rs~lBusy~d2026-11-19",
+     "title": "Bereitschaft",
+     "standby": true,
+     "start": "2026-11-19T13:00",
+     "end": "2026-11-19T15:00"
     }
    ],
    "skips": [
     "rs~lWeek~w08001630|2026-11-18",
     "rs~lWeek~w08001630|2026-11-25",
+    "tt~lHalf~p4wf44o|2026-11-24",
+    "tt~lHalf~p4wf44o|2026-12-22",
+    "tt~lHalf~p4wf44o|2026-12-29",
+    "tt~lHalf~pdtk2js|2026-11-22",
+    "tt~lHalf~pdtk2js|2026-11-26",
+    "tt~lHalf~pdtk2js|2026-12-20",
+    "tt~lHalf~pdtk2js|2026-12-24",
+    "tt~lHalf~pdtk2js|2026-12-27",
+    "tt~lHalf~pdtk2js|2026-12-31",
+    "tt~lHalf~s07550840|2026-11-23",
+    "tt~lHalf~s07550840|2026-11-27",
+    "tt~lHalf~s07550840|2026-12-21",
+    "tt~lHalf~s07550840|2026-12-25",
+    "tt~lHalf~s07550840|2026-12-28",
+    "tt~lHalf~s07550840|2027-01-01",
+    "tt~lHalf~s08450930|2026-11-25",
+    "tt~lHalf~s08450930|2026-12-23",
+    "tt~lHalf~s08450930|2026-12-30",
     "tt~lTT2~p1v5wa2w|2026-11-24",
     "tt~lTT2~p1v5wa2w|2026-12-22",
     "tt~lTT2~p1v5wa2w|2026-12-29",
+    "tt~lTT~p1o011kr~A|2026-11-19",
     "tt~lTT~p1o011kr~A|2026-12-31",
     "tt~lTT~p1o011kr~B|2026-11-26",
     "tt~lTT~p1o011kr~B|2026-12-24",
+    "tt~lTT~p4wf44o~A|2026-11-19",
     "tt~lTT~p4wf44o~A|2026-11-20",
     "tt~lTT~p4wf44o~A|2026-12-18",
     "tt~lTT~p4wf44o~A|2026-12-31",
@@ -4722,6 +5568,7 @@
     "tt~lTT~p77vd9s~B|2026-11-25",
     "tt~lTT~p77vd9s~B|2026-12-23",
     "tt~lTT~p77vd9s~B|2026-12-25",
+    "tt~lTT~pt3rg82~A|2026-11-19",
     "tt~lTT~pt3rg82~A|2026-11-20",
     "tt~lTT~pt3rg82~A|2026-12-18",
     "tt~lTT~pt3rg82~A|2026-12-28",
@@ -4731,8 +5578,10 @@
     "tt~lTT~pt3rg82~B|2026-12-21",
     "tt~lTT~pt3rg82~B|2026-12-24",
     "tt~lTT~pt3rg82~B|2026-12-25",
+    "tt~lTT~s08000845~A|2026-11-20",
     "tt~lTT~s08000845~A|2026-11-24",
     "tt~lTT~s08000845~A|2026-11-27",
+    "tt~lTT~s08000845~A|2026-12-01",
     "tt~lTT~s08000845~A|2026-12-22",
     "tt~lTT~s08000845~A|2026-12-25",
     "tt~lTT~s08000845~A|2026-12-29",
@@ -4744,20 +5593,561 @@
     "tt~lTT~s08000845~B|2026-12-29",
     "tt~lTT~s08000845~B|2027-01-01",
     "tt~lTT~s08000935~A|2026-11-23",
+    "tt~lTT~s08000935~A|2026-11-30",
     "tt~lTT~s08000935~A|2026-12-21",
     "tt~lTT~s08000935~A|2026-12-28",
     "tt~lTT~s08000935~B|2026-11-23",
     "tt~lTT~s08000935~B|2026-12-21",
     "tt~lTT~s08000935~B|2026-12-28",
+    "tt~lTT~s11451230~A|2026-11-19",
     "tt~lTT~s11451230~A|2026-11-26",
     "tt~lTT~s11451230~A|2026-12-24",
     "tt~lTT~s11451230~A|2026-12-31",
     "tt~lTT~s11451230~B|2026-11-26",
     "tt~lTT~s11451230~B|2026-12-24",
     "tt~lTT~s11451230~B|2026-12-31"
+   ],
+   "days": [
+    {
+     "date": "2026-11-16",
+     "timetables": [
+      {
+       "id": "lTT",
+       "holds": true,
+       "lessons": [
+        1,
+        2
+       ],
+       "things": [
+        "Taschenrechner",
+        "Sportzeug",
+        "turnschuhe"
+       ]
+      },
+      {
+       "id": "lTT2",
+       "holds": true,
+       "lessons": [],
+       "things": []
+      },
+      {
+       "id": "lHalf",
+       "holds": false,
+       "lessons": [
+        1
+       ],
+       "things": [
+        "Kittel"
+       ]
+      }
+     ]
+    },
+    {
+     "date": "2026-11-17",
+     "timetables": [
+      {
+       "id": "lTT",
+       "holds": true,
+       "lessons": [
+        1
+       ],
+       "things": [
+        "Taschenrechner"
+       ]
+      },
+      {
+       "id": "lTT2",
+       "holds": true,
+       "lessons": [],
+       "things": []
+      },
+      {
+       "id": "lHalf",
+       "holds": false,
+       "lessons": [],
+       "things": []
+      }
+     ]
+    },
+    {
+     "date": "2026-11-18",
+     "timetables": [
+      {
+       "id": "lTT",
+       "holds": true,
+       "lessons": [],
+       "things": []
+      },
+      {
+       "id": "lTT2",
+       "holds": true,
+       "lessons": [
+        1
+       ],
+       "things": [
+        "Flöte"
+       ]
+      },
+      {
+       "id": "lHalf",
+       "holds": true,
+       "lessons": [
+        2
+       ],
+       "things": [
+        "Sportzeug"
+       ]
+      }
+     ]
+    },
+    {
+     "date": "2026-11-19",
+     "timetables": [
+      {
+       "id": "lTT",
+       "holds": true,
+       "lessons": [
+        5
+       ],
+       "things": [
+        "Malkasten",
+        "Brotdose",
+        "Sportzeug"
+       ]
+      },
+      {
+       "id": "lTT2",
+       "holds": true,
+       "lessons": [],
+       "things": []
+      },
+      {
+       "id": "lHalf",
+       "holds": true,
+       "lessons": [],
+       "things": []
+      }
+     ]
+    },
+    {
+     "date": "2026-11-20",
+     "timetables": [
+      {
+       "id": "lTT",
+       "holds": true,
+       "lessons": [],
+       "things": []
+      },
+      {
+       "id": "lTT2",
+       "holds": true,
+       "lessons": [],
+       "things": []
+      },
+      {
+       "id": "lHalf",
+       "holds": true,
+       "lessons": [
+        1
+       ],
+       "things": [
+        "Kittel"
+       ]
+      }
+     ]
+    },
+    {
+     "date": "2026-11-30",
+     "timetables": [
+      {
+       "id": "lTT",
+       "holds": true,
+       "lessons": [
+        1,
+        2
+       ],
+       "things": [
+        "Taschenrechner",
+        "Sportzeug",
+        "turnschuhe",
+        "Regenjacke"
+       ]
+      },
+      {
+       "id": "lTT2",
+       "holds": true,
+       "lessons": [],
+       "things": []
+      },
+      {
+       "id": "lHalf",
+       "holds": true,
+       "lessons": [
+        1
+       ],
+       "things": [
+        "Kittel"
+       ]
+      }
+     ]
+    },
+    {
+     "date": "2026-12-01",
+     "timetables": [
+      {
+       "id": "lTT",
+       "holds": true,
+       "lessons": [
+        1
+       ],
+       "things": [
+        "Taschenrechner"
+       ]
+      },
+      {
+       "id": "lTT2",
+       "holds": true,
+       "lessons": [],
+       "things": []
+      },
+      {
+       "id": "lHalf",
+       "holds": true,
+       "lessons": [],
+       "things": []
+      }
+     ]
+    },
+    {
+     "date": "2026-12-14",
+     "timetables": [
+      {
+       "id": "lTT",
+       "holds": true,
+       "lessons": [
+        1,
+        2
+       ],
+       "things": [
+        "Taschenrechner",
+        "Sportzeug",
+        "turnschuhe"
+       ]
+      },
+      {
+       "id": "lTT2",
+       "holds": true,
+       "lessons": [],
+       "things": []
+      },
+      {
+       "id": "lHalf",
+       "holds": false,
+       "lessons": [
+        1
+       ],
+       "things": [
+        "Kittel"
+       ]
+      }
+     ]
+    }
+   ],
+   "timetables": [
+    {
+     "id": "lTT",
+     "days": [
+      {
+       "date": "2026-11-19",
+       "from": 2,
+       "things": [
+        "Brotdose",
+        "Sportzeug"
+       ]
+      },
+      {
+       "date": "2026-11-20",
+       "free": true
+      },
+      {
+       "date": "2026-11-24",
+       "free": true
+      },
+      {
+       "date": "2026-11-30",
+       "note": "Ausflug",
+       "things": [
+        "Regenjacke"
+       ]
+      },
+      {
+       "date": "2026-12-01",
+       "to": 1,
+       "note": "Hitzefrei"
+      }
+     ],
+     "exams": [
+      {
+       "id": "x2",
+       "subjectId": "s3",
+       "date": "2026-11-18",
+       "learn": 0
+      },
+      {
+       "id": "x3",
+       "subjectId": "gone",
+       "date": "2026-11-19",
+       "learn": 2
+      },
+      {
+       "id": "x1",
+       "subjectId": "s2",
+       "date": "2026-12-01",
+       "learn": 3,
+       "note": "Bruchrechnen"
+      }
+     ],
+     "validFrom": null,
+     "validUntil": null
+    },
+    {
+     "id": "lTT2",
+     "days": [],
+     "exams": [],
+     "validFrom": null,
+     "validUntil": null
+    },
+    {
+     "id": "lHalf",
+     "days": [],
+     "exams": [],
+     "validFrom": "2026-11-18",
+     "validUntil": "2026-12-11"
+    }
+   ],
+   "rosters": [
+    {
+     "id": "lWeek",
+     "eve": false,
+     "shifts": [],
+     "minutes": 1710
+    },
+    {
+     "id": "lShift",
+     "eve": true,
+     "shifts": [
+      {
+       "id": "f",
+       "name": "Früh",
+       "code": "F",
+       "start": "06:00",
+       "end": "14:00"
+      },
+      {
+       "id": "b",
+       "name": "Rufdienst",
+       "code": "R",
+       "start": "18:00",
+       "end": "08:00",
+       "standby": true
+      },
+      {
+       "id": "n",
+       "name": "Nacht",
+       "code": "n",
+       "start": "22:00",
+       "end": "06:00"
+      },
+      {
+       "id": "u",
+       "name": "Urlaub",
+       "code": "U"
+      }
+     ],
+     "minutes": 1140
+    },
+    {
+     "id": "lBusy",
+     "eve": false,
+     "shifts": [
+      {
+       "id": "f",
+       "name": "Früh",
+       "code": "F",
+       "start": "06:00",
+       "end": "14:00"
+      },
+      {
+       "id": "b",
+       "name": "Bereit",
+       "code": "B",
+       "start": "08:00",
+       "end": "12:00"
+      },
+      {
+       "id": "c",
+       "name": "Bereit 2",
+       "code": "C",
+       "start": "13:00",
+       "end": "15:00",
+       "standby": true
+      }
+     ],
+     "minutes": 720
+    },
+    {
+     "id": "lOff",
+     "eve": false,
+     "shifts": [],
+     "minutes": 480
+    }
    ]
   }
  ],
+ "shopping": {
+  "guesses": [
+   {
+    "title": "Vollkornbrot",
+    "aisle": "bakery"
+   },
+   {
+    "title": "Hafermilch",
+    "aisle": "dairy"
+   },
+   {
+    "title": "Bio-Äpfel",
+    "aisle": "produce"
+   },
+   {
+    "title": "TK-Erbsen",
+    "aisle": "frozen"
+   },
+   {
+    "title": "Klopapier",
+    "aisle": "household"
+   },
+   {
+    "title": "Kaffee",
+    "aisle": "pantry"
+   },
+   {
+    "title": "Ei",
+    "aisle": "dairy"
+   },
+   {
+    "title": "Eis",
+    "aisle": "frozen"
+   },
+   {
+    "title": "Reiswaffeln",
+    "aisle": "other"
+   },
+   {
+    "title": "Zahnpasta",
+    "aisle": "pantry"
+   },
+   {
+    "title": "Rotwein",
+    "aisle": "drinks"
+   },
+   {
+    "title": "Gummibärchen",
+    "aisle": "sweets"
+   },
+   {
+    "title": "Schrauben",
+    "aisle": "other"
+   },
+   {
+    "title": "tomatenmark",
+    "aisle": "produce"
+   },
+   {
+    "title": "Schinkenwürfel",
+    "aisle": "meat"
+   },
+   {
+    "title": "Croissants",
+    "aisle": "bakery"
+   }
+  ],
+  "aisles": [
+   {
+    "id": "i13",
+    "aisle": "dairy",
+    "missed": null
+   },
+   {
+    "id": "i15",
+    "aisle": "dairy",
+    "missed": null
+   },
+   {
+    "id": "i16",
+    "aisle": "bakery",
+    "missed": null
+   },
+   {
+    "id": "i17",
+    "aisle": "other",
+    "missed": {
+     "by": "pB",
+     "at": 1790000000040
+    }
+   },
+   {
+    "id": "i19",
+    "aisle": "drinks",
+    "missed": null
+   },
+   {
+    "id": "i20",
+    "aisle": "household",
+    "missed": null
+   }
+  ],
+  "groups": [
+   {
+    "aisle": "bakery",
+    "items": [
+     "i16"
+    ]
+   },
+   {
+    "aisle": "dairy",
+    "items": [
+     "i13",
+     "i15"
+    ]
+   },
+   {
+    "aisle": "drinks",
+    "items": [
+     "i19"
+    ]
+   },
+   {
+    "aisle": "household",
+    "items": [
+     "i20"
+    ]
+   },
+   {
+    "aisle": "other",
+    "items": [
+     "i17"
+    ]
+   }
+  ],
+  "lastTrip": {
+   "by": "pB",
+   "at": 1790000000050,
+   "n": 4,
+   "left": 2,
+   "missed": 1,
+   "from": "pA"
+  }
+ },
  "feeds": {
   "zone": "Europe/Berlin",
   "cases": [
