@@ -293,6 +293,12 @@ class GroupEngine:
         expected = self.join and self.join.get("admin") == sender
         if sender not in admins and not expected:
             return False
+        # Once the group is known, keys are only taken from somebody on its own, encrypted list of
+        # persons. What the service calls an admin is not enough: whoever runs it could add one.
+        persons = self.state.get("person") or {}
+        pubs = {doc["pub"].get("v") for doc in persons.values() if isinstance(doc.get("pub"), dict)}
+        if persons and not expected and sender not in pubs:
+            return False
         keys = payload.get("keys") if isinstance(payload, dict) else None
         if not isinstance(keys, dict):
             return False
