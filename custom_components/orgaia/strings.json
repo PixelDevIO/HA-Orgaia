@@ -719,6 +719,12 @@
     },
     "change_in_app": {
       "message": "Only ticking off works here; change the title in the app."
+    },
+    "repeat_unknown": {
+      "message": "Orgaia cannot repeat an appointment like this. Plain daily, weekly, monthly or yearly repetitions work, with an end date and weekdays."
+    },
+    "no_list_for_events": {
+      "message": "The group has no task list yet that new appointments could go into. Create one in the app first."
     }
   },
   "selector": {

@@ -14,20 +14,17 @@ from typing import Any
 
 from homeassistant.components.todo import TodoItem, TodoItemStatus, TodoListEntity, TodoListEntityFeature
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .board import person_of_user
-from .client.engine import WriteError
-from .const import CONF_VOICE_PERSON, DOMAIN
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator
-from .entity import OrgaiaEntity, completed_days, list_shown, person_entity, person_ids_for, space_key, track_dynamic
+from .entity import completed_days, list_shown, person_entity, person_ids_for, space_key, track_dynamic
 from .protocol import actions
-from .protocol.actions import ActionError, Change
+from .protocol.actions import ActionError
 from .protocol.shopping import AISLE_NAMES, parse_articles, trip_of
 from .summary import TodoEntry, todo_entries, todo_lists
 from .util import from_ms, to_date, to_datetime, today
+from .writing import Writer, fail
 
 
 async def async_setup_entry(
@@ -97,39 +94,10 @@ def _item(e: TodoEntry, description: str | None) -> TodoItem:
     )
 
 
-# A context a service call set on the entity just before calling it. One that is older was left over
-# from an earlier call; a voice assistant calls the entity without setting one.
-FRESH_CONTEXT = 2.0
-
-
-def _fail(key: str, **placeholders: str) -> ServiceValidationError:
-    return ServiceValidationError(translation_domain=DOMAIN, translation_key=key, translation_placeholders=placeholders)
-
-
-class _Writable(OrgaiaEntity, TodoListEntity):
+class _Writable(Writer, TodoListEntity):
     """Ticks off and adds in the name of the person the Home Assistant user is."""
 
     list_id: str | None = None
-
-    def _caller(self) -> tuple[str | None, bool]:
-        """The person behind this call, and whether a user was known at all. The context is used up."""
-        context, at = self._context, self._context_set
-        self._context, self._context_set = None, None
-        user = context.user_id if context and at and time.time() - at <= FRESH_CONTEXT else None
-        if not user:
-            return None, False
-        return person_of_user(self.hass, self.coordinator.config_entry, user), True
-
-    def _person(self, adding_article: bool = False) -> str:
-        person, known = self._caller()
-        if person:
-            return person
-        if not known and adding_article:
-            voice = self.coordinator.config_entry.options.get(CONF_VOICE_PERSON)
-            p = self.coordinator.data.person_by_id.get(voice or "")
-            if p and not p["removed"]:
-                return p["id"]
-        raise _fail("who_are_you" if known else "no_user")
 
     @property
     def supported_features(self) -> TodoListEntityFeature:
@@ -140,21 +108,6 @@ class _Writable(OrgaiaEntity, TodoListEntity):
     def _features(self) -> TodoListEntityFeature:
         return TodoListEntityFeature.UPDATE_TODO_ITEM
 
-    async def _write(self, changes: list[Change], person: str) -> None:
-        if not changes:
-            return
-        try:
-            await self.coordinator.write(changes, person)
-        except WriteError as err:
-            entry = self.coordinator.config_entry
-            if err.reason == "read_only":
-                raise _fail("read_only", group=entry.title) from err
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key=f"write_{err.reason}",
-                translation_placeholders={"group": entry.title},
-            ) from err
-
     def _entries(self) -> list[TodoEntry]:
         raise NotImplementedError
 
@@ -162,11 +115,11 @@ class _Writable(OrgaiaEntity, TodoListEntity):
         """Ticking off or opening again; everything else is changed in the app."""
         entry = next((e for e in self._entries() if e.uid == item.uid), None)
         if entry is None:
-            raise _fail("no_item", item=item.uid or "")
+            raise fail("no_item", item=item.uid or "")
         wanted = item.status == TodoItemStatus.COMPLETED
         shown = f"{entry.title} ({entry.qty})" if entry.qty else entry.title
         if item.summary not in (None, shown) and wanted == entry.done:
-            raise _fail("change_in_app")
+            raise fail("change_in_app")
         if wanted == entry.done:
             return
         person = self._person()
@@ -176,7 +129,7 @@ class _Writable(OrgaiaEntity, TodoListEntity):
                 view, view.item_by_id[entry.item_id], wanted, entry.occ_date, person, int(time.time() * 1000), today()
             )
         except ActionError as err:
-            raise _fail(err.reason) from err
+            raise fail(err.reason) from err
         await self._write(changes, person)
 
 
@@ -205,7 +158,7 @@ class OrgaiaTodoList(_Writable):
         view = self.coordinator.data
         lst = view.list_by_id.get(self.list_id or "")
         if not lst:
-            raise _fail("no_list", list=self.list_id or "")
+            raise fail("no_list", list=self.list_id or "")
         shopping = lst["type"] == "shopping"
         person = self._person(adding_article=shopping)
         now = int(time.time() * 1000)
@@ -219,7 +172,7 @@ class OrgaiaTodoList(_Writable):
                     view, lst["id"], item.summary or "", person, now, self.coordinator.engine.new_id, due
                 )
         except ActionError as err:
-            raise _fail(err.reason) from err
+            raise fail(err.reason) from err
         await self._write(changes, person)
 
     @property

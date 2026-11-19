@@ -719,6 +719,12 @@
     },
     "change_in_app": {
       "message": "Hier geht nur Abhaken; den Titel änderst du in der App."
+    },
+    "repeat_unknown": {
+      "message": "So kann Orgaia einen Termin nicht wiederholen. Es gehen tägliche, wöchentliche, monatliche oder jährliche Wiederholungen, mit Enddatum und Wochentagen."
+    },
+    "no_list_for_events": {
+      "message": "Die Gruppe hat noch keine Aufgabenliste, in die neue Termine kommen könnten. Lege zuerst in der App eine an."
     }
   },
   "selector": {
