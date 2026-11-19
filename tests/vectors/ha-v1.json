@@ -4050,6 +4050,8 @@
    "labels": {
     "pack": "{thing} einpacken",
     "school": "Schule",
+    "careVs": "Verlässliche Schule",
+    "careOgs": "OGS",
     "work": "Arbeit",
     "exam": "Klassenarbeit {subject}",
     "learn": "Für {subject} lernen",
@@ -4211,6 +4213,14 @@
       }
      },
      "lHalf": {
+      "care.1": {
+       "ts": "0mubbsalc000vecnode1",
+       "v": "16:00"
+      },
+      "care.3": {
+       "ts": "0mubbsalc000vecnode1",
+       "v": "16:00"
+      },
       "color": {
        "ts": "0mubbsalc000vecnode1",
        "v": 9
@@ -4407,6 +4417,34 @@
        "ts": "0mubbs9tk000vecnode1",
        "v": "2026-11-16"
       },
+      "care.1": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": "13:30"
+      },
+      "care.2": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": "12:00"
+      },
+      "care.3": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": "1pm"
+      },
+      "care.4": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": "14:00"
+      },
+      "care.5": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": "08:30"
+      },
+      "careFetch": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": true
+      },
+      "careKind": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": "vs"
+      },
       "color": {
        "ts": "0mubbs9tk000vecnode1",
        "v": 3
@@ -4446,7 +4484,8 @@
         "note": "Ausflug",
         "things": [
          "Regenjacke"
-        ]
+        ],
+        "noCare": true
        }
       },
       "ex.2026-12-01": {
@@ -4454,6 +4493,12 @@
        "v": {
         "to": 1,
         "note": "Hitzefrei"
+       }
+      },
+      "ex.2026-12-03": {
+       "ts": "0mubbs9tk000vecnode1",
+       "v": {
+        "careTo": "15:15"
        }
       },
       "exam.x1": {
@@ -5101,6 +5146,126 @@
      "fromTimetable": "lTT"
     },
     {
+     "id": "tt~lTT~c09351330~A",
+     "listId": "lTT",
+     "kind": "event",
+     "title": "Verlässliche Schule",
+     "assignees": [
+      "pC"
+     ],
+     "start": "2024-01-01T09:35",
+     "end": "2024-01-01T13:30",
+     "repeat": {
+      "freq": "week",
+      "interval": 2,
+      "days": [
+       1
+      ]
+     },
+     "fromTimetable": "lTT",
+     "needFrom": true
+    },
+    {
+     "id": "tt~lTT~c08451200~A",
+     "listId": "lTT",
+     "kind": "event",
+     "title": "Verlässliche Schule",
+     "assignees": [
+      "pC"
+     ],
+     "start": "2024-01-01T08:45",
+     "end": "2024-01-01T12:00",
+     "repeat": {
+      "freq": "week",
+      "interval": 2,
+      "days": [
+       2
+      ]
+     },
+     "fromTimetable": "lTT",
+     "needFrom": true
+    },
+    {
+     "id": "tt~lTT~c12301400~A",
+     "listId": "lTT",
+     "kind": "event",
+     "title": "Verlässliche Schule",
+     "assignees": [
+      "pC"
+     ],
+     "start": "2024-01-01T12:30",
+     "end": "2024-01-01T14:00",
+     "repeat": {
+      "freq": "week",
+      "interval": 2,
+      "days": [
+       4
+      ]
+     },
+     "fromTimetable": "lTT",
+     "needFrom": true
+    },
+    {
+     "id": "tt~lTT~c09351330~B",
+     "listId": "lTT",
+     "kind": "event",
+     "title": "Verlässliche Schule",
+     "assignees": [
+      "pC"
+     ],
+     "start": "2023-12-25T09:35",
+     "end": "2023-12-25T13:30",
+     "repeat": {
+      "freq": "week",
+      "interval": 2,
+      "days": [
+       1
+      ]
+     },
+     "fromTimetable": "lTT",
+     "needFrom": true
+    },
+    {
+     "id": "tt~lTT~c08451200~B",
+     "listId": "lTT",
+     "kind": "event",
+     "title": "Verlässliche Schule",
+     "assignees": [
+      "pC"
+     ],
+     "start": "2023-12-25T08:45",
+     "end": "2023-12-25T12:00",
+     "repeat": {
+      "freq": "week",
+      "interval": 2,
+      "days": [
+       2
+      ]
+     },
+     "fromTimetable": "lTT",
+     "needFrom": true
+    },
+    {
+     "id": "tt~lTT~c12301400~B",
+     "listId": "lTT",
+     "kind": "event",
+     "title": "Verlässliche Schule",
+     "assignees": [
+      "pC"
+     ],
+     "start": "2023-12-25T12:30",
+     "end": "2023-12-25T14:00",
+     "repeat": {
+      "freq": "week",
+      "interval": 2,
+      "days": [
+       4
+      ]
+     },
+     "fromTimetable": "lTT",
+     "needFrom": true
+    },
+    {
      "id": "tt~lTT~o1rk3833~2026-11-19",
      "listId": "lTT",
      "kind": "task",
@@ -5135,6 +5300,24 @@
       "until": "2026-11-18"
      },
      "fromTimetable": "lTT"
+    },
+    {
+     "id": "tt~lTT~y2026-11-19",
+     "listId": "lTT",
+     "kind": "event",
+     "title": "Verlässliche Schule",
+     "assignees": [
+      "pC"
+     ],
+     "start": "2026-11-19T12:30",
+     "end": "2026-11-19T14:00",
+     "repeat": {
+      "freq": "day",
+      "interval": 1,
+      "until": "2026-11-19"
+     },
+     "fromTimetable": "lTT",
+     "needFrom": true
     },
     {
      "id": "tt~lTT~x2026-11-19",
@@ -5180,6 +5363,24 @@
      "note": "Ausflug"
     },
     {
+     "id": "tt~lTT~y2026-12-01",
+     "listId": "lTT",
+     "kind": "event",
+     "title": "Verlässliche Schule",
+     "assignees": [
+      "pC"
+     ],
+     "start": "2026-12-01T08:45",
+     "end": "2026-12-01T12:00",
+     "repeat": {
+      "freq": "day",
+      "interval": 1,
+      "until": "2026-12-01"
+     },
+     "fromTimetable": "lTT",
+     "needFrom": true
+    },
+    {
      "id": "tt~lTT~x2026-12-01",
      "listId": "lTT",
      "kind": "event",
@@ -5191,6 +5392,36 @@
      "end": "2026-12-01T08:45",
      "fromTimetable": "lTT",
      "note": "Hitzefrei"
+    },
+    {
+     "id": "tt~lTT~y2026-12-03",
+     "listId": "lTT",
+     "kind": "event",
+     "title": "Verlässliche Schule",
+     "assignees": [
+      "pC"
+     ],
+     "start": "2026-12-03T12:30",
+     "end": "2026-12-03T15:15",
+     "repeat": {
+      "freq": "day",
+      "interval": 1,
+      "until": "2026-12-03"
+     },
+     "fromTimetable": "lTT",
+     "needFrom": true
+    },
+    {
+     "id": "tt~lTT~x2026-12-03",
+     "listId": "lTT",
+     "kind": "event",
+     "title": "Schule",
+     "assignees": [
+      "pC"
+     ],
+     "start": "2026-12-03T11:45",
+     "end": "2026-12-03T12:30",
+     "fromTimetable": "lTT"
     },
     {
      "id": "tt~lTT~ex2",
@@ -5336,6 +5567,46 @@
      ],
      "start": "2026-11-18T08:45",
      "end": "2026-11-18T09:30",
+     "repeat": {
+      "freq": "week",
+      "interval": 1,
+      "days": [
+       3
+      ],
+      "until": "2026-12-11"
+     },
+     "fromTimetable": "lHalf"
+    },
+    {
+     "id": "tt~lHalf~c08401600",
+     "listId": "lHalf",
+     "kind": "event",
+     "title": "OGS",
+     "assignees": [
+      "pC"
+     ],
+     "start": "2026-11-18T08:40",
+     "end": "2026-11-18T16:00",
+     "repeat": {
+      "freq": "week",
+      "interval": 1,
+      "days": [
+       1
+      ],
+      "until": "2026-12-11"
+     },
+     "fromTimetable": "lHalf"
+    },
+    {
+     "id": "tt~lHalf~c09301600",
+     "listId": "lHalf",
+     "kind": "event",
+     "title": "OGS",
+     "assignees": [
+      "pC"
+     ],
+     "start": "2026-11-18T09:30",
+     "end": "2026-11-18T16:00",
      "repeat": {
       "freq": "week",
       "interval": 1,
@@ -5528,6 +5799,12 @@
    "skips": [
     "rs~lWeek~w08001630|2026-11-18",
     "rs~lWeek~w08001630|2026-11-25",
+    "tt~lHalf~c08401600|2026-11-23",
+    "tt~lHalf~c08401600|2026-12-21",
+    "tt~lHalf~c08401600|2026-12-28",
+    "tt~lHalf~c09301600|2026-11-25",
+    "tt~lHalf~c09301600|2026-12-23",
+    "tt~lHalf~c09301600|2026-12-30",
     "tt~lHalf~p4wf44o|2026-11-24",
     "tt~lHalf~p4wf44o|2026-12-22",
     "tt~lHalf~p4wf44o|2026-12-29",
@@ -5549,6 +5826,28 @@
     "tt~lTT2~p1v5wa2w|2026-11-24",
     "tt~lTT2~p1v5wa2w|2026-12-22",
     "tt~lTT2~p1v5wa2w|2026-12-29",
+    "tt~lTT~c08451200~A|2026-11-24",
+    "tt~lTT~c08451200~A|2026-12-01",
+    "tt~lTT~c08451200~A|2026-12-22",
+    "tt~lTT~c08451200~A|2026-12-29",
+    "tt~lTT~c08451200~B|2026-11-24",
+    "tt~lTT~c08451200~B|2026-12-22",
+    "tt~lTT~c08451200~B|2026-12-29",
+    "tt~lTT~c09351330~A|2026-11-23",
+    "tt~lTT~c09351330~A|2026-11-30",
+    "tt~lTT~c09351330~A|2026-12-21",
+    "tt~lTT~c09351330~A|2026-12-28",
+    "tt~lTT~c09351330~B|2026-11-23",
+    "tt~lTT~c09351330~B|2026-12-21",
+    "tt~lTT~c09351330~B|2026-12-28",
+    "tt~lTT~c12301400~A|2026-11-19",
+    "tt~lTT~c12301400~A|2026-11-26",
+    "tt~lTT~c12301400~A|2026-12-03",
+    "tt~lTT~c12301400~A|2026-12-24",
+    "tt~lTT~c12301400~A|2026-12-31",
+    "tt~lTT~c12301400~B|2026-11-26",
+    "tt~lTT~c12301400~B|2026-12-24",
+    "tt~lTT~c12301400~B|2026-12-31",
     "tt~lTT~p1o011kr~A|2026-11-19",
     "tt~lTT~p1o011kr~A|2026-12-31",
     "tt~lTT~p1o011kr~B|2026-11-26",
@@ -5601,6 +5900,7 @@
     "tt~lTT~s08000935~B|2026-12-28",
     "tt~lTT~s11451230~A|2026-11-19",
     "tt~lTT~s11451230~A|2026-11-26",
+    "tt~lTT~s11451230~A|2026-12-03",
     "tt~lTT~s11451230~A|2026-12-24",
     "tt~lTT~s11451230~A|2026-12-31",
     "tt~lTT~s11451230~B|2026-11-26",
@@ -5622,13 +5922,19 @@
         "Taschenrechner",
         "Sportzeug",
         "turnschuhe"
-       ]
+       ],
+       "care": {
+        "kind": "vs",
+        "start": "09:35",
+        "end": "13:30"
+       }
       },
       {
        "id": "lTT2",
        "holds": true,
        "lessons": [],
-       "things": []
+       "things": [],
+       "care": null
       },
       {
        "id": "lHalf",
@@ -5638,7 +5944,12 @@
        ],
        "things": [
         "Kittel"
-       ]
+       ],
+       "care": {
+        "kind": "ogs",
+        "start": "08:40",
+        "end": "16:00"
+       }
       }
      ]
     },
@@ -5653,19 +5964,26 @@
        ],
        "things": [
         "Taschenrechner"
-       ]
+       ],
+       "care": {
+        "kind": "vs",
+        "start": "08:45",
+        "end": "12:00"
+       }
       },
       {
        "id": "lTT2",
        "holds": true,
        "lessons": [],
-       "things": []
+       "things": [],
+       "care": null
       },
       {
        "id": "lHalf",
        "holds": false,
        "lessons": [],
-       "things": []
+       "things": [],
+       "care": null
       }
      ]
     },
@@ -5676,7 +5994,8 @@
        "id": "lTT",
        "holds": true,
        "lessons": [],
-       "things": []
+       "things": [],
+       "care": null
       },
       {
        "id": "lTT2",
@@ -5686,7 +6005,8 @@
        ],
        "things": [
         "Flöte"
-       ]
+       ],
+       "care": null
       },
       {
        "id": "lHalf",
@@ -5696,7 +6016,12 @@
        ],
        "things": [
         "Sportzeug"
-       ]
+       ],
+       "care": {
+        "kind": "ogs",
+        "start": "09:30",
+        "end": "16:00"
+       }
       }
      ]
     },
@@ -5713,19 +6038,26 @@
         "Malkasten",
         "Brotdose",
         "Sportzeug"
-       ]
+       ],
+       "care": {
+        "kind": "vs",
+        "start": "12:30",
+        "end": "14:00"
+       }
       },
       {
        "id": "lTT2",
        "holds": true,
        "lessons": [],
-       "things": []
+       "things": [],
+       "care": null
       },
       {
        "id": "lHalf",
        "holds": true,
        "lessons": [],
-       "things": []
+       "things": [],
+       "care": null
       }
      ]
     },
@@ -5736,13 +6068,15 @@
        "id": "lTT",
        "holds": true,
        "lessons": [],
-       "things": []
+       "things": [],
+       "care": null
       },
       {
        "id": "lTT2",
        "holds": true,
        "lessons": [],
-       "things": []
+       "things": [],
+       "care": null
       },
       {
        "id": "lHalf",
@@ -5752,7 +6086,8 @@
        ],
        "things": [
         "Kittel"
-       ]
+       ],
+       "care": null
       }
      ]
     },
@@ -5771,13 +6106,15 @@
         "Sportzeug",
         "turnschuhe",
         "Regenjacke"
-       ]
+       ],
+       "care": null
       },
       {
        "id": "lTT2",
        "holds": true,
        "lessons": [],
-       "things": []
+       "things": [],
+       "care": null
       },
       {
        "id": "lHalf",
@@ -5787,7 +6124,12 @@
        ],
        "things": [
         "Kittel"
-       ]
+       ],
+       "care": {
+        "kind": "ogs",
+        "start": "08:40",
+        "end": "16:00"
+       }
       }
      ]
     },
@@ -5802,19 +6144,26 @@
        ],
        "things": [
         "Taschenrechner"
-       ]
+       ],
+       "care": {
+        "kind": "vs",
+        "start": "08:45",
+        "end": "12:00"
+       }
       },
       {
        "id": "lTT2",
        "holds": true,
        "lessons": [],
-       "things": []
+       "things": [],
+       "care": null
       },
       {
        "id": "lHalf",
        "holds": true,
        "lessons": [],
-       "things": []
+       "things": [],
+       "care": null
       }
      ]
     },
@@ -5832,13 +6181,19 @@
         "Taschenrechner",
         "Sportzeug",
         "turnschuhe"
-       ]
+       ],
+       "care": {
+        "kind": "vs",
+        "start": "09:35",
+        "end": "13:30"
+       }
       },
       {
        "id": "lTT2",
        "holds": true,
        "lessons": [],
-       "things": []
+       "things": [],
+       "care": null
       },
       {
        "id": "lHalf",
@@ -5848,7 +6203,12 @@
        ],
        "things": [
         "Kittel"
-       ]
+       ],
+       "care": {
+        "kind": "ogs",
+        "start": "08:40",
+        "end": "16:00"
+       }
       }
      ]
     }
@@ -5878,12 +6238,17 @@
        "note": "Ausflug",
        "things": [
         "Regenjacke"
-       ]
+       ],
+       "noCare": true
       },
       {
        "date": "2026-12-01",
        "to": 1,
        "note": "Hitzefrei"
+      },
+      {
+       "date": "2026-12-03",
+       "careTo": "15:15"
       }
      ],
      "exams": [
@@ -5908,21 +6273,40 @@
       }
      ],
      "validFrom": null,
-     "validUntil": null
+     "validUntil": null,
+     "care": {
+      "kind": "vs",
+      "until": {
+       "1": "13:30",
+       "2": "12:00",
+       "4": "14:00",
+       "5": "08:30"
+      },
+      "fetch": true
+     }
     },
     {
      "id": "lTT2",
      "days": [],
      "exams": [],
      "validFrom": null,
-     "validUntil": null
+     "validUntil": null,
+     "care": null
     },
     {
      "id": "lHalf",
      "days": [],
      "exams": [],
      "validFrom": "2026-11-18",
-     "validUntil": "2026-12-11"
+     "validUntil": "2026-12-11",
+     "care": {
+      "kind": "ogs",
+      "until": {
+       "1": "16:00",
+       "3": "16:00"
+      },
+      "fetch": false
+     }
     }
    ],
    "rosters": [

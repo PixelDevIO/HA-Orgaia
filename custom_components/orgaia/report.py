@@ -25,6 +25,7 @@ TEXT = {
         "due": "Fällig",
         "school": "{who} hat Schule von {start} bis {end}",
         "no_school": "{who} hat keine Schule",
+        "care": {"vs": "danach verlässliche Schule bis {end}", "ogs": "danach OGS bis {end}"},
         "holiday": "{who} hat Ferien",
         "exam": "{who} schreibt {subject}",
         "work": "{who} arbeitet {text}",
@@ -45,6 +46,7 @@ TEXT = {
         "due": "Due",
         "school": "{who} has school from {start} to {end}",
         "no_school": "{who} has no school",
+        "care": {"vs": "then reliable school until {end}", "ogs": "then after-school care until {end}"},
         "holiday": "{who} is on holiday",
         "exam": "{who} has a {subject} test",
         "work": "{who} works {text}",
@@ -121,6 +123,8 @@ def day_report(view: SpaceView, day: str, today: str, minute: int, person: str |
                     "exams": [x["subject"] for x in s.get("exams") or []],
                     "note": s.get("note"),
                     "pack": pack_on(lst, off, day),
+                    # Care after school: {"kind": "vs" | "ogs", "start", "end"}, or None.
+                    "care": s.get("care"),
                 }
             )
         elif lst["type"] == "roster" and lst.get("roster"):
@@ -207,7 +211,10 @@ def speech(report: dict[str, Any], language: str | None, today: str) -> str:
         sentences.append(f"{t['due']}: {_join(open_due, t['and'])}")
     for s in report["school"]:
         if s["status"] == "school":
-            sentences.append(t["school"].format(who=s["person"], start=s["start"], end=s["end"]))
+            text = t["school"].format(who=s["person"], start=s["start"], end=s["end"])
+            if s.get("care"):
+                text += ", " + t["care"][s["care"]["kind"]].format(end=s["care"]["end"])
+            sentences.append(text)
         elif s["status"] == "holiday":
             sentences.append(t["holiday"].format(who=s["person"]))
         for subject in s["exams"]:

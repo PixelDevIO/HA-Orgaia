@@ -28,6 +28,8 @@ from custom_components.orgaia.protocol.invite import parse_invite
 from custom_components.orgaia.protocol.model import apply_op, empty_state, merge_state, to_app_state
 from custom_components.orgaia.protocol.plans import (
     PlanLabels,
+    care_on_day,
+    holiday_on,
     is_plan_item,
     lessons_on_day,
     things_on_day,
@@ -219,7 +221,9 @@ def test_plans(case: dict) -> None:
     view = build_view("gPlans", "group", state)
     assert [{"id": lst["id"], "type": lst["type"]} for lst in view.lists] == case["lists"]
     lb = case["labels"]
-    labels = PlanLabels(lb["pack"], lb["school"], lb["work"], lb["exam"], lb["learn"], lb["standby"])
+    labels = PlanLabels(
+        lb["pack"], lb["school"], lb["work"], lb["exam"], lb["learn"], lb["standby"], lb["careVs"], lb["careOgs"]
+    )
     full = with_plan_items(view, labels, case["today"])
     derived = [{k: v for k, v in i.items() if k != "done"} for i in full.items if is_plan_item(i)]
     for mine, theirs in zip(derived, case["items"], strict=True):
@@ -233,6 +237,9 @@ def test_plans(case: dict) -> None:
                 "holds": timetable_holds(lst["timetable"], day["date"]),
                 "lessons": [x["n"] for x in lessons_on_day(lst["timetable"], day["date"])],
                 "things": [t["name"] for t in things_on_day(lst["timetable"], day["date"]).values()],
+                "care": None
+                if holiday_on(view.meta.get("schoolOff") or [], day["date"])
+                else care_on_day(lst["timetable"], day["date"]),
             }
             for lst in timetables
         ]
@@ -244,6 +251,12 @@ def test_plans(case: dict) -> None:
             "exams": lst["timetable"]["exams"],
             "validFrom": lst["timetable"]["validFrom"],
             "validUntil": lst["timetable"]["validUntil"],
+            # JSON keys are text, so the weekdays of care come back as "1".
+            "care": lst["timetable"]["care"]
+            and {
+                **lst["timetable"]["care"],
+                "until": {str(k): v for k, v in lst["timetable"]["care"]["until"].items()},
+            },
         }
         for lst in timetables
     ] == case["timetables"]

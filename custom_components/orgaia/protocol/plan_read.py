@@ -21,6 +21,7 @@ ROSTER_DAY_PREFIX = "d."
 ROSTER_OFF_PREFIX = "off."
 SCHOOL_DAY_PREFIX = "ex."
 EXAM_PREFIX = "exam."
+CARE_PREFIX = "care."
 
 TT_PREFIX = "tt~"
 RS_PREFIX = "rs~"
@@ -144,6 +145,7 @@ def read_timetable(raw: dict[str, Any]) -> dict[str, Any]:
     day_things: dict[int, list[str]] = {}
     days: list[dict[str, Any]] = []
     exams: list[dict[str, Any]] = []
+    care_until: dict[int, str] = {}
     for k, v in raw.items():
         if k.startswith(SCHOOL_DAY_PREFIX):
             # One school day that differs: free, only some periods, extra things to bring.
@@ -163,6 +165,12 @@ def read_timetable(raw: dict[str, Any]) -> dict[str, Any]:
             extra = _things(v.get("things"))[:10]
             if extra:
                 day["things"] = extra
+            # Care after school that day: none, or until another time.
+            care_to = v.get("careTo")
+            if v.get("noCare") is True:
+                day["noCare"] = True
+            elif isinstance(care_to, str) and _TIME.fullmatch(care_to):
+                day["careTo"] = care_to
             if len(day) > 1:
                 days.append(day)
         elif k.startswith(EXAM_PREFIX):
@@ -189,6 +197,10 @@ def read_timetable(raw: dict[str, Any]) -> dict[str, Any]:
         elif k.startswith(LESSON_PREFIX):
             if isinstance(v, str):
                 cells[k[len(LESSON_PREFIX) :]] = v
+        elif k.startswith(CARE_PREFIX):
+            d = _day_number(k[len(CARE_PREFIX) :])
+            if d is not None and 0 <= d <= 6 and isinstance(v, str) and _TIME.fullmatch(v):
+                care_until[d] = v
         elif k.startswith(DAY_PREFIX):
             d = _day_number(k[len(DAY_PREFIX) :])
             things = _things(v)
@@ -209,6 +221,16 @@ def read_timetable(raw: dict[str, Any]) -> dict[str, Any]:
         "exams": sorted(exams, key=lambda e: e["date"]),
         "validFrom": raw["ttFrom"] if _real_date(raw.get("ttFrom")) else None,
         "validUntil": raw["ttUntil"] if _real_date(raw.get("ttUntil")) else None,
+        # Care after school: reliable school ("vs") or OGS, with its end time per weekday.
+        "care": (
+            {
+                "kind": "vs" if raw.get("careKind") == "vs" else "ogs",
+                "until": care_until,
+                "fetch": raw.get("careFetch") is True,
+            }
+            if care_until
+            else None
+        ),
     }
 
 

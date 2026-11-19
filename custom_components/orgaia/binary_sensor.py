@@ -1,4 +1,4 @@
-"""On/off states for automations: at school, at work, on call, school holidays, busy, out shopping, may write."""
+"""On/off states for automations: at school, in care, at work, on call, school holidays, busy, shopping, may write."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from homeassistant.helpers.event import async_track_time_change
 
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator
 from .entity import OrgaiaEntity, OrgaiaPlanEntity, person_entity, person_ids_for, plan_list_ids, track_dynamic
-from .protocol.plans import at_school, at_work, holiday_on, is_plan_item, next_holiday, on_call
+from .protocol.plans import at_school, at_work, holiday_on, in_care, is_plan_item, next_holiday, on_call, school_day
 from .protocol.recur import add_days
 from .protocol.shopping import STATE_GOING
 from .protocol.view import SpaceView
@@ -27,6 +27,15 @@ def standby_rosters(view: SpaceView) -> list[str]:
         lst["id"]
         for lst in view.lists
         if lst["type"] == "roster" and lst.get("roster") and any(s.get("standby") for s in lst["roster"]["shifts"])
+    ]
+
+
+def care_timetables(view: SpaceView) -> list[str]:
+    """Timetables with care after school (reliable school or OGS): only those get an "in care" sensor."""
+    return [
+        lst["id"]
+        for lst in view.lists
+        if lst["type"] == "timetable" and lst.get("timetable") and lst["timetable"].get("care")
     ]
 
 
@@ -54,6 +63,14 @@ async def async_setup_entry(
         entry,
         plan_list_ids("timetable"),
         lambda list_id: [OrgaiaAtSchoolSensor(coordinator, list_id)],
+        async_add_entities,
+        "binary_sensor",
+    )
+    track_dynamic(
+        hass,
+        entry,
+        care_timetables,
+        lambda list_id: [OrgaiaInCareSensor(coordinator, list_id)],
         async_add_entities,
         "binary_sensor",
     )
@@ -121,6 +138,45 @@ class OrgaiaAtSchoolSensor(OrgaiaPlanEntity, _ByTheMinute):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         attrs: dict[str, Any] = {"until": self._until()}
+        plan = self.plan
+        if plan is not None:
+            # Care after school today, so that an automation knows school ends but the child is not home yet.
+            care = school_day(plan, self.coordinator.data.meta.get("schoolOff") or [], today()).get("care")
+            attrs["care_until"] = care["end"] if care else None
+        if self.person_id is not None:
+            attrs["person_entity"] = person_entity(self.coordinator.config_entry, self.person_id)
+        return attrs
+
+
+class OrgaiaInCareSensor(OrgaiaPlanEntity, _ByTheMinute):
+    """On from the end of school to the end of care (reliable school or OGS) today."""
+
+    plan_type = "timetable"
+    _attr_translation_key = "in_care"
+    _attr_icon = "mdi:account-child-outline"
+
+    def __init__(self, coordinator: OrgaiaCoordinator, list_id: str) -> None:
+        super().__init__(coordinator, list_id, "care")
+
+    def _until(self) -> str | None:
+        plan = self.plan
+        if plan is None:
+            return None
+        off = self.coordinator.data.meta.get("schoolOff") or []
+        return in_care(plan, off, today(), minute_of_day(local_now()))
+
+    @property
+    def is_on(self) -> bool:
+        return self._until() is not None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        plan = self.plan
+        kind = plan["timetable"]["care"]["kind"] if plan is not None and plan["timetable"].get("care") else None
+        attrs: dict[str, Any] = {
+            "until": self._until(),
+            "kind": {"vs": "reliable_school", "ogs": "ogs"}.get(kind or ""),
+        }
         if self.person_id is not None:
             attrs["person_entity"] = person_entity(self.coordinator.config_entry, self.person_id)
         return attrs

@@ -210,12 +210,14 @@ class OrgaiaSchoolSensor(OrgaiaPlanEntity, SensorEntity):
             "pack_tomorrow": pack_on(plan, off, nxt["date"]),
             "tomorrow": {
                 **{k: nxt[k] for k in ("status", "start", "end", "lessons")},
-                **{k: nxt[k] for k in ("changed", "note", "exams") if k in nxt},
+                **{k: nxt[k] for k in ("changed", "note", "exams", "care") if k in nxt},
                 "text": self._text(nxt),
             },
             # Class tests of the next two weeks, and whether today is a day to learn for one.
             "exams_ahead": exams_ahead(plan, day["date"]),
         }
+        # Care after school (reliable school or OGS): {"kind", "start", "end"}, or None on a day without.
+        attrs["care"] = day.get("care")
         for key in ("week", "holiday", "changed", "note", "exams"):
             if key in day:
                 attrs[key] = day[key]

@@ -82,6 +82,10 @@ const TEXT = {
     noRoster: 'No roster in this group.',
     noLessons: 'No lessons entered.',
     noSchool: 'No school',
+    careVs: 'Reliable school',
+    careOgs: 'After-school care',
+    careShort: 'Care',
+    careUntil: 'until {time}',
     holidays: 'Holidays',
     free: 'off',
     packToday: 'Pack today',
@@ -207,6 +211,10 @@ const TEXT = {
     noRoster: 'In dieser Gruppe gibt es keinen Dienstplan.',
     noLessons: 'Keine Stunden eingetragen.',
     noSchool: 'Keine Schule',
+    careVs: 'Verlässliche Schule',
+    careOgs: 'OGS',
+    careShort: 'Betreuung',
+    careUntil: 'bis {time}',
     holidays: 'Ferien',
     free: 'frei',
     packToday: 'Heute einpacken',
@@ -265,7 +273,7 @@ const TEXT = {
 };
 
 // The integration this card came with. A browser that still has an older card says so.
-const CARD_VERSION = '0.8.1';
+const CARD_VERSION = '0.9.0';
 
 // The people's colours of the app. All carry white text.
 const COLORS = ['#2F5FD0', '#B4500B', '#7B3FB5', '#0B6F6A', '#B02C63', '#56681A', '#8A5A00', '#3F4B8C'];
@@ -450,6 +458,7 @@ const STYLE = `
     background: color-mix(in srgb, var(--c) var(--fill, 16%), transparent); border-left: 3px solid var(--c);
     display: flex; flex-direction: column; justify-content: center; font-size: 0.875rem; line-height: 1.2;
   }
+  .lesson.care { --c: var(--secondary-text-color); --fill: 8%; border-left-style: dashed; color: var(--secondary-text-color); }
   .lesson.live, .shift.live, .ev.live .when { outline: 2px solid var(--primary-color); outline-offset: 1px; }
   .shift { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 2px 6px; }
   .code { font-weight: 700; min-width: 1.5em; text-align: center; }
@@ -819,8 +828,11 @@ class OrgaiaCard extends HTMLElement {
           return `<div class="slot${live ? ' live' : ''}"><span class="when">${esc(l.period)}.<br><span class="sub">${esc(l.start)}–${esc(l.end)}</span></span>${cell(l, live)}</div>`;
         })
         .join('');
+      const c = day.care;
+      const careLive = c && day.date === today && c.start <= now && now < c.end;
+      const care = c ? `<div class="slot${careLive ? ' live' : ''}"><span class="when"><span class="sub">${esc(c.start)}–${esc(c.end)}</span></span><div class="lesson care${careLive ? ' live' : ''}"><span class="name">${esc(c.kind === 'vs' ? t.careVs : t.careOgs)}</span></div></div>` : '';
       const none = day.status === 'holiday' ? day.holiday || t.holidays : t.noSchool;
-      return head + (rows || `<p class="hint">${esc(none)}</p>`) + foot;
+      return head + (rows ? rows + care : `<p class="hint">${esc(none)}</p>`) + foot;
     }
 
     const used = plan.weeks.flatMap((w) => w.days);
@@ -855,6 +867,16 @@ class OrgaiaCard extends HTMLElement {
         grid += `<div class="cell${d.date === today ? ' today' : ''}" style="${col};grid-row:${n + 1}">${l ? cell(l, live) : ''}</div>`;
       }
     });
+    // Care after school (reliable school or OGS) as one more row: until when, day by day.
+    if (week.days.some((d) => d.care)) {
+      const kind = week.days.find((d) => d.care).care.kind;
+      grid += `<div class="when" style="grid-row:${last + 2}"><span class="sub">${esc(kind === 'vs' ? t.careVs : t.careOgs)}</span></div>`;
+      cols.forEach((i, c) => {
+        const d = week.days[i];
+        const live = d.care && d.date === today && d.care.start <= now && now < d.care.end;
+        grid += `<div class="cell${d.date === today ? ' today' : ''}" style="grid-column:${c + 2};grid-row:${last + 2}">${d.care ? `<div class="lesson care${live ? ' live' : ''}"><span class="name">${esc(this._say('careUntil', { time: d.care.end }))}</span></div>` : ''}</div>`;
+      });
+    }
     return head + grid + '</div>' + foot;
   }
 
@@ -987,6 +1009,7 @@ class OrgaiaCard extends HTMLElement {
         const sub = [];
         if (s.note) sub.push(esc(s.note));
         s.exams.forEach((x) => sub.push(`<b>${esc(this._say('test', { subject: x }))}</b>`));
+        if (s.care) sub.push(`${esc(s.care.kind === 'vs' ? t.careVs : t.careOgs)} ${esc(this._say('careUntil', { time: s.care.end }))}`);
         if (s.pack.length) sub.push(`${esc(t.pack)}: ${esc(s.pack.join(', '))}`);
         const who = name ? t.school : `${s.person} · ${t.school}`;
         if (s.status === 'school') rows.push([s.start, row(`${s.start}–${s.end}`, esc(who), sub, 'school')]);
