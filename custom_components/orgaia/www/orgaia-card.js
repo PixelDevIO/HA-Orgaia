@@ -323,7 +323,8 @@ const STYLE = `
   :host { display: block; container-type: inline-size; }
   ha-card { padding: 12px 16px 16px; color: var(--primary-text-color); }
   h1 { font-size: 1.25rem; font-weight: 500; margin: 4px 0 12px; }
-  h2 { font-size: 1rem; font-weight: 500; margin: 0; flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  /* The name keeps its words: when it and the buttons beside it do not fit on one line, the buttons move to the next. */
+  h2 { font-size: 1rem; font-weight: 500; margin: 0; flex: 1 1 auto; min-width: 0; overflow-wrap: break-word; }
   .hint { color: var(--secondary-text-color); font-size: 0.875rem; margin: 0 0 8px; }
   .warn { color: var(--error-color); }
   .who { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 4px; }
