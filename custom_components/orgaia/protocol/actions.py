@@ -340,3 +340,18 @@ def apply_shop_set(
             continue
         out.extend(add_article(view, list_id, a["title"], a.get("qty"), person, now + n, new_id))
     return out
+
+
+def set_driver(
+    view: SpaceView, item: dict[str, Any], which: str, driver: str | None, occ_date: str | None
+) -> list[Change]:
+    """Who takes the participants there (``to``) or picks them up (``from``): the series, or one time of it."""
+    if item.get("kind") != "event":
+        raise ActionError("not_an_event")
+    need = "needTo" if which == "to" else "needFrom"
+    if not item.get(need):
+        raise ActionError("no_drive")
+    field_name = "driveTo" if which == "to" else "driveFrom"
+    if item.get("repeat") and occ_date:
+        return [("occ", occ_id(item["id"], occ_date), {field_name: driver})]
+    return [("item", item["id"], {field_name: driver})]

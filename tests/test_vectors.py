@@ -35,8 +35,8 @@ from custom_components.orgaia.protocol.plans import (
     with_plan_items,
     work_minutes,
 )
-from custom_components.orgaia.protocol.shopping import aisle_of, by_aisle, guess_aisle, missed_of
 from custom_components.orgaia.protocol.recur import occurrence_dates, rotation_assignee
+from custom_components.orgaia.protocol.shopping import aisle_of, by_aisle, guess_aisle, missed_of
 from custom_components.orgaia.protocol.view import build_view, occ_id
 
 VECTORS = json.loads((Path(__file__).parent / "vectors" / "ha-v1.json").read_text())
@@ -268,12 +268,12 @@ def test_shopping() -> None:
     view = build_view("gVectors", "group", state)
     assert [{"title": g["title"], "aisle": guess_aisle(g["title"])} for g in case["guesses"]] == case["guesses"]
     open_items = [i for i in view.items if i["listId"] == "lEinkauf" and not i["done"]]
-    assert [
-        {"id": i["id"], "aisle": aisle_of(view.aisles, i), "missed": missed_of(i)} for i in open_items
-    ] == case["aisles"]
-    assert [
-        {"aisle": a, "items": [i["id"] for i in group]} for a, group in by_aisle(view.aisles, open_items)
-    ] == case["groups"]
+    assert [{"id": i["id"], "aisle": aisle_of(view.aisles, i), "missed": missed_of(i)} for i in open_items] == case[
+        "aisles"
+    ]
+    assert [{"aisle": a, "items": [i["id"] for i in group]} for a, group in by_aisle(view.aisles, open_items)] == case[
+        "groups"
+    ]
     assert view.list_by_id["lEinkauf"].get("lastTrip") == case["lastTrip"]
     assert [s["name"] for s in view.list_by_id["lEinkauf"]["sets"]] == ["Wocheneinkauf"]
 

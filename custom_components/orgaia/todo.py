@@ -16,7 +16,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from .const import COMPLETED_DAYS
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator
 from .entity import OrgaiaEntity, active_person_ids, person_entity, space_key, track_dynamic
-from .protocol.shopping import trip_of
+from .protocol.shopping import AISLE_NAMES, trip_of
 from .summary import TodoEntry, todo_entries, todo_lists
 from .util import from_ms, to_date, to_datetime, today
 
@@ -50,7 +50,13 @@ async def async_setup_entry(
     )
 
 
-def _description(e: TodoEntry, with_persons: bool = True, list_name: str | None = None) -> str | None:
+MISSED_LABEL = {"de": "nicht bekommen", "en": "not got"}
+
+
+def _description(
+    e: TodoEntry, with_persons: bool = True, list_name: str | None = None, language: str | None = None
+) -> str | None:
+    lang = (language or "de").split("-")[0].lower()
     parts = []
     if list_name:
         parts.append("📋 " + list_name)
@@ -59,6 +65,11 @@ def _description(e: TodoEntry, with_persons: bool = True, list_name: str | None 
     if e.late:
         # Came onto the list after it was released, as the app's mark "new".
         parts.append("🆕")
+    if e.missed_by is not None:
+        who = f" ({e.missed_by})" if e.missed_by else ""
+        parts.append(f"✗ {MISSED_LABEL.get(lang, MISSED_LABEL['en'])}{who}")
+    if e.aisle:
+        parts.append("🏷 " + AISLE_NAMES.get(lang, AISLE_NAMES["en"])[e.aisle])
     if e.note:
         parts.append(e.note)
     if e.subtasks:
@@ -103,7 +114,8 @@ class OrgaiaTodoList(OrgaiaEntity, TodoListEntity):
     @property
     def todo_items(self) -> list[TodoItem]:
         entries = todo_entries(self.coordinator.data, today(), COMPLETED_DAYS, list_id=self.list_id)
-        return [_item(e, _description(e)) for e in entries]
+        language = self.hass.config.language if self.hass else None
+        return [_item(e, _description(e, language=language)) for e in entries]
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
@@ -133,6 +145,10 @@ class OrgaiaTodoList(OrgaiaEntity, TodoListEntity):
             "note": ready.get("note"),
             "shopper": name(trip.shopper),
             "shopper_entity": person_entity(entry, trip.shopper) if trip.shopper else None,
+            "not_got": sum(
+                1 for i in view.items if i["listId"] == self.list_id and not i.get("done") and i.get("missed")
+            ),
+            "fixed_purchases": [x["name"] for x in lst.get("sets") or []],
         }
 
 

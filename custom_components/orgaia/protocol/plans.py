@@ -33,7 +33,9 @@ class PlanLabels:
 
 
 LABELS = {
-    "de": PlanLabels("{thing} einpacken", "Schule", "Arbeit", "Klassenarbeit {subject}", "Für {subject} lernen", "Bereitschaft"),
+    "de": PlanLabels(
+        "{thing} einpacken", "Schule", "Arbeit", "Klassenarbeit {subject}", "Für {subject} lernen", "Bereitschaft"
+    ),
     "en": PlanLabels("Pack {thing}", "School", "Work", "{subject} test", "Study for {subject}", "On call"),
 }
 
@@ -142,7 +144,9 @@ def things_on_day(tt: dict[str, Any], date: str) -> dict[str, dict[str, Any]]:
 
 def timetable_holds(tt: dict[str, Any], date: str) -> bool:
     """Whether the timetable holds on a date (a half-year has a first and a last day)."""
-    return (not tt.get("validFrom") or date >= tt["validFrom"]) and (not tt.get("validUntil") or date <= tt["validUntil"])
+    return (not tt.get("validFrom") or date >= tt["validFrom"]) and (
+        not tt.get("validUntil") or date <= tt["validUntil"]
+    )
 
 
 def school_day_of(tt: dict[str, Any], date: str) -> dict[str, Any] | None:
