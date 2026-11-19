@@ -209,6 +209,10 @@
     "update_required": {
       "title": "Orgaia-Integration aktualisieren",
       "description": "Der Orgaia-Dienst nimmt diese Version der Integration nicht mehr an, deshalb wird **{group}** nicht aktualisiert. Installiere in HACS die neueste Version und starte Home Assistant neu."
+    },
+    "write_not_allowed": {
+      "title": "{group}: Home Assistant darf noch nicht abhaken",
+      "description": "Aus Home Assistant sollte etwas abgehakt oder eingetragen werden, aber kein Admin von {group} hat das bisher erlaubt. Öffne in der Orgaia-App die Gruppe, dann Verwalten › Home Assistant, und schalte „Darf abhaken und eintragen“ ein. Dieser Hinweis verschwindet von selbst, sobald es erlaubt ist."
     }
   },
   "options": {

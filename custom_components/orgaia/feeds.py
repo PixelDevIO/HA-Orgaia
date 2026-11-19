@@ -73,6 +73,18 @@ class FeedCache:
                 out[lst["id"]] = self._events[lst["id"]]
         return out
 
+    def status(self) -> list[dict[str, Any]]:
+        """For diagnostics: per subscribed list when it was fetched, and the last error. No address, no entries."""
+        return [
+            {
+                "events": len(c.get("events") or []),
+                "fetched_at": c.get("fetchedAt") or None,
+                "error": c.get("error"),
+                "error_at": c.get("errorAt"),
+            }
+            for c in self._data.values()
+        ]
+
     def stale(self, view: SpaceView, now: float | None = None) -> list[dict[str, Any]]:
         now = time.time() if now is None else now
         out = []

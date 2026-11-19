@@ -209,6 +209,10 @@
     "update_required": {
       "title": "Update the Orgaia integration",
       "description": "The Orgaia service no longer accepts this version of the integration, so **{group}** is not updated. Install the latest version in HACS and restart Home Assistant."
+    },
+    "write_not_allowed": {
+      "title": "{group}: Home Assistant may not tick off yet",
+      "description": "Something was to be ticked off or added from Home Assistant, but no admin of {group} allowed that yet. In the Orgaia app, open the group, then Manage › Home Assistant, and switch on \"May tick off and add\". This notice goes away by itself once it is allowed."
     }
   },
   "options": {
