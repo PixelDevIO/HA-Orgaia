@@ -27,6 +27,14 @@
       },
       "wait": {
         "title": "Waiting for confirmation"
+      },
+      "reconfigure": {
+        "title": "Connect {group} again",
+        "description": "Joins {group} again with a new link and a new key. Entities and automations stay; the old key leaves the group. Create a new link for Home Assistant in the app and paste it here.",
+        "data": {
+          "link": "Invite link",
+          "name": "Name in the group"
+        }
       }
     },
     "progress": {
@@ -47,7 +55,8 @@
       "rejected": "The admin declined the request.",
       "timeout": "Nobody confirmed the request in time. Create a new link and try again.",
       "wrong_group": "The link belongs to a different group.",
-      "reauth_successful": "The group is connected again."
+      "reauth_successful": "The group is connected again.",
+      "reconfigure_successful": "Connected again."
     }
   },
   "entity": {
@@ -160,6 +169,12 @@
       },
       "work_today": {
         "name": "Work today"
+      },
+      "today": {
+        "name": "Today"
+      },
+      "open_drives": {
+        "name": "Open drives"
       }
     },
     "binary_sensor": {
@@ -171,6 +186,18 @@
       },
       "school_holidays": {
         "name": "School holidays"
+      },
+      "on_call": {
+        "name": "On call"
+      },
+      "busy": {
+        "name": "Appointment now"
+      },
+      "out_shopping": {
+        "name": "Out shopping"
+      },
+      "can_write": {
+        "name": "May tick off and add"
       }
     }
   },
@@ -187,8 +214,30 @@
   "options": {
     "step": {
       "init": {
+        "title": "Orgaia",
+        "menu_options": {
+          "persons": "People",
+          "settings": "Settings"
+        }
+      },
+      "persons": {
         "title": "People of the group",
-        "description": "Choose which Home Assistant person each person of the group is. Events and person sensors then also name the person entity, e.g. for notifications. People with the same name are suggested."
+        "description": "Choose which Home Assistant person each person of the group is. Events and person sensors then also name the person entity, e.g. for notifications, and that user may tick off and add in the standard to-do cards. People with the same name are suggested."
+      },
+      "settings": {
+        "title": "Settings",
+        "data": {
+          "voice_person": "Articles by voice in the name of",
+          "lists": "Lists as to-do lists",
+          "person_devices": "A device per person",
+          "completed_days": "Days ticked-off tasks stay"
+        },
+        "data_description": {
+          "voice_person": "A voice assistant does not know who speaks. Articles it puts on a shopping list are added in the name of this person (\"—\": not at all). It can never tick off.",
+          "lists": "None chosen: every task and shopping list and every timetable.",
+          "person_devices": "Off: no to-do list, calendar or sensors per person, only for the group. For large groups.",
+          "completed_days": "0 to 60, normally 14."
+        }
       }
     },
     "abort": {
@@ -208,7 +257,11 @@
       "event_starting": "An appointment starts",
       "shopping_released": "A shopping list was released",
       "shopping_taken": "Somebody took over the shopping",
-      "shopping_done": "The shopping is done"
+      "shopping_done": "The shopping is done",
+      "drive_needed": "A drive needs somebody",
+      "drive_taken": "Somebody took over a drive",
+      "rsvp_changed": "Somebody replied to an appointment",
+      "poll_decided": "A time found by vote was fixed"
     }
   },
   "services": {
@@ -395,6 +448,184 @@
           "description": "The list: its to-do entity or its name."
         }
       }
+    },
+    "set_not_got": {
+      "name": "Mark as not got",
+      "description": "Whoever is out shopping did not get an article. It stays on the list for next time.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Group",
+          "description": "The Orgaia group. Only needed when more than one group is connected."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Who does it: a person of the group by name, or the Home Assistant person assigned to them in the options. The app shows this name."
+        },
+        "item": {
+          "name": "Article",
+          "description": "The article: its title, or the id the to-do list gives it."
+        },
+        "list": {
+          "name": "List",
+          "description": "The list: its to-do entity or its name."
+        },
+        "missed": {
+          "name": "Not got",
+          "description": "Off to take the mark back."
+        }
+      }
+    },
+    "set_quantity": {
+      "name": "Change the quantity",
+      "description": "A new quantity for an article, or one more or one less.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Group",
+          "description": "The Orgaia group. Only needed when more than one group is connected."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Who does it: a person of the group by name, or the Home Assistant person assigned to them in the options. The app shows this name."
+        },
+        "item": {
+          "name": "Article",
+          "description": "The article: its title, or the id the to-do list gives it."
+        },
+        "list": {
+          "name": "List",
+          "description": "The list: its to-do entity or its name."
+        },
+        "quantity": {
+          "name": "Quantity",
+          "description": "Such as \"2\" or \"500 g\"; empty for none."
+        },
+        "step": {
+          "name": "Step",
+          "description": "1 for one more, -1 for one less. Only for counts such as \"2\" or \"3 Pck\"."
+        }
+      }
+    },
+    "set_aisle": {
+      "name": "Sort into an aisle",
+      "description": "Sorts an article into an aisle of the shop. The group remembers it for the next time the article is on the list.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Group",
+          "description": "The Orgaia group. Only needed when more than one group is connected."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Who does it: a person of the group by name, or the Home Assistant person assigned to them in the options. The app shows this name."
+        },
+        "item": {
+          "name": "Article",
+          "description": "The article: its title, or the id the to-do list gives it."
+        },
+        "list": {
+          "name": "List",
+          "description": "The list: its to-do entity or its name."
+        },
+        "aisle": {
+          "name": "Aisle",
+          "description": "Empty to let Orgaia guess again."
+        }
+      }
+    },
+    "add_fixed_purchase": {
+      "name": "Add a fixed purchase",
+      "description": "Puts a fixed purchase of the list (such as \"Weekly shop\") on it. Articles already open stay as they are.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Group",
+          "description": "The Orgaia group. Only needed when more than one group is connected."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Who does it: a person of the group by name, or the Home Assistant person assigned to them in the options. The app shows this name."
+        },
+        "list": {
+          "name": "List",
+          "description": "The list: its to-do entity or its name."
+        },
+        "set": {
+          "name": "Fixed purchase",
+          "description": "Its name, as in the app."
+        }
+      }
+    },
+    "take_drive": {
+      "name": "Take over a drive",
+      "description": "The person takes the participants there, picks them up, or both.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Group",
+          "description": "The Orgaia group. Only needed when more than one group is connected."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Who does it: a person of the group by name, or the Home Assistant person assigned to them in the options. The app shows this name."
+        },
+        "item": {
+          "name": "Appointment",
+          "description": "The appointment: its title or id. Without a date, the next time it happens in the coming 30 days."
+        },
+        "date": {
+          "name": "Date",
+          "description": "The day of the appointment, for one that repeats."
+        },
+        "which": {
+          "name": "Which way",
+          "description": "\"to\": taking there, \"from\": picking up, \"both\"."
+        }
+      }
+    },
+    "drop_drive": {
+      "name": "Hand back a drive",
+      "description": "The person no longer drives; the drive is open for the others again. Only their own drives change.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Group",
+          "description": "The Orgaia group. Only needed when more than one group is connected."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Who does it: a person of the group by name, or the Home Assistant person assigned to them in the options. The app shows this name."
+        },
+        "item": {
+          "name": "Appointment",
+          "description": "The appointment: its title or id. Without a date, the next time it happens in the coming 30 days."
+        },
+        "date": {
+          "name": "Date",
+          "description": "The day of the appointment, for one that repeats."
+        },
+        "which": {
+          "name": "Which way",
+          "description": "\"to\": taking there, \"from\": picking up, \"both\"."
+        }
+      }
+    },
+    "get_agenda": {
+      "name": "Get the day",
+      "description": "What happens on a day: appointments, what is due, school, work, packing, shopping and drives. Returns the data and a text to read out (\"speech\"). Only reads, so it needs no person.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Group",
+          "description": "Only this group; without it every connected group."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Only what concerns this person: a name, or an assigned person entity."
+        },
+        "date": {
+          "name": "Date",
+          "description": "The first day; today without it."
+        },
+        "days": {
+          "name": "Days",
+          "description": "How many days from it, 1 to 14."
+        }
+      }
     }
   },
   "exceptions": {
@@ -460,6 +691,54 @@
     },
     "write_unknown": {
       "message": "Orgaia did not take the change."
+    },
+    "no_aisle": {
+      "message": "There is no such aisle."
+    },
+    "no_set": {
+      "message": "The list has no such fixed purchase."
+    },
+    "no_drive": {
+      "message": "This appointment needs no such drive."
+    },
+    "no_drive_found": {
+      "message": "No appointment {item} that needs a drive was found."
+    },
+    "not_an_event": {
+      "message": "That is not an appointment."
+    },
+    "who_are_you": {
+      "message": "Your Home Assistant user is not assigned to a person of the group. Assign it under Orgaia › Configure › People, or use the Orgaia card, which asks who you are."
+    },
+    "no_user": {
+      "message": "Who is it? A voice assistant may only put articles on a shopping list, and only once a person is chosen for it under Orgaia › Configure › Settings."
+    },
+    "change_in_app": {
+      "message": "Only ticking off works here; change the title in the app."
+    }
+  },
+  "selector": {
+    "aisle": {
+      "options": {
+        "produce": "Fruit & veg",
+        "bakery": "Bakery",
+        "dairy": "Dairy & eggs",
+        "meat": "Meat & fish",
+        "frozen": "Frozen",
+        "pantry": "Pantry",
+        "drinks": "Drinks",
+        "sweets": "Sweets & snacks",
+        "drugstore": "Toiletries",
+        "household": "Household",
+        "other": "Other"
+      }
+    },
+    "which": {
+      "options": {
+        "to": "Taking there",
+        "from": "Picking up",
+        "both": "Both"
+      }
     }
   }
 }

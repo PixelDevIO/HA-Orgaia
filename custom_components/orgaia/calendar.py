@@ -12,7 +12,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator
-from .entity import OrgaiaEntity, OrgaiaPlanEntity, active_person_ids, plan_list_ids, track_dynamic
+from .entity import OrgaiaEntity, OrgaiaPlanEntity, person_ids_for, plan_list_ids, track_dynamic
 from .protocol.agenda import DEFAULT_DURATION, Deadline, Occurrence
 from .protocol.plans import school_day
 from .protocol.recur import add_days, date_of
@@ -50,7 +50,7 @@ async def async_setup_entry(
     track_dynamic(
         hass,
         entry,
-        active_person_ids,
+        person_ids_for(entry),
         lambda person_id: [OrgaiaCalendar(coordinator, person_id)],
         async_add_entities,
         "calendar",

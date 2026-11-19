@@ -201,6 +201,9 @@ def _me(hass: HomeAssistant, entry: OrgaiaConfigEntry, user_id: str | None) -> s
     return None
 
 
+person_of_user = _me
+
+
 def _payload(hass: HomeAssistant, entry: OrgaiaConfigEntry, user_id: str | None) -> dict[str, Any]:
     coordinator: OrgaiaCoordinator = entry.runtime_data
     view = coordinator.data

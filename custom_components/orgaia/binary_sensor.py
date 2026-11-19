@@ -12,7 +12,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.event import async_track_time_change
 
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator
-from .entity import OrgaiaEntity, OrgaiaPlanEntity, active_person_ids, person_entity, plan_list_ids, track_dynamic
+from .entity import OrgaiaEntity, OrgaiaPlanEntity, person_entity, person_ids_for, plan_list_ids, track_dynamic
 from .protocol.plans import at_school, at_work, holiday_on, is_plan_item, next_holiday, on_call
 from .protocol.recur import add_days
 from .protocol.shopping import STATE_GOING
@@ -76,7 +76,7 @@ async def async_setup_entry(
     track_dynamic(
         hass,
         entry,
-        active_person_ids,
+        person_ids_for(entry),
         lambda person_id: [OrgaiaBusySensor(coordinator, person_id), OrgaiaShoppingSensor(coordinator, person_id)],
         async_add_entities,
         "binary_sensor",

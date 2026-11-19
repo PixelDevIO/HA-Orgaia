@@ -165,3 +165,191 @@ finish_shopping:
       example: "todo.familie_einkauf"
       selector:
         text:
+set_not_got:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: orgaia
+    person:
+      required: true
+      example: "Ben"
+      selector:
+        text:
+    item:
+      required: true
+      example: "Gouda"
+      selector:
+        text:
+    list:
+      example: "todo.familie_einkauf"
+      selector:
+        text:
+    missed:
+      default: true
+      selector:
+        boolean:
+set_quantity:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: orgaia
+    person:
+      required: true
+      example: "Anna"
+      selector:
+        text:
+    item:
+      required: true
+      example: "Milch"
+      selector:
+        text:
+    list:
+      example: "todo.familie_einkauf"
+      selector:
+        text:
+    quantity:
+      example: "2 l"
+      selector:
+        text:
+    step:
+      example: 1
+      selector:
+        number:
+          min: -9
+          max: 9
+          mode: box
+set_aisle:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: orgaia
+    person:
+      required: true
+      example: "Anna"
+      selector:
+        text:
+    item:
+      required: true
+      example: "Hafermilch"
+      selector:
+        text:
+    list:
+      example: "todo.familie_einkauf"
+      selector:
+        text:
+    aisle:
+      selector:
+        select:
+          translation_key: aisle
+          options:
+            - produce
+            - bakery
+            - dairy
+            - meat
+            - frozen
+            - pantry
+            - drinks
+            - sweets
+            - drugstore
+            - household
+            - other
+add_fixed_purchase:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: orgaia
+    person:
+      required: true
+      example: "Anna"
+      selector:
+        text:
+    list:
+      required: true
+      example: "todo.familie_einkauf"
+      selector:
+        text:
+    set:
+      required: true
+      example: "Wocheneinkauf"
+      selector:
+        text:
+take_drive:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: orgaia
+    person:
+      required: true
+      example: "Anna"
+      selector:
+        text:
+    item:
+      required: true
+      example: "Fußball"
+      selector:
+        text:
+    date:
+      selector:
+        date:
+    which:
+      default: both
+      selector:
+        select:
+          translation_key: which
+          options:
+            - to
+            - from
+            - both
+drop_drive:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: orgaia
+    person:
+      required: true
+      example: "Anna"
+      selector:
+        text:
+    item:
+      required: true
+      example: "Fußball"
+      selector:
+        text:
+    date:
+      selector:
+        date:
+    which:
+      default: both
+      selector:
+        select:
+          translation_key: which
+          options:
+            - to
+            - from
+            - both
+get_agenda:
+  fields:
+    config_entry_id:
+      selector:
+        config_entry:
+          integration: orgaia
+    person:
+      example: "Ben"
+      selector:
+        text:
+    date:
+      selector:
+        date:
+    days:
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 14
+          mode: box

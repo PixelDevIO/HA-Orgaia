@@ -12,22 +12,38 @@ import aiohttp
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.selector import EntitySelector, EntitySelectorConfig
+from homeassistant.helpers.selector import (
+    BooleanSelector,
+    EntitySelector,
+    EntitySelectorConfig,
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
+    SelectOptionDict,
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
+)
 from homeassistant.helpers.storage import Store
 import voluptuous as vol
 
 from .client.api import ApiError
 from .client.engine import GroupEngine, JoinError
 from .const import (
+    COMPLETED_DAYS,
+    CONF_COMPLETED_DAYS,
     CONF_DEVICE,
     CONF_JOIN,
     CONF_LINK,
+    CONF_LISTS,
     CONF_NAME,
     CONF_NODE,
+    CONF_PERSON_DEVICES,
     CONF_PERSONS,
     CONF_SEED,
     CONF_SERVER,
     CONF_SPACE,
+    CONF_VOICE_PERSON,
     DEFAULT_MEMBER_NAME,
     DOMAIN,
     JOIN_POLL_SECONDS,
@@ -83,6 +99,26 @@ class OrgaiaConfigFlow(ConfigFlow, domain=DOMAIN):
         entry = self._get_reauth_entry()
         return self.async_show_form(
             step_id="reauth_confirm",
+            data_schema=_schema(),
+            errors=errors,
+            description_placeholders={"group": entry.title},
+        )
+
+    async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Joins the same group again with a new link and a new key, keeping entities and automations.
+
+        For when the key should change (a backup got into the wrong hands) or the old membership is in
+        doubt. The old membership is left once the new one stands.
+        """
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            error = await self._request(user_input)
+            if error is None:
+                return await self.async_step_wait()
+            errors["base"] = error
+        entry = self._get_reconfigure_entry()
+        return self.async_show_form(
+            step_id="reconfigure",
             data_schema=_schema(),
             errors=errors,
             description_placeholders={"group": entry.title},
@@ -157,11 +193,15 @@ class OrgaiaConfigFlow(ConfigFlow, domain=DOMAIN):
             CONF_JOIN: engine.join,
         }
         await self.async_set_unique_id(engine.space_id)
-        if self.source == "reauth":
-            entry = self._get_reauth_entry()
+        if self.source in ("reauth", "reconfigure"):
+            entry = self._get_reauth_entry() if self.source == "reauth" else self._get_reconfigure_entry()
             if entry.unique_id != engine.space_id:
                 await self._leave(engine)
                 return self.async_abort(reason="wrong_group")
+            old = getattr(entry, "runtime_data", None)
+            if self.source == "reconfigure" and old is not None:
+                # The old key leaves the group, so the admins see one Home Assistant, not two.
+                await self._leave(old.engine)
             await Store(self.hass, STORAGE_VERSION, storage_key(entry.entry_id), private=True).async_remove()
             return self.async_update_reload_and_abort(entry, data=data)
         if self._async_current_entries() and any(e.unique_id == engine.space_id for e in self._async_current_entries()):
@@ -185,13 +225,17 @@ class OrgaiaConfigFlow(ConfigFlow, domain=DOMAIN):
 
 
 class OrgaiaOptionsFlow(OptionsFlow):
-    """Which Home Assistant person each person of the group is. Same names are suggested."""
+    """People (which Home Assistant person each one is) and settings (voice, lists, devices, ticks)."""
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         entry = self.config_entry
-        view = entry.runtime_data.data if getattr(entry, "runtime_data", None) else None
-        if view is None:
+        if not getattr(entry, "runtime_data", None):
             return self.async_abort(reason="not_loaded")
+        return self.async_show_menu(step_id="init", menu_options=["persons", "settings"])
+
+    async def async_step_persons(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        entry = self.config_entry
+        view = entry.runtime_data.data
         # The form shows a field per person, labelled with the name (made unique if two share it).
         labels: dict[str, str] = {}
         for p in view.active_persons():
@@ -215,7 +259,41 @@ class OrgaiaOptionsFlow(OptionsFlow):
             name = view.person_by_id[pid]["name"]
             suggested = current.get(pid) or by_name.get(name.strip().casefold())
             schema[vol.Optional(label, description={"suggested_value": suggested} if suggested else None)] = selector
-        return self.async_show_form(
-            step_id="init",
-            data_schema=vol.Schema(schema),
-        )
+        return self.async_show_form(step_id="persons", data_schema=vol.Schema(schema))
+
+    async def async_step_settings(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        entry = self.config_entry
+        view = entry.runtime_data.data
+        if user_input is not None:
+            options = {**entry.options}
+            voice = user_input.get(CONF_VOICE_PERSON) or ""
+            options[CONF_VOICE_PERSON] = voice if voice != NOBODY else None
+            options[CONF_LISTS] = list(user_input.get(CONF_LISTS) or [])
+            options[CONF_PERSON_DEVICES] = bool(user_input.get(CONF_PERSON_DEVICES, True))
+            options[CONF_COMPLETED_DAYS] = int(user_input.get(CONF_COMPLETED_DAYS, COMPLETED_DAYS))
+            return self.async_create_entry(data=options)
+        persons = [SelectOptionDict(value=NOBODY, label="—")] + [
+            SelectOptionDict(value=p["id"], label=p["name"]) for p in view.active_persons()
+        ]
+        lists = [
+            SelectOptionDict(value=lst["id"], label=lst["name"])
+            for lst in view.lists
+            if lst["type"] in ("tasks", "shopping", "timetable")
+        ]
+        schema = {
+            vol.Optional(CONF_VOICE_PERSON, default=entry.options.get(CONF_VOICE_PERSON) or NOBODY): SelectSelector(
+                SelectSelectorConfig(options=persons, mode=SelectSelectorMode.DROPDOWN)
+            ),
+            vol.Optional(CONF_LISTS, default=entry.options.get(CONF_LISTS) or []): SelectSelector(
+                SelectSelectorConfig(options=lists, multiple=True, mode=SelectSelectorMode.DROPDOWN)
+            ),
+            vol.Optional(CONF_PERSON_DEVICES, default=entry.options.get(CONF_PERSON_DEVICES, True)): BooleanSelector(),
+            vol.Optional(
+                CONF_COMPLETED_DAYS, default=entry.options.get(CONF_COMPLETED_DAYS, COMPLETED_DAYS)
+            ): NumberSelector(NumberSelectorConfig(min=0, max=60, step=1, mode=NumberSelectorMode.BOX)),
+        }
+        return self.async_show_form(step_id="settings", data_schema=vol.Schema(schema))
+
+
+# Chosen in the settings when no person should add articles by voice.
+NOBODY = "-"

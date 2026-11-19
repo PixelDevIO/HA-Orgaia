@@ -16,7 +16,7 @@ from .calendar import DONE_MARK, LOOKAHEAD_DAYS, events_between
 from .client.engine import STATUS_NEEDS_PLUS, STATUS_OFFLINE, STATUS_OK, STATUS_REMOVED, STATUS_UPDATE
 from .const import MAX_TITLES
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator
-from .entity import OrgaiaEntity, OrgaiaPlanEntity, active_person_ids, person_entity, plan_list_ids, track_dynamic
+from .entity import OrgaiaEntity, OrgaiaPlanEntity, person_entity, person_ids_for, plan_list_ids, track_dynamic
 from .protocol.plans import (
     STATUS_FREE,
     STATUS_HOLIDAY,
@@ -96,7 +96,7 @@ async def async_setup_entry(
     track_dynamic(
         hass,
         entry,
-        active_person_ids,
+        person_ids_for(entry),
         lambda person_id: [
             *(OrgaiaCountSensor(coordinator, d, person_id) for d in COUNTS if d.key != "shopping"),
             OrgaiaNextTaskSensor(coordinator, person_id),

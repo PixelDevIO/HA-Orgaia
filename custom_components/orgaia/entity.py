@@ -11,7 +11,16 @@ from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import CONF_PERSONS, DOMAIN, NAME, VERSION
+from .const import (
+    COMPLETED_DAYS,
+    CONF_COMPLETED_DAYS,
+    CONF_LISTS,
+    CONF_PERSON_DEVICES,
+    CONF_PERSONS,
+    DOMAIN,
+    NAME,
+    VERSION,
+)
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator
 from .protocol.view import SpaceView
 
@@ -81,6 +90,25 @@ def active_person_ids(view: SpaceView) -> list[str]:
     return [p["id"] for p in view.active_persons()]
 
 
+def person_ids_for(entry: OrgaiaConfigEntry) -> Callable[[SpaceView], list[str]]:
+    """The people that get a device with entities of their own: all, unless switched off in the options."""
+    if entry.options.get(CONF_PERSON_DEVICES, True) is False:
+        return lambda _view: []
+    return active_person_ids
+
+
+def list_shown(entry: OrgaiaConfigEntry, list_id: str) -> bool:
+    """Whether a list becomes a to-do list: all, unless some were chosen in the options."""
+    chosen = entry.options.get(CONF_LISTS) or []
+    return not chosen or list_id in chosen
+
+
+def completed_days(entry: OrgaiaConfigEntry) -> int:
+    """How many days ticked-off tasks stay in the to-do lists."""
+    days = entry.options.get(CONF_COMPLETED_DAYS)
+    return int(days) if isinstance(days, (int, float)) and 0 <= days <= 365 else COMPLETED_DAYS
+
+
 def track_dynamic(
     hass: HomeAssistant,
     entry: OrgaiaConfigEntry,
@@ -127,7 +155,10 @@ class OrgaiaPlanEntity(OrgaiaEntity):
         self.list_id = list_id
         plan = (coordinator.data.list_by_id.get(list_id) or {}).get(self.plan_type) or {}
         person = plan.get("personId")
-        if person not in coordinator.data.person_by_id:
+        if (
+            person not in coordinator.data.person_by_id
+            or coordinator.config_entry.options.get(CONF_PERSON_DEVICES, True) is False
+        ):
             person = None
         super().__init__(coordinator, f"{self.plan_type}_{list_id}_{key}", person)
 
