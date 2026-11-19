@@ -2,16 +2,22 @@
 
 from __future__ import annotations
 
+import json
+import os
+from pathlib import Path
+
 from homeassistant.components.todo import TodoListEntityFeature
 from homeassistant.core import Context, HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
 import pytest
 
-from custom_components.orgaia.const import CONF_PERSONS, CONF_VOICE_PERSON, DOMAIN
+from custom_components.orgaia.const import CONF_PERSONS, CONF_VOICE_PERSON, DOMAIN, VERSION
 from custom_components.orgaia.protocol.actions import ActionError, repeat_of_rrule
 
 from .fake_service import FakeService
 from .test_init import setup_group
+
+FIXTURE = Path(__file__).parent / "card" / "board.json"
 
 
 async def as_ben(hass: HomeAssistant, entry, user_id: str) -> None:
@@ -165,3 +171,50 @@ async def test_day_overview(hass: HomeAssistant, service: FakeService, freezer) 
     assert first["speech"].startswith("Today: 23:00 Elternabend")
     assert len(group["days"]) == 2
     assert hass.states.get("binary_sensor.familie_may_tick_off_and_add").state == "off"
+
+
+async def test_card_gets_aisles_sets_drives_and_days(
+    hass: HomeAssistant, service: FakeService, freezer, hass_ws_client, hass_admin_user
+) -> None:
+    """What the card's shopping, agenda and today views need, and the card knows its own version."""
+    entry = await setup_group(hass, service, freezer)
+    day = hass.states.get("sensor.familie_connection").last_updated.astimezone().date().isoformat()
+    service.write("item", "s2", {"title": "Brot", "listId": "shop", "aisle": "bakery", "qty": "2", "order": 2})
+    service.write("item", "s3", {"title": "Gouda", "listId": "shop", "missed": {"by": "ben", "at": 1}, "order": 3})
+    service.write(
+        "list", "shop", {"set.w": {"name": "Wocheneinkauf", "items": [{"title": "Milch"}, {"title": "Eier"}]}}
+    )
+    service.write(
+        "item",
+        "e2",
+        {"title": "Training", "listId": "todo", "kind": "event", "start": f"{day}T22:00", "needTo": True, "order": 6},
+    )
+    service.write("item", "e2", {"assignees": ["ben"], "driveTo": None})
+    await entry.runtime_data.async_refresh()
+    await hass.async_block_till_done()
+    refresh = await hass.auth.async_create_refresh_token(hass_admin_user, "https://example.com/app")
+    client = await hass_ws_client(hass, hass.auth.async_create_access_token(refresh))
+    await client.send_json_auto_id({"type": "orgaia/board/subscribe"})
+    assert (await client.receive_json())["success"]
+    got = (await client.receive_json())["event"]
+
+    assert got["version"] == VERSION
+    card = (Path(__file__).parents[1] / "custom_components/orgaia/www/orgaia-card.js").read_text()
+    assert f"const CARD_VERSION = '{VERSION}';" in card
+    shop = next(lst for lst in got["lists"] if lst["id"] == "shop")
+    entries = {e["title"]: e for e in shop["entries"]}
+    assert entries["Brot"]["aisle"] == "bakery" and entries["Brot"]["step"] is True
+    assert entries["Gouda"]["missed"] == "ben" and entries["Milch"]["aisle"] == "dairy"
+    assert shop["sets"] == [{"id": "w", "name": "Wocheneinkauf", "count": 2}]
+    assert [k for k, _ in got["aisles"]][:2] == ["produce", "bakery"]
+    training = next(r for r in got["agenda"] if r["title"] == "Training")
+    assert training["drive"] == {"item": "e2", "date": day, "to": None}
+    today, tomorrow = got["days"]
+    assert today["date"] == day and [a["title"] for a in today["appointments"]] == ["Training", "Elternabend"]
+    assert today["appointments"][0]["drive_missing"] == ["to"]
+    assert today["speech"].startswith("Today:") and tomorrow["speech"].startswith("Tomorrow:")
+
+    # The card's browser test draws every view from this.
+    if os.environ.get("UPDATE_CARD_FIXTURE"):
+        FIXTURE.write_text(json.dumps(got, ensure_ascii=False, indent=1) + "\n")
+    assert FIXTURE.exists()

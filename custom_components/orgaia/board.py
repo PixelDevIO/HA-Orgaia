@@ -11,15 +11,16 @@ from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
 import voluptuous as vol
 
-from .const import COMPLETED_DAYS, CONF_PERSONS, DOMAIN
+from .const import COMPLETED_DAYS, CONF_PERSONS, DOMAIN, VERSION
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator
 from .protocol.agenda import Occurrence
 from .protocol.plans import pack_on, school_day, work_day
 from .protocol.recur import add_days, date_of, week_start
-from .protocol.shopping import trip_of, trip_overdue
+from .protocol.shopping import AISLE_NAMES, AISLES, can_step, missed_of, trip_of, trip_overdue
 from .protocol.view import SpaceView, occ_id
-from .summary import TodoEntry, calendar_deadlines, calendar_occurrences, todo_entries, todo_lists
-from .util import today
+from .report import day_report, speech
+from .summary import TodoEntry, calendar_deadlines, calendar_occurrences, drive_of, todo_entries, todo_lists
+from .util import minute_of_day, today
 
 
 def _own_ticks(view: SpaceView, e: TodoEntry) -> list[str] | None:
@@ -31,8 +32,15 @@ def _own_ticks(view: SpaceView, e: TodoEntry) -> list[str] | None:
     return [p for p in e.assignees if isinstance(marks.get(p), dict)]
 
 
-def _entry(view: SpaceView, e: TodoEntry, day: str) -> dict[str, Any]:
+def _entry(view: SpaceView, e: TodoEntry, day: str, shop: bool = False) -> dict[str, Any]:
     out: dict[str, Any] = {"uid": e.uid, "title": e.title, "done": e.done}
+    if shop:
+        # The aisle it is sorted under, whether + and − work on its quantity, and "not got".
+        out["aisle"] = e.aisle or "other"
+        out["step"] = can_step(e.qty)
+        missed = missed_of(view.item_by_id.get(e.item_id) or {})
+        if missed and not e.done:
+            out["missed"] = missed["by"] if missed["by"] in view.person_by_id else True
     if e.due:
         out["due"] = e.due
         out["overdue"] = not e.done and e.due[:10] < day
@@ -61,7 +69,7 @@ def board(view: SpaceView, day: str) -> dict[str, Any]:
             "id": lst["id"],
             "name": lst["name"],
             "type": lst["type"],
-            "entries": [_entry(view, e, day) for e in entries],
+            "entries": [_entry(view, e, day, lst["type"] == "shopping") for e in entries],
         }
         if lst["type"] == "shopping":
             trip = trip_of(view, lst)
@@ -77,6 +85,7 @@ def board(view: SpaceView, day: str) -> dict[str, Any]:
                 **({"shopper": trip.shopper} if trip.shopper else {}),
                 **({"overdue": True} if trip_overdue(trip, day) else {}),
             }
+            row["sets"] = [{"id": x["id"], "name": x["name"], "count": len(x["items"])} for x in lst.get("sets") or []]
         lists.append(row)
     persons = [{"id": p["id"], "name": p["name"], "color": p["color"]} for p in view.active_persons()]
     return {
@@ -162,6 +171,14 @@ def _occurrence(view: SpaceView, occ: Occurrence) -> dict[str, Any]:
         out["location"] = item["location"]
     if kind == "task" and occ.done:
         out["done"] = True
+    drive = drive_of(view, occ)
+    if drive:
+        out["drive"] = {
+            "item": item["id"],
+            "date": occ.occ_date or date_of(occ.start),
+            **({"to": drive.driver_to} if drive.need_to else {}),
+            **({"from": drive.driver_from} if drive.need_from else {}),
+        }
     return out
 
 
@@ -204,17 +221,31 @@ def _me(hass: HomeAssistant, entry: OrgaiaConfigEntry, user_id: str | None) -> s
 person_of_user = _me
 
 
+def days(view: SpaceView, day: str, minute: int, language: str | None) -> list[dict[str, Any]]:
+    """Today and tomorrow in a few lines, for the card's "today" view on a wall display."""
+    out = []
+    for d in (day, add_days(day, 1)):
+        report = day_report(view, d, day, minute)
+        out.append({**report, "speech": speech(report, language, day)})
+    return out
+
+
 def _payload(hass: HomeAssistant, entry: OrgaiaConfigEntry, user_id: str | None) -> dict[str, Any]:
     coordinator: OrgaiaCoordinator = entry.runtime_data
     view = coordinator.data
     me = _me(hass, entry, user_id)
+    language = hass.config.language
+    names = AISLE_NAMES.get((language or "en").split("-")[0].lower(), AISLE_NAMES["en"])
     return {
+        "version": VERSION,
         "entry_id": entry.entry_id,
         "title": entry.title,
         "status": coordinator.status,
         "can_write": coordinator.engine.can_write,
         "me": me if me in view.person_by_id and not view.person_by_id[me]["removed"] else None,
         "today": today(),
+        "aisles": [[key, names[key]] for key in AISLES],
+        "days": days(view, today(), minute_of_day(), language),
         **board(view, today()),
     }
 
