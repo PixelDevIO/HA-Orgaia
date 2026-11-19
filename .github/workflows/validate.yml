@@ -30,3 +30,14 @@ jobs:
           python-version: "3.13"
       - run: pip install pytest-homeassistant-custom-component
       - run: pytest -q
+
+  card:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node --check custom_components/orgaia/www/orgaia-card.js
+      - run: npm install --no-save playwright@1.49.1 && npx playwright install --with-deps chromium
+      - run: node tests/card/smoke.mjs

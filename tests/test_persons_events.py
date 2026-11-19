@@ -57,6 +57,8 @@ async def test_person_mapping(hass: HomeAssistant, service: FakeService, freezer
     hass.states.async_set("person.anna", "home", {"friendly_name": "Anna"})
     entry = await setup_group(hass, service, freezer)
     result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["type"] == "menu"
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"next_step_id": "persons"})
     assert result["type"] == "form"
     fields = {str(k): k for k in result["data_schema"].schema}
     assert set(fields) == {"Anna", "Ben"}

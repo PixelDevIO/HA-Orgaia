@@ -11,7 +11,7 @@ from typing import Any
 
 from . import plan_read as plans
 from .model import State, plain
-from .shopping import read_trip
+from .shopping import aisle_memory, read_trip, shop_sets
 
 RSVP_PREFIX = "rsvp."
 DONE_PREFIX = "done."
@@ -109,6 +109,8 @@ class SpaceView:
     person_by_id: dict[str, dict[str, Any]] = field(default_factory=dict)
     list_by_id: dict[str, dict[str, Any]] = field(default_factory=dict)
     item_by_id: dict[str, dict[str, Any]] = field(default_factory=dict)
+    # How each shopping article was sorted last time, by its title, also when long bought and gone.
+    aisles: dict[str, str] = field(default_factory=dict)
 
     @property
     def name(self) -> str:
@@ -215,6 +217,10 @@ def build_view(space_id: str, kind: str, state: State) -> SpaceView:
             lst["roster"] = plans.read_roster(raw)
         elif ltype == "shopping" and kind == "group":
             lst.update(read_trip(raw))
+        if ltype == "shopping":
+            sets = shop_sets(raw)
+            if sets:
+                lst["sets"] = sets
         lists.append(lst)
     lists.sort(key=lambda lst: (lst["order"], locale_key(lst["id"])))
     list_by_id = {lst["id"]: lst for lst in lists}
@@ -365,4 +371,5 @@ def build_view(space_id: str, kind: str, state: State) -> SpaceView:
         person_by_id={p["id"]: p for p in persons},
         list_by_id=list_by_id,
         item_by_id=item_by_id,
+        aisles=aisle_memory([plain(doc) for doc in state.get("item", {}).values()]),
     )

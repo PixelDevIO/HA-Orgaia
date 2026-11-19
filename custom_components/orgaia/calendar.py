@@ -5,20 +5,26 @@ Appointments and tasks with a time slot, repetitions and exceptions included.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
+import time
+from typing import Any
 
-from homeassistant.components.calendar import CalendarEntity, CalendarEvent
+from homeassistant.components.calendar import CalendarEntity, CalendarEntityFeature, CalendarEvent
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.util import dt as dt_util
 
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator
-from .entity import OrgaiaEntity, OrgaiaPlanEntity, active_person_ids, plan_list_ids, track_dynamic
+from .entity import OrgaiaPlanEntity, person_ids_for, plan_list_ids, track_dynamic
+from .protocol import actions
+from .protocol.actions import ActionError
 from .protocol.agenda import DEFAULT_DURATION, Deadline, Occurrence
 from .protocol.plans import school_day
 from .protocol.recur import add_days, date_of
 from .protocol.view import SpaceView, occ_id
 from .summary import calendar_deadlines, calendar_occurrences
 from .util import local_now, to_date, to_datetime
+from .writing import Writer, fail
 
 # How far ahead the calendar looks for the next appointment.
 LOOKAHEAD_DAYS = 60
@@ -50,7 +56,7 @@ async def async_setup_entry(
     track_dynamic(
         hass,
         entry,
-        active_person_ids,
+        person_ids_for(entry),
         lambda person_id: [OrgaiaCalendar(coordinator, person_id)],
         async_add_entities,
         "calendar",
@@ -165,7 +171,13 @@ def events_between(
     return out
 
 
-class OrgaiaCalendar(OrgaiaEntity, CalendarEntity):
+def _local(value: datetime) -> str:
+    return dt_util.as_local(value).strftime("%Y-%m-%dT%H:%M")
+
+
+class OrgaiaCalendar(Writer, CalendarEntity):
+    """The group's appointments, or one person's. New ones can be made here when writing is allowed."""
+
     _attr_translation_key = "calendar"
 
     def __init__(self, coordinator: OrgaiaCoordinator, person_id: str | None = None) -> None:
@@ -199,6 +211,46 @@ class OrgaiaCalendar(OrgaiaEntity, CalendarEntity):
         return events_between(
             self.coordinator.data, start_date, end_date, self.person_id, hass.config.language, with_deadlines=True
         )
+
+    @property
+    def supported_features(self) -> CalendarEntityFeature:
+        return CalendarEntityFeature.CREATE_EVENT if self.coordinator.engine.can_write else CalendarEntityFeature(0)
+
+    async def async_create_event(self, **kwargs: Any) -> None:
+        """A new appointment, made in the name of the person the user is.
+
+        On a person's calendar that person takes part; on the group's nobody in particular.
+        """
+        person = self._person()
+        start, end = kwargs["dtstart"], kwargs.get("dtend")
+        all_day = not isinstance(start, datetime)
+        if all_day:
+            first: date = start
+            # Home Assistant's end of a whole day is the next morning; the app names the last day.
+            last = end - timedelta(days=1) if isinstance(end, date) and not isinstance(end, datetime) else first
+            begin, finish = first.isoformat(), max(first, last).isoformat()
+        else:
+            begin = _local(start)
+            finish = _local(end) if isinstance(end, datetime) else None
+        view = self.coordinator.data
+        try:
+            changes = actions.add_event(
+                view,
+                kwargs.get("summary") or "",
+                begin,
+                finish,
+                all_day,
+                person,
+                int(time.time() * 1000),
+                self.coordinator.engine.new_id,
+                assignees=[self.person_id] if self.person_id else None,
+                note=kwargs.get("description"),
+                location=kwargs.get("location"),
+                rrule=kwargs.get("rrule"),
+            )
+        except ActionError as err:
+            raise fail(err.reason) from err
+        await self._write(changes, person)
 
 
 # A timetable's calendar never looks further than this in one go.

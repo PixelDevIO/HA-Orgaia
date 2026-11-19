@@ -5,7 +5,7 @@
  * tick off. The app shows that name with the note "via Home Assistant". After a while without a tap
  * the card forgets who it was, so the next one at the display does not tick off in somebody else's name.
  *
- * One card, several views: all lists, only the shopping, only the tasks, a timetable as a week grid,
+ * One card, several views: all lists, only the shopping, only the tasks, today at a glance, a timetable as a week grid,
  * the rosters side by side, or what is coming up. The editor picks the view and where it reads from.
  *
  * It comes with the Orgaia integration; no build step, no dependencies.
@@ -110,6 +110,32 @@ const TEXT = {
     kindWork: 'Work',
     kindDue: 'Due',
     kindShopping: 'Shopping',
+    viewToday: 'Today',
+    showTomorrow: 'Show tomorrow too',
+    nothingToday: 'Nothing planned.',
+    overdueN: '{n} overdue',
+    school: 'School',
+    test: 'Test: {subject}',
+    pack: 'Pack',
+    onCall: 'On call',
+    waitsShopping: 'waits for somebody to do the shopping',
+    notGot: 'not got',
+    notGotBy: 'not got ({name})',
+    markNotGot: 'Not got',
+    unmarkNotGot: 'Open again',
+    oneMore: 'One more',
+    oneLess: 'One less',
+    fixed: 'Fixed purchases',
+    byAisle: 'Sort the shopping by aisle',
+    there: 'there: {name}',
+    back: 'back: {name}',
+    nobodyYet: 'nobody yet',
+    takeThere: 'I take them there',
+    takeBack: 'I pick them up',
+    dropDrive: 'Not me after all',
+    showDrives: 'Buttons for drives',
+    reload: 'Orgaia was updated. Reload this page to get the new card.',
+    reloadNow: 'Reload',
   },
   de: {
     who: 'Wer bist du?',
@@ -209,8 +235,37 @@ const TEXT = {
     kindWork: 'Arbeit',
     kindDue: 'Fällig',
     kindShopping: 'Einkauf',
+    viewToday: 'Heute',
+    showTomorrow: 'Auch morgen zeigen',
+    nothingToday: 'Nichts geplant.',
+    overdueN: '{n} überfällig',
+    school: 'Schule',
+    test: 'Arbeit: {subject}',
+    pack: 'Einpacken',
+    onCall: 'Bereitschaft',
+    waitsShopping: 'wartet auf jemanden, der einkauft',
+    notGot: 'nicht bekommen',
+    notGotBy: 'nicht bekommen ({name})',
+    markNotGot: 'Nicht bekommen',
+    unmarkNotGot: 'Wieder offen',
+    oneMore: 'Eins mehr',
+    oneLess: 'Eins weniger',
+    fixed: 'Feste Einkäufe',
+    byAisle: 'Einkauf nach Gängen sortieren',
+    there: 'hin: {name}',
+    back: 'zurück: {name}',
+    nobodyYet: 'noch offen',
+    takeThere: 'Ich fahre hin',
+    takeBack: 'Ich hole ab',
+    dropDrive: 'Doch nicht',
+    showDrives: 'Knöpfe für Fahrten',
+    reload: 'Orgaia wurde aktualisiert. Lade die Seite neu, um die neue Karte zu bekommen.',
+    reloadNow: 'Neu laden',
   },
 };
+
+// The integration this card came with. A browser that still has an older card says so.
+const CARD_VERSION = '0.8.0';
 
 // The people's colours of the app. All carry white text.
 const COLORS = ['#2F5FD0', '#B4500B', '#7B3FB5', '#0B6F6A', '#B02C63', '#56681A', '#8A5A00', '#3F4B8C'];
@@ -219,7 +274,7 @@ const colorOf = (i) => COLORS[(((i || 0) % COLORS.length) + COLORS.length) % COL
 const esc = (s) =>
   String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
-const VIEWS = ['lists', 'shopping', 'tasks', 'timetable', 'roster', 'agenda'];
+const VIEWS = ['lists', 'shopping', 'tasks', 'today', 'timetable', 'roster', 'agenda'];
 const viewOf = (config) => (VIEWS.includes(config && config.view) ? config.view : 'lists');
 const textsFor = (hass) => TEXT[((hass && hass.language) || 'en').slice(0, 2)] || TEXT.en;
 /** A choice from the editor: an id or a name, one or several, or a line separated by commas. */
@@ -417,6 +472,17 @@ const STYLE = `
   .ev.bar { border-left: 3px solid var(--c, transparent); padding-left: 8px; margin-bottom: 2px; }
   .ev.school .name, .ev.work .name { color: var(--secondary-text-color); }
   .ev.done .name { text-decoration: line-through; color: var(--secondary-text-color); }
+  .aisle { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--secondary-text-color); margin: 10px 0 0 48px; }
+  .steps { display: flex; align-items: center; gap: 2px; flex: none; }
+  .step { width: 36px; height: 36px; border-radius: 18px; border: 1px solid var(--divider-color); background: none; color: var(--primary-text-color); font: inherit; font-size: 1.1rem; cursor: pointer; }
+  .step[disabled] { opacity: 0.4; cursor: default; }
+  .row .btn.small { align-self: center; flex: none; }
+  .missed .name { color: var(--secondary-text-color); }
+  .sets { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 4px 0; }
+  .drives { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 6px; }
+  .late { color: var(--error-color); }
+  .big h3 { font-size: 1rem; }
+  .big .ev .text { font-size: 1.05rem; }
   @container (max-width: 520px) {
     .tt { gap: 3px; }
     .tt .when { padding: 4px 2px 4px 0; font-size: 0.875rem; }
@@ -524,7 +590,7 @@ class OrgaiaCard extends HTMLElement {
 
   _tick() {
     const view = viewOf(this._config);
-    if (view === 'timetable' || view === 'roster' || view === 'agenda') this._render();
+    if (view === 'today' || view === 'timetable' || view === 'roster' || view === 'agenda') this._render();
   }
 
   _onData(data) {
@@ -613,9 +679,20 @@ class OrgaiaCard extends HTMLElement {
       sub.push((e.assignees || []).map((id) => { const p = this._person(id); return p ? `<span class="dot" style="--c:${colorOf(p.color)}"></span>${esc(p.name)}` : ''; }).filter(Boolean).join(' '));
     }
     if (e.done && e.done_by) sub.push(esc(this._say('doneBy', { name: this._name(e.done_by) })));
-    return `<div class="row${e.done ? ' done' : ''}${this._busy.has(e.uid) ? ' busy' : ''}">
+    if (e.missed) sub.push(`<span class="late">${esc(typeof e.missed === 'string' ? this._say('notGotBy', { name: this._name(e.missed) }) : t.notGot)}</span>`);
+    let extra = '';
+    if (list.type === 'shopping' && can && !e.done) {
+      const going = list.trip && list.trip.state === 'going';
+      // While out shopping: "not got". Otherwise + and − on a quantity that counts.
+      if (going) extra = `<button class="btn small" data-act="missed" data-uid="${esc(e.uid)}" data-list="${esc(list.id)}" data-missed="${e.missed ? '0' : '1'}">${esc(e.missed ? t.unmarkNotGot : t.markNotGot)}</button>`;
+      else if (e.step) {
+        const one = !e.qty || /^1(\s|$)/.test(e.qty);
+        extra = `<span class="steps"><button class="step" data-act="step" data-step="-1" data-uid="${esc(e.uid)}" data-list="${esc(list.id)}" aria-label="${esc(t.oneLess)}: ${esc(e.title)}"${one ? ' disabled' : ''}>−</button><button class="step" data-act="step" data-step="1" data-uid="${esc(e.uid)}" data-list="${esc(list.id)}" aria-label="${esc(t.oneMore)}: ${esc(e.title)}">+</button></span>`;
+      }
+    }
+    return `<div class="row${e.done ? ' done' : ''}${e.missed ? ' missed' : ''}${this._busy.has(e.uid) ? ' busy' : ''}">
       <button class="tick" role="checkbox" aria-checked="${checked}" aria-label="${esc(e.title)}" data-act="tick" data-uid="${esc(e.uid)}" data-done="${checked ? '0' : '1'}"${can && mine ? '' : ' disabled'}>${CHECK}</button>
-      <div class="text"><span class="name">${esc(e.title)}</span>${e.late ? `<span class="tag">${esc(t.isNew)}</span>` : ''}${sub.length ? `<div class="sub">${sub.join(' · ')}</div>` : ''}</div>
+      <div class="text"><span class="name">${esc(e.title)}</span>${e.late ? `<span class="tag">${esc(t.isNew)}</span>` : ''}${sub.length ? `<div class="sub">${sub.join(' · ')}</div>` : ''}</div>${extra}
     </div>`;
   }
 
@@ -655,6 +732,19 @@ class OrgaiaCard extends HTMLElement {
     const done = entries.filter((e) => e.done);
     const trip = this._trip(list) || { state: '', buttons: '' };
     let body = open.map((e) => this._row(list, e)).join('');
+    if (shop && open.length && this._config.by_aisle !== false) {
+      // In the order one walks through the shop, as the app sorts it.
+      const order = (this._data.aisles || []).map(([key]) => key);
+      const names = Object.fromEntries(this._data.aisles || []);
+      const groups = new Map();
+      for (const e of open) {
+        const key = order.includes(e.aisle) ? e.aisle : 'other';
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(e);
+      }
+      const keys = [...groups.keys()].sort((a, b) => order.indexOf(a) - order.indexOf(b));
+      body = keys.length > 1 ? keys.map((k) => `<p class="aisle">${esc(names[k] || k)}</p>${groups.get(k).map((e) => this._row(list, e)).join('')}`).join('') : body;
+    }
     if (!open.length) body = `<p class="hint">${esc(shop ? (done.length ? '' : t.emptyShop) : t.empty)}</p>`;
     let rest = '';
     if (done.length && (shop || this._config.show_done)) {
@@ -669,7 +759,11 @@ class OrgaiaCard extends HTMLElement {
         <button class="btn" type="submit">${esc(t.add)}</button>
       </form>`;
     }
-    return `<section class="list"><div class="head"><h2>${esc(list.name)}</h2>${trip.buttons}</div>${trip.state}${body}${rest}${form}</section>`;
+    let sets = '';
+    if (shop && this._data.can_write && (list.sets || []).length && !(list.trip && list.trip.state === 'going')) {
+      sets = `<div class="sets"><span class="sub">${esc(t.fixed)}:</span>${list.sets.map((x) => `<button class="btn small" data-act="set" data-list="${esc(list.id)}" data-set="${esc(x.id)}">+ ${esc(x.name)} (${x.count})</button>`).join('')}</div>`;
+    }
+    return `<section class="list"><div class="head"><h2>${esc(list.name)}</h2>${trip.buttons}</div>${trip.state}${body}${rest}${form}${sets}</section>`;
   }
 
   _day(ymd, long) {
@@ -842,6 +936,16 @@ class OrgaiaCard extends HTMLElement {
       if (r.kind === 'shopping') sub.push(esc(t.shopping));
       if (r.location) sub.push(esc(r.location));
       if (this._config.show_persons !== false && (r.persons || []).length) sub.push(r.persons.map((id) => this._badge(id)).filter(Boolean).join(' '));
+      let drive = '';
+      if (r.drive) {
+        const sides = [['to', 'there', 'takeThere'], ['from', 'back', 'takeBack']].filter(([k]) => k in r.drive);
+        sub.push('🚗 ' + sides.map(([k, label]) => `<span class="${r.drive[k] ? '' : 'late'}">${esc(this._say(label, { name: r.drive[k] ? this._name(r.drive[k]) : t.nobodyYet }))}</span>`).join(', '));
+        if (data.can_write && this._config.show_drives !== false) {
+          const btn = (which, label) => `<button class="btn small" data-act="drive" data-item="${esc(r.drive.item)}" data-date="${esc(r.drive.date)}" data-which="${which}" data-take="${label === 'dropDrive' ? '0' : '1'}">${esc(t[label])}</button>`;
+          const buttons = sides.map(([k, , label]) => (!r.drive[k] ? btn(k, label) : this._who && r.drive[k] === this._who ? btn(k, 'dropDrive') : '')).filter(Boolean);
+          if (buttons.length) drive = `<div class="drives">${buttons.join('')}</div>`;
+        }
+      }
       let bar = '';
       if (this._config.color_by === 'person') {
         const first = this._person((r.persons || [])[0]);
@@ -849,10 +953,74 @@ class OrgaiaCard extends HTMLElement {
       } else if (this._config.color_by === 'kind') {
         bar = chosenColor(this._config.kind_colors, r.kind) || cssColor(KINDS[r.kind]);
       }
-      html += `<div class="ev ${esc(r.kind)}${live ? ' live' : ''}${r.done ? ' done' : ''}${bar ? ' bar' : ''}"${bar ? ` style="--c:${bar}"` : ''}><span class="when">${esc(when)}</span><div class="text"><span class="name">${esc(r.title)}</span>${sub.length ? `<div class="sub">${sub.join(' · ')}</div>` : ''}</div></div>`;
+      html += `<div class="ev ${esc(r.kind)}${live ? ' live' : ''}${r.done ? ' done' : ''}${bar ? ' bar' : ''}"${bar ? ` style="--c:${bar}"` : ''}><span class="when">${esc(when)}</span><div class="text"><span class="name">${esc(r.title)}</span>${sub.length ? `<div class="sub">${sub.join(' · ')}</div>` : ''}${drive}</div></div>`;
     }
+    // Taking a drive is done in somebody's name, as ticking off is.
+    if (data.can_write && this._config.show_drives !== false && rows.some((r) => r.drive)) html = this._chips() + html;
     if (hidden) html += `<p class="hint">${esc(this._say('more', { n: hidden }))}</p>`;
     return html;
+  }
+
+  /** Today (and tomorrow) at a glance, for a display on the wall: appointments, school, work, what is due, the shopping. */
+  _today() {
+    const t = this._t;
+    const data = this._data;
+    const all = data.days || [];
+    const shown = this._config.show_tomorrow ? all.slice(0, 2) : all.slice(0, 1);
+    const only = wanted(this._config.person)[0];
+    const person = only ? data.persons.find((p) => p.id.toLowerCase() === only || p.name.trim().toLowerCase() === only) : null;
+    const name = person ? person.name : null;
+    const forMe = (names) => !name || (names || []).includes(name);
+    const row = (when, title, sub, cls) =>
+      `<div class="ev${cls ? ' ' + cls : ''}"><span class="when">${esc(when)}</span><div class="text"><span class="name">${title}</span>${sub.length ? `<div class="sub">${sub.join(' · ')}</div>` : ''}</div></div>`;
+    let html = '';
+    shown.forEach((d, i) => {
+      const rows = [];
+      for (const a of d.appointments.filter((x) => forMe(x.persons))) {
+        const sub = [];
+        if (a.location) sub.push(esc(a.location));
+        if (!name && a.persons.length) sub.push(esc(a.persons.join(', ')));
+        if ((a.drive_missing || []).length) sub.push(`<span class="late">🚗 ${esc(t.nobodyYet)}</span>`);
+        rows.push([a.all_day ? '' : a.start, row(a.all_day ? t.allDay : a.start + (a.end ? '–' + a.end : ''), esc(a.title), sub, 'event')]);
+      }
+      for (const s of d.school.filter((x) => !name || x.person === name)) {
+        const sub = [];
+        if (s.note) sub.push(esc(s.note));
+        s.exams.forEach((x) => sub.push(`<b>${esc(this._say('test', { subject: x }))}</b>`));
+        if (s.pack.length) sub.push(`${esc(t.pack)}: ${esc(s.pack.join(', '))}`);
+        const who = name ? t.school : `${s.person} · ${t.school}`;
+        if (s.status === 'school') rows.push([s.start, row(`${s.start}–${s.end}`, esc(who), sub, 'school')]);
+        else if (s.status === 'holiday') rows.push(['', row(t.allDay, esc(name ? t.holidays : `${s.person} · ${t.holidays}`), sub, 'school')]);
+        else if (sub.length) rows.push(['', row('', esc(s.person), sub, 'school')]);
+      }
+      for (const w of d.work.filter((x) => !name || x.person === name)) {
+        const label = [name ? '' : w.person, w.shift || '', w.standby ? t.onCall : ''].filter(Boolean).join(' · ');
+        rows.push([w.spans[0].slice(0, 5), row(w.spans.join(', '), esc(label || t.kindWork), [], 'work')]);
+      }
+      rows.sort((a, b) => a[0].localeCompare(b[0]));
+      const due = d.due.filter((x) => !x.done && forMe(x.persons));
+      if (due.length) rows.push(['', row(t.due, esc(due.map((x) => x.title).join(', ')), [], 'due')]);
+      if (!name && d.overdue.length) rows.push(['', row(this._say('overdueN', { n: d.overdue.length }), esc(d.overdue.join(', ')), [], 'due')]);
+      if (i === 0) {
+        for (const sh of d.shopping) {
+          const text = sh.state === 'going' && sh.shopper ? this._say('going', { name: sh.shopper }) : t.waitsShopping;
+          rows.push(['', row(t.shopping, `${esc(sh.list)}`, [esc(text)], 'shopping')]);
+        }
+      }
+      const word = i === 0 ? t.today : t.tomorrow;
+      const near = word.charAt(0).toUpperCase() + word.slice(1);
+      html += `<h3${i === 0 ? ' class="today"' : ''}>${esc(near)} · ${esc(this._day(d.date, true))}</h3>`;
+      html += rows.length ? rows.map((r) => r[1]).join('') : `<p class="hint">${esc(t.nothingToday)}</p>`;
+    });
+    return `<div class="big">${html}</div>`;
+  }
+
+  /** The names to tap before doing something in somebody's name. */
+  _chips() {
+    const t = this._t;
+    const chips = this._data.persons.map((p) => `<button class="chip" style="--c:${colorOf(p.color)}" aria-pressed="${p.id === this._who}" data-act="who" data-person="${esc(p.id)}">${esc(p.name)}</button>`).join('');
+    const error = this._error ? `<p class="error" role="alert">${esc(this._error)}</p>` : '';
+    return `<p class="hint" id="ask">${esc(this._who ? t.notYou : t.who)}</p><div class="who" role="group" aria-labelledby="ask">${chips}</div>${error}`;
   }
 
   /** What the editor's "Appearance" says, as styles of the card itself. */
@@ -887,9 +1055,12 @@ class OrgaiaCard extends HTMLElement {
     const title = this._config.title != null ? this._config.title : data && data.title;
     const look = this._look();
     let html = `<style>${STYLE}</style><ha-card${look ? ` style="${esc(look)}"` : ''}>${title ? `<h1>${esc(title)}</h1>` : ''}`;
+    if (data && data.version && data.version !== CARD_VERSION) {
+      html += `<p class="hint warn">${esc(t.reload)} <button class="btn small" data-act="reload">${esc(t.reloadNow)}</button></p>`;
+    }
     if (!data || !data.lists) {
       html += `<p class="hint">${esc(data ? t.notLoaded : '…')}</p>`;
-    } else if (['timetable', 'roster', 'agenda'].includes(viewOf(this._config))) {
+    } else if (['today', 'timetable', 'roster', 'agenda'].includes(viewOf(this._config))) {
       if (data.status === 'offline') html += `<p class="hint warn">${esc(t.offline)}</p>`;
       html += this[`_${viewOf(this._config)}`]();
     } else {
@@ -897,11 +1068,9 @@ class OrgaiaCard extends HTMLElement {
       if (!data.can_write) {
         html += `<p class="hint">${esc(t.readOnly)}</p>`;
       } else {
-        const chips = data.persons.map((p) => `<button class="chip" style="--c:${colorOf(p.color)}" aria-pressed="${p.id === this._who}" data-act="who" data-person="${esc(p.id)}">${esc(p.name)}</button>`).join('');
-        html += `<p class="hint" id="ask">${esc(this._who ? t.notYou : t.who)}</p><div class="who" role="group" aria-labelledby="ask">${chips}</div>`;
+        // Right under the names: that is where the eye is after a tap that did not work.
+        html += this._chips();
       }
-      // Right under the names: that is where the eye is after a tap that did not work.
-      if (this._error) html += `<p class="error" role="alert">${esc(this._error)}</p>`;
       html += this._lists().map((l) => this._list(l)).join('');
     }
     html += '</ha-card>';
@@ -965,6 +1134,18 @@ class OrgaiaCard extends HTMLElement {
     } else if (act === 'tick') {
       if (this._busy.has(el.dataset.uid)) return;
       this._call('set_done', { item: el.dataset.uid, done: el.dataset.done === '1' }, el.dataset.uid);
+    } else if (act === 'reload') {
+      location.reload();
+    } else if (act === 'missed') {
+      if (this._busy.has(el.dataset.uid)) return;
+      this._call('set_not_got', { item: el.dataset.uid, list: el.dataset.list, missed: el.dataset.missed === '1' }, el.dataset.uid);
+    } else if (act === 'step') {
+      if (this._busy.has(el.dataset.uid)) return;
+      this._call('set_quantity', { item: el.dataset.uid, list: el.dataset.list, step: Number(el.dataset.step) }, el.dataset.uid);
+    } else if (act === 'set') {
+      this._call('add_fixed_purchase', { list: el.dataset.list, set: el.dataset.set });
+    } else if (act === 'drive') {
+      this._call(el.dataset.take === '1' ? 'take_drive' : 'drop_drive', { item: el.dataset.item, date: el.dataset.date, which: el.dataset.which });
     } else {
       this._call(act, { list: el.dataset.list });
     }
@@ -1069,13 +1250,17 @@ class OrgaiaCardEditor extends HTMLElement {
       schema.push(pick('lists', fit, true));
       if (view === 'tasks') schema.push(pick('person', data.persons, false));
       if (view !== 'shopping') schema.push(flag('show_done'), flag('add_tasks'));
+      if (view !== 'tasks') schema.push(flag('by_aisle'));
       schema.push(choice('ask', [['auto', t.askAuto], ['always', t.askAlways]]), number('forget_after', 0, 3600));
     } else if (view === 'timetable') {
       schema.push(pick('plan', named(data.timetables), false), choice('layout', [['week', t.layoutWeek], ['day', t.layoutDay]]), flag('show_rooms'), flag('show_pack'));
     } else if (view === 'roster') {
       schema.push(pick('plans', named(data.rosters), true), number('days', 1, 14), choice('start', [['today', t.startToday], ['week', t.startWeek]]));
+    } else if (view === 'today') {
+      schema.push(pick('person', data.persons, false), flag('show_tomorrow'));
     } else {
-      schema.push(number('days', 1, 31), pick('person', data.persons, false), flag('show_plans'), flag('show_deadlines'), flag('show_persons'), number('max', 0, 100));
+      schema.push(number('days', 1, 31), pick('person', data.persons, false), flag('show_plans'), flag('show_deadlines'), flag('show_persons'), flag('show_drives'), number('max', 0, 100));
+      schema.push(choice('ask', [['auto', t.askAuto], ['always', t.askAlways]]), number('forget_after', 0, 3600));
     }
     const color = (name) => ({ name, selector: { ui_color: {} } });
     const section = (name, title, fields) => ({ type: 'expandable', name, title, flatten: true, schema: fields });
@@ -1127,7 +1312,13 @@ class OrgaiaCardEditor extends HTMLElement {
       fill('show_plans', true);
       fill('show_deadlines', true);
       fill('show_persons', true);
+      fill('show_drives', true);
+      fill('ask', 'auto');
+      fill('forget_after', 60);
+    } else if (view === 'today') {
+      fill('show_tomorrow', false);
     } else {
+      if (view !== 'tasks') fill('by_aisle', true);
       fill('ask', 'auto');
       fill('forget_after', 60);
     }
@@ -1153,6 +1344,7 @@ class OrgaiaCardEditor extends HTMLElement {
       ask: 'ask', forget_after: 'forget', plan: 'plan', layout: 'layout', show_rooms: 'showRooms', show_pack: 'showPack', plans: 'plans',
       accent_color: 'accent', background_color: 'background', background_opacity: 'opacity', text_color: 'textColor', fill: 'fill', color_by: 'colorBy',
       days: 'days', start: 'startAt', show_plans: 'showPlans', show_deadlines: 'showDeadlines', show_persons: 'showPersons', max: 'max',
+      by_aisle: 'byAisle', show_drives: 'showDrives', show_tomorrow: 'showTomorrow',
     }[field.name];
     return t[key] || field.name;
   }
@@ -1177,6 +1369,9 @@ class OrgaiaCardEditor extends HTMLElement {
       if (v == null || v === '' || (Array.isArray(v) && !v.length)) delete value[key];
     }
     if (value.ask === 'auto') delete value.ask;
+    if (value.by_aisle === true) delete value.by_aisle;
+    if (value.show_drives === true) delete value.show_drives;
+    if (value.show_tomorrow === false) delete value.show_tomorrow;
     const config = { type: this._config.type || 'custom:orgaia-card', ...value };
     this._config = config;
     this.dispatchEvent(new CustomEvent('config-changed', { detail: { config }, bubbles: true, composed: true }));
@@ -1206,7 +1401,7 @@ if (!customElements.get('orgaia-card')) {
   window.customCards.push({
     type: 'orgaia-card',
     name: 'Orgaia',
-    description: 'An Orgaia group: lists to tick off, the shopping, tasks, a timetable, rosters or what is coming up. The view is chosen in the editor.',
+    description: 'An Orgaia group: lists to tick off, the shopping, tasks, today at a glance, a timetable, rosters or what is coming up. The view is chosen in the editor.',
     preview: true,
     documentationURL: 'https://github.com/PixelDevIO/HA-Orgaia#orgaia-card',
   });

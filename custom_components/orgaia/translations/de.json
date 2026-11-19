@@ -27,6 +27,14 @@
       },
       "wait": {
         "title": "Warte auf Bestätigung"
+      },
+      "reconfigure": {
+        "title": "{group} neu verbinden",
+        "description": "Tritt {group} mit neuem Link und neuem Schlüssel wieder bei. Entitäten und Automationen bleiben; der alte Schlüssel verlässt die Gruppe. Erstelle in der App einen neuen Link für Home Assistant und füge ihn hier ein.",
+        "data": {
+          "link": "Einladungslink",
+          "name": "Name in der Gruppe"
+        }
       }
     },
     "progress": {
@@ -47,7 +55,8 @@
       "rejected": "Der Admin hat die Anfrage abgelehnt.",
       "timeout": "Niemand hat die Anfrage rechtzeitig bestätigt. Erstelle einen neuen Link und versuche es noch einmal.",
       "wrong_group": "Der Link gehört zu einer anderen Gruppe.",
-      "reauth_successful": "Die Gruppe ist wieder verbunden."
+      "reauth_successful": "Die Gruppe ist wieder verbunden.",
+      "reconfigure_successful": "Wieder verbunden."
     }
   },
   "entity": {
@@ -160,6 +169,12 @@
       },
       "work_today": {
         "name": "Arbeit heute"
+      },
+      "today": {
+        "name": "Heute"
+      },
+      "open_drives": {
+        "name": "Offene Fahrten"
       }
     },
     "binary_sensor": {
@@ -171,6 +186,18 @@
       },
       "school_holidays": {
         "name": "Schulferien"
+      },
+      "on_call": {
+        "name": "Bereitschaft"
+      },
+      "busy": {
+        "name": "Termin läuft"
+      },
+      "out_shopping": {
+        "name": "Kauft ein"
+      },
+      "can_write": {
+        "name": "Darf abhaken und eintragen"
       }
     }
   },
@@ -182,13 +209,39 @@
     "update_required": {
       "title": "Orgaia-Integration aktualisieren",
       "description": "Der Orgaia-Dienst nimmt diese Version der Integration nicht mehr an, deshalb wird **{group}** nicht aktualisiert. Installiere in HACS die neueste Version und starte Home Assistant neu."
+    },
+    "write_not_allowed": {
+      "title": "{group}: Home Assistant darf noch nicht abhaken",
+      "description": "Aus Home Assistant sollte etwas abgehakt oder eingetragen werden, aber kein Admin von {group} hat das bisher erlaubt. Öffne in der Orgaia-App die Gruppe, dann Verwalten › Home Assistant, und schalte „Darf abhaken und eintragen“ ein. Dieser Hinweis verschwindet von selbst, sobald es erlaubt ist."
     }
   },
   "options": {
     "step": {
       "init": {
+        "title": "Orgaia",
+        "menu_options": {
+          "persons": "Personen",
+          "settings": "Einstellungen"
+        }
+      },
+      "persons": {
         "title": "Personen der Gruppe",
-        "description": "Wähle, welche Person in Home Assistant jede Person der Gruppe ist. Ereignisse und Personen-Sensoren nennen dann auch die Personen-Entität, zum Beispiel für Benachrichtigungen. Personen mit gleichem Namen werden vorgeschlagen."
+        "description": "Wähle, welche Home-Assistant-Person jede Person der Gruppe ist. Ereignisse und Personen-Sensoren nennen dann auch die Person, etwa für Mitteilungen, und dieser Benutzer darf in den normalen To-do-Karten abhaken und eintragen. Personen mit gleichem Namen werden vorgeschlagen."
+      },
+      "settings": {
+        "title": "Einstellungen",
+        "data": {
+          "voice_person": "Artikel per Sprache im Namen von",
+          "lists": "Listen als To-do-Listen",
+          "person_devices": "Ein Gerät je Person",
+          "completed_days": "Tage, die Erledigtes sichtbar bleibt"
+        },
+        "data_description": {
+          "voice_person": "Ein Sprachassistent weiß nicht, wer spricht. Artikel, die er auf eine Einkaufsliste setzt, kommen im Namen dieser Person dazu („—“: gar nicht). Abhaken kann er nie.",
+          "lists": "Keine gewählt: alle Aufgaben- und Einkaufslisten und Stundenpläne.",
+          "person_devices": "Aus: keine To-do-Liste, kein Kalender und keine Sensoren je Person, nur für die Gruppe. Für große Gruppen.",
+          "completed_days": "0 bis 60, normal 14."
+        }
       }
     },
     "abort": {
@@ -208,7 +261,11 @@
       "event_starting": "Ein Termin beginnt",
       "shopping_released": "Eine Einkaufsliste wurde freigegeben",
       "shopping_taken": "Jemand hat den Einkauf übernommen",
-      "shopping_done": "Der Einkauf ist erledigt"
+      "shopping_done": "Der Einkauf ist erledigt",
+      "drive_needed": "Eine Fahrt braucht jemanden",
+      "drive_taken": "Jemand hat eine Fahrt übernommen",
+      "rsvp_changed": "Jemand hat auf einen Termin geantwortet",
+      "poll_decided": "Ein abgestimmter Termin steht fest"
     }
   },
   "services": {
@@ -395,6 +452,184 @@
           "description": "Die Liste: ihre To-do-Entität oder ihr Name."
         }
       }
+    },
+    "set_not_got": {
+      "name": "Als nicht bekommen markieren",
+      "description": "Wer einkauft, hat einen Artikel nicht bekommen. Er bleibt für das nächste Mal auf der Liste.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Gruppe",
+          "description": "Die Orgaia-Gruppe. Nur nötig, wenn mehr als eine Gruppe verbunden ist."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Wer es macht: eine Person der Gruppe mit Namen, oder die Home-Assistant-Person, die ihr in den Optionen zugeordnet ist. Dieser Name steht dann in der App."
+        },
+        "item": {
+          "name": "Artikel",
+          "description": "Der Artikel: sein Titel, oder seine Kennung, wie die To-do-Liste sie nennt."
+        },
+        "list": {
+          "name": "Liste",
+          "description": "Die Liste: ihre To-do-Entität oder ihr Name."
+        },
+        "missed": {
+          "name": "Nicht bekommen",
+          "description": "Aus, um die Markierung zurückzunehmen."
+        }
+      }
+    },
+    "set_quantity": {
+      "name": "Menge ändern",
+      "description": "Eine neue Menge für einen Artikel, oder eins mehr oder weniger.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Gruppe",
+          "description": "Die Orgaia-Gruppe. Nur nötig, wenn mehr als eine Gruppe verbunden ist."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Wer es macht: eine Person der Gruppe mit Namen, oder die Home-Assistant-Person, die ihr in den Optionen zugeordnet ist. Dieser Name steht dann in der App."
+        },
+        "item": {
+          "name": "Artikel",
+          "description": "Der Artikel: sein Titel, oder seine Kennung, wie die To-do-Liste sie nennt."
+        },
+        "list": {
+          "name": "Liste",
+          "description": "Die Liste: ihre To-do-Entität oder ihr Name."
+        },
+        "quantity": {
+          "name": "Menge",
+          "description": "Etwa „2“ oder „500 g“; leer für keine."
+        },
+        "step": {
+          "name": "Schritt",
+          "description": "1 für eins mehr, -1 für eins weniger. Nur für Stückzahlen wie „2“ oder „3 Pck“."
+        }
+      }
+    },
+    "set_aisle": {
+      "name": "In Abteilung einsortieren",
+      "description": "Sortiert einen Artikel in eine Abteilung. Die Gruppe merkt es sich für das nächste Mal.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Gruppe",
+          "description": "Die Orgaia-Gruppe. Nur nötig, wenn mehr als eine Gruppe verbunden ist."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Wer es macht: eine Person der Gruppe mit Namen, oder die Home-Assistant-Person, die ihr in den Optionen zugeordnet ist. Dieser Name steht dann in der App."
+        },
+        "item": {
+          "name": "Artikel",
+          "description": "Der Artikel: sein Titel, oder seine Kennung, wie die To-do-Liste sie nennt."
+        },
+        "list": {
+          "name": "Liste",
+          "description": "Die Liste: ihre To-do-Entität oder ihr Name."
+        },
+        "aisle": {
+          "name": "Abteilung",
+          "description": "Leer, damit Orgaia wieder selbst einsortiert."
+        }
+      }
+    },
+    "add_fixed_purchase": {
+      "name": "Feste Einkäufe hinzufügen",
+      "description": "Setzt feste Einkäufe der Liste (etwa „Wocheneinkauf“) auf die Liste. Was schon offen ist, bleibt, wie es ist.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Gruppe",
+          "description": "Die Orgaia-Gruppe. Nur nötig, wenn mehr als eine Gruppe verbunden ist."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Wer es macht: eine Person der Gruppe mit Namen, oder die Home-Assistant-Person, die ihr in den Optionen zugeordnet ist. Dieser Name steht dann in der App."
+        },
+        "list": {
+          "name": "Liste",
+          "description": "Die Liste: ihre To-do-Entität oder ihr Name."
+        },
+        "set": {
+          "name": "Feste Einkäufe",
+          "description": "Ihr Name, wie in der App."
+        }
+      }
+    },
+    "take_drive": {
+      "name": "Fahrt übernehmen",
+      "description": "Die Person bringt hin, holt ab, oder beides.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Gruppe",
+          "description": "Die Orgaia-Gruppe. Nur nötig, wenn mehr als eine Gruppe verbunden ist."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Wer es macht: eine Person der Gruppe mit Namen, oder die Home-Assistant-Person, die ihr in den Optionen zugeordnet ist. Dieser Name steht dann in der App."
+        },
+        "item": {
+          "name": "Termin",
+          "description": "Der Termin: sein Titel oder seine Kennung. Ohne Datum das nächste Mal in den kommenden 30 Tagen."
+        },
+        "date": {
+          "name": "Datum",
+          "description": "Der Tag des Termins, bei einer Serie."
+        },
+        "which": {
+          "name": "Welche Fahrt",
+          "description": "„to“: hinbringen, „from“: abholen, „both“: beides."
+        }
+      }
+    },
+    "drop_drive": {
+      "name": "Fahrt abgeben",
+      "description": "Die Person fährt doch nicht; die Fahrt ist wieder offen. Nur die eigenen Fahrten ändern sich.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Gruppe",
+          "description": "Die Orgaia-Gruppe. Nur nötig, wenn mehr als eine Gruppe verbunden ist."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Wer es macht: eine Person der Gruppe mit Namen, oder die Home-Assistant-Person, die ihr in den Optionen zugeordnet ist. Dieser Name steht dann in der App."
+        },
+        "item": {
+          "name": "Termin",
+          "description": "Der Termin: sein Titel oder seine Kennung. Ohne Datum das nächste Mal in den kommenden 30 Tagen."
+        },
+        "date": {
+          "name": "Datum",
+          "description": "Der Tag des Termins, bei einer Serie."
+        },
+        "which": {
+          "name": "Welche Fahrt",
+          "description": "„to“: hinbringen, „from“: abholen, „both“: beides."
+        }
+      }
+    },
+    "get_agenda": {
+      "name": "Tagesüberblick abrufen",
+      "description": "Was an einem Tag ansteht: Termine, Fälliges, Schule, Arbeit, Einpacken, Einkauf und Fahrten. Gibt die Daten und einen Text zum Vorlesen („speech“) zurück. Liest nur und braucht deshalb keine Person.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Gruppe",
+          "description": "Nur diese Gruppe; ohne sie alle verbundenen Gruppen."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Nur, was diese Person betrifft: ein Name oder eine zugeordnete Person."
+        },
+        "date": {
+          "name": "Datum",
+          "description": "Der erste Tag; ohne Angabe heute."
+        },
+        "days": {
+          "name": "Tage",
+          "description": "Wie viele Tage ab dann, 1 bis 14."
+        }
+      }
     }
   },
   "exceptions": {
@@ -460,6 +695,60 @@
     },
     "write_unknown": {
       "message": "Orgaia hat die Änderung nicht angenommen."
+    },
+    "no_aisle": {
+      "message": "Diese Abteilung gibt es nicht."
+    },
+    "no_set": {
+      "message": "Die Liste hat keine solchen festen Einkäufe."
+    },
+    "no_drive": {
+      "message": "Dieser Termin braucht diese Fahrt nicht."
+    },
+    "no_drive_found": {
+      "message": "Es gibt keinen Termin {item}, der eine Fahrt braucht."
+    },
+    "not_an_event": {
+      "message": "Das ist kein Termin."
+    },
+    "who_are_you": {
+      "message": "Dein Home-Assistant-Benutzer ist keiner Person der Gruppe zugeordnet. Ordne ihn unter Orgaia › Konfigurieren › Personen zu, oder nutze die Orgaia-Karte, die fragt, wer du bist."
+    },
+    "no_user": {
+      "message": "Wer ist es? Ein Sprachassistent darf nur Artikel auf eine Einkaufsliste setzen, und das erst, wenn unter Orgaia › Konfigurieren › Einstellungen eine Person dafür gewählt ist."
+    },
+    "change_in_app": {
+      "message": "Hier geht nur Abhaken; den Titel änderst du in der App."
+    },
+    "repeat_unknown": {
+      "message": "So kann Orgaia einen Termin nicht wiederholen. Es gehen tägliche, wöchentliche, monatliche oder jährliche Wiederholungen, mit Enddatum und Wochentagen."
+    },
+    "no_list_for_events": {
+      "message": "Die Gruppe hat noch keine Aufgabenliste, in die neue Termine kommen könnten. Lege zuerst in der App eine an."
+    }
+  },
+  "selector": {
+    "aisle": {
+      "options": {
+        "produce": "Obst & Gemüse",
+        "bakery": "Brot & Backwaren",
+        "dairy": "Milch, Käse & Eier",
+        "meat": "Fleisch, Wurst & Fisch",
+        "frozen": "Tiefkühl",
+        "pantry": "Vorrat",
+        "drinks": "Getränke",
+        "sweets": "Süßes & Knabbern",
+        "drugstore": "Drogerie",
+        "household": "Haushalt",
+        "other": "Sonstiges"
+      }
+    },
+    "which": {
+      "options": {
+        "to": "Hinbringen",
+        "from": "Abholen",
+        "both": "Beides"
+      }
     }
   }
 }

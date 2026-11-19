@@ -30,9 +30,9 @@ from .entity import person_entity, space_key
 from .protocol.feeds import is_feed_item
 from .protocol.plans import is_plan_item
 from .protocol.recur import add_days
-from .protocol.shopping import Trip
+from .protocol.shopping import Trip, trip_of
 from .protocol.view import SpaceView
-from .summary import TodoEntry, calendar_occurrences, overdue_entries, shopping_trips, todo_entries
+from .summary import TodoEntry, calendar_occurrences, drives_between, overdue_entries, shopping_trips, todo_entries
 from .util import local_now, minute_of_day, to_datetime
 
 _LOGGER = logging.getLogger(__name__)
@@ -48,6 +48,10 @@ EVENT_STARTING = "event_starting"
 SHOPPING_RELEASED = "shopping_released"
 SHOPPING_TAKEN = "shopping_taken"
 SHOPPING_DONE = "shopping_done"
+DRIVE_NEEDED = "drive_needed"
+DRIVE_TAKEN = "drive_taken"
+RSVP_CHANGED = "rsvp_changed"
+POLL_DECIDED = "poll_decided"
 
 EVENT_TYPES = [
     TASK_CREATED,
@@ -61,7 +65,14 @@ EVENT_TYPES = [
     SHOPPING_RELEASED,
     SHOPPING_TAKEN,
     SHOPPING_DONE,
+    DRIVE_NEEDED,
+    DRIVE_TAKEN,
+    RSVP_CHANGED,
+    POLL_DECIDED,
 ]
+
+# How far ahead drives are watched for "nobody drives yet".
+DRIVE_DAYS = 14
 
 TICK = timedelta(minutes=1)
 LATE_START = timedelta(minutes=5)
@@ -119,6 +130,12 @@ class EventTracker:
         self._persons: set[str] = set()
         # Per shopping list: when it was released, who shops, when the last trip ended.
         self._trips: dict[str, tuple[Any, Any, Any]] = {}
+        # Per appointment, day and way (there, back): who drives.
+        self._drives: dict[tuple[str, str, str], str | None] = {}
+        # Per appointment, day (or "" for the series) and person: their answer.
+        self._rsvps: dict[tuple[str, str, str], str] = {}
+        # Per appointment with a vote: the option that was fixed.
+        self._polls: dict[str, Any] = {}
         self._day = ""
         self._last_tick = local_now()
 
@@ -165,6 +182,29 @@ class EventTracker:
         self._appointments = {i["id"]: _appointment(i) for i in view.items if i["kind"] == "event"}
         self._persons = {p["id"] for p in view.active_persons()}
         self._trips = {lst["id"]: _trip_mark(lst, trip) for lst, trip in shopping_trips(view)}
+        self._drives = {}
+        for d in drives_between(view, today, add_days(today, DRIVE_DAYS - 1)):
+            day = d.occ.start[:10]
+            if d.need_to:
+                self._drives[(d.occ.item["id"], day, "to")] = d.driver_to
+            if d.need_from:
+                self._drives[(d.occ.item["id"], day, "from")] = d.driver_from
+        self._rsvps = {}
+        for i in view.items:
+            if i["kind"] != "event":
+                continue
+            for pid, r in (i.get("rsvps") or {}).items():
+                if isinstance(r, dict) and isinstance(r.get("a"), str):
+                    self._rsvps[(i["id"], "", pid)] = r["a"]
+        for o in view.occs.values():
+            for pid, r in (o.get("rsvps") or {}).items():
+                if isinstance(r, dict) and isinstance(r.get("a"), str):
+                    self._rsvps[(o["itemId"], o["date"], pid)] = r["a"]
+        self._polls = {
+            i["id"]: i["poll"].get("chosen")
+            for i in view.items
+            if isinstance(i.get("poll"), dict) and i["kind"] == "event"
+        }
 
     def _overdue_now(self, view: SpaceView) -> set[str]:
         now = local_now()
@@ -194,8 +234,12 @@ class EventTracker:
             self._rounds,
             self._trips,
         )
+        old_drives, old_rsvps, old_polls = self._drives, self._rsvps, self._polls
         self._remember(view)
         self._check_trips(view, old_trips)
+        self._check_drives(view, old_drives, old_items)
+        self._check_rsvps(view, old_rsvps, old_persons)
+        self._check_polls(view, old_polls)
         self._check_rounds(view, old_rounds, old_entries)
         for uid, task in self._tasks.items():
             entry = self._entries[uid]
@@ -242,6 +286,82 @@ class EventTracker:
                 self._fire_trip(view, SHOPPING_RELEASED, lst, trip)
             if shopper and (shopper != before[1] or released != before[0]):
                 self._fire_trip(view, SHOPPING_TAKEN, lst, trip)
+
+    def _check_drives(self, view: SpaceView, old: dict[tuple[str, str, str], str | None], old_items: set[str]) -> None:
+        """Somebody took over a drive, or a drive now needs somebody (new, or the driver stepped back)."""
+        for key, driver in self._drives.items():
+            item_id, day, way = key
+            if item_id not in old_items:
+                # A new appointment that needs a drive nobody does yet.
+                if driver is None:
+                    self._fire_drive(view, DRIVE_NEEDED, item_id, day, way, None)
+                continue
+            if key not in old:
+                # The day moved into the watched days, or the appointment now needs a drive.
+                if driver is None and day != add_days(local_now().date().isoformat(), DRIVE_DAYS - 1):
+                    self._fire_drive(view, DRIVE_NEEDED, item_id, day, way, None)
+                continue
+            before = old[key]
+            if driver == before:
+                continue
+            if driver is None:
+                self._fire_drive(view, DRIVE_NEEDED, item_id, day, way, before)
+            else:
+                self._fire_drive(view, DRIVE_TAKEN, item_id, day, way, before)
+
+    def _check_rsvps(self, view: SpaceView, old: dict[tuple[str, str, str], str], old_persons: set[str]) -> None:
+        """Somebody said yes, maybe or no to an appointment."""
+        for key, answer in self._rsvps.items():
+            if old.get(key) == answer:
+                continue
+            item_id, day, pid = key
+            item = view.item_by_id.get(item_id)
+            if item is None:
+                continue
+            names, entities = self._people(view, [pid])
+            assignees, assignee_entities = self._people(view, item.get("assignees") or [])
+            answers = {p: a for (i, d, p), a in self._rsvps.items() if i == item_id and d in ("", day)}
+            self._fire(
+                {
+                    **self._base(RSVP_CHANGED),
+                    "item_id": item_id,
+                    "date": day or None,
+                    "title": item["title"],
+                    "start": item.get("start"),
+                    "answer": answer,
+                    "before": old.get(key),
+                    "person": names[0] if names else None,
+                    "person_entity": entities[0] if entities else None,
+                    "assignees": assignees,
+                    "assignee_entities": assignee_entities,
+                    # Whether everybody who takes part has answered now.
+                    "all_answered": all(p in answers for p in item.get("assignees") or []),
+                }
+            )
+
+    def _check_polls(self, view: SpaceView, old: dict[str, Any]) -> None:
+        """A time found by vote was fixed (or the vote was called off)."""
+        for item_id, chosen in self._polls.items():
+            if not chosen or old.get(item_id) == chosen or item_id not in old:
+                continue
+            item = view.item_by_id[item_id]
+            option = next(
+                (o for o in (item["poll"].get("options") or []) if isinstance(o, dict) and o.get("id") == chosen), None
+            )
+            names, entities = self._people(view, item.get("assignees") or [])
+            self._fire(
+                {
+                    **self._base(POLL_DECIDED),
+                    "item_id": item_id,
+                    "title": item["title"],
+                    "cancelled": chosen == "cancel",
+                    "start": (option or {}).get("start") or item.get("start"),
+                    "end": (option or {}).get("end") or item.get("end"),
+                    "location": item.get("location"),
+                    "assignees": names,
+                    "assignee_entities": entities,
+                }
+            )
 
     def _check_rounds(self, view: SpaceView, old_rounds: dict[str, Any], old_entries: dict[str, TodoEntry]) -> None:
         """A task that comes back was done (a new `lastDone`) or that was taken back (an older one)."""
@@ -362,6 +482,14 @@ class EventTracker:
             data["completed_by_entity"] = person_entity(self.entry, e.done_by)
         if assigned is not None:
             data["assigned"], data["assigned_entities"] = self._people(view, assigned)
+        if lst.get("type") == "shopping":
+            # Whether somebody is out shopping right now, so an article added late can reach them.
+            trip = trip_of(view, lst)
+            data["shopping_state"] = trip.state
+            data["added_late"] = e.late
+            shopper = view.person_by_id.get(trip.shopper or "")
+            data["shopper"] = shopper["name"] if shopper else None
+            data["shopper_entity"] = person_entity(self.entry, trip.shopper) if trip.shopper else None
         self._fire(data)
 
     def _fire_trip(self, view: SpaceView, event_type: str, lst: dict[str, Any], trip: Trip) -> None:
@@ -381,6 +509,9 @@ class EventTracker:
                 {
                     "bought": last.get("n", 0),
                     "left": last.get("left", 0),
+                    "not_got": last.get("missed", 0),
+                    "released_by": (view.person_by_id.get(last.get("from") or "") or {}).get("name"),
+                    "released_by_entity": person_entity(self.entry, last["from"]) if last.get("from") else None,
                     "shopper": by["name"] if by else None,
                     "shopper_entity": person_entity(self.entry, last.get("by") or ""),
                 }
@@ -400,6 +531,35 @@ class EventTracker:
                 }
             )
         self._fire(data)
+
+    def _fire_drive(
+        self, view: SpaceView, event_type: str, item_id: str, day: str, way: str, before: str | None
+    ) -> None:
+        item = view.item_by_id.get(item_id)
+        if item is None:
+            return
+        driver = self._drives.get((item_id, day, way))
+        names, entities = self._people(view, item.get("assignees") or [])
+        by, by_entity = self._people(view, [driver] if driver else [])
+        was, was_entity = self._people(view, [before] if before else [])
+        self._fire(
+            {
+                **self._base(event_type),
+                "item_id": item_id,
+                "date": day,
+                "title": item["title"],
+                "start": item.get("start"),
+                "location": item.get("location"),
+                # "to": taking there, "from": picking up.
+                "way": way,
+                "driver": by[0] if by else None,
+                "driver_entity": by_entity[0] if by_entity else None,
+                "previous_driver": was[0] if was else None,
+                "previous_driver_entity": was_entity[0] if was_entity else None,
+                "assignees": names,
+                "assignee_entities": entities,
+            }
+        )
 
     def _fire_appointment(
         self,

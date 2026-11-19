@@ -16,7 +16,17 @@ from .protocol.agenda import (
     resolve_occurrence,
 )
 from .protocol.recur import add_days, date_of, occurrence_dates, parse_ymd, to_min
-from .protocol.shopping import STATE_GOING, STATE_READY, TRIP_PREFIX, Trip, is_late, trip_of, trip_overdue
+from .protocol.shopping import (
+    STATE_GOING,
+    STATE_READY,
+    TRIP_PREFIX,
+    Trip,
+    aisle_of,
+    is_late,
+    missed_of,
+    trip_of,
+    trip_overdue,
+)
 from .protocol.view import SpaceView, occ_id
 
 
@@ -40,6 +50,9 @@ class TodoEntry:
     # Shopping: how much of it, and whether it came onto the list after the list was released.
     qty: str | None = None
     late: bool = False
+    # Shopping: the aisle it is sorted into, and who did not get it while out shopping.
+    aisle: str | None = None
+    missed_by: str | None = None
 
 
 # Lists whose tasks belong to people: task lists, and timetables with their packing tasks.
@@ -157,6 +170,10 @@ def todo_entries(
             lst = view.list_by_id[item["listId"]]
             trip = trips.get(lst["id"]) or trips.setdefault(lst["id"], trip_of(view, lst))
             entry.late = is_late(item, trip)
+            entry.aisle = aisle_of(view.aisles, item)
+            missed = missed_of(item)
+            if missed and not entry.done:
+                entry.missed_by = (view.person_by_id.get(missed["by"]) or {}).get("name") or ""
         out.append(entry)
     return out
 
@@ -338,4 +355,51 @@ def overdue_entries(view: SpaceView, today: str, minute: int) -> list[TodoEntry]
             entry = _entry(view, item, today)
             if entry is not None:
                 out.append(entry)
+    return out
+
+
+@dataclass(frozen=True)
+class Drive:
+    """An appointment that needs taking there and/or picking up, and who does it."""
+
+    occ: Occurrence
+    need_to: bool
+    need_from: bool
+    driver_to: str | None
+    driver_from: str | None
+
+    @property
+    def missing(self) -> list[str]:
+        return [
+            w
+            for w, need, who in (("to", self.need_to, self.driver_to), ("from", self.need_from, self.driver_from))
+            if need and not who
+        ]
+
+
+def drive_of(view: SpaceView, occ: Occurrence) -> Drive | None:
+    """Who drives for one time an appointment happens, the occurrence's own choice first."""
+    item = occ.item
+    if item.get("kind") != "event" or not (item.get("needTo") or item.get("needFrom")):
+        return None
+    raw = view.occs.get(occ_id(item["id"], occ.occ_date)) if occ.occ_date else None
+    base = view.item_by_id.get(item["id"]) or item
+
+    def who(field_name: str) -> str | None:
+        value = raw[field_name] if raw and field_name in raw else base.get(field_name)
+        p = view.person_by_id.get(value) if isinstance(value, str) else None
+        return value if p and not p["removed"] else None
+
+    return Drive(occ, bool(item.get("needTo")), bool(item.get("needFrom")), who("driveTo"), who("driveFrom"))
+
+
+def drives_between(view: SpaceView, start: str, end: str, open_only: bool = False) -> list[Drive]:
+    """Appointments between two dates that need a drive; with ``open_only`` those nobody took yet."""
+    out = []
+    for occ in calendar_occurrences(view, start, end):
+        if occ.skip or date_of(occ.start) < start:
+            continue
+        d = drive_of(view, occ)
+        if d and (not open_only or d.missing):
+            out.append(d)
     return out

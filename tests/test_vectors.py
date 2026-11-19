@@ -26,8 +26,17 @@ from custom_components.orgaia.protocol.crypto import (
 from custom_components.orgaia.protocol.ics import parse_ics
 from custom_components.orgaia.protocol.invite import parse_invite
 from custom_components.orgaia.protocol.model import apply_op, empty_state, merge_state, to_app_state
-from custom_components.orgaia.protocol.plans import PlanLabels, is_plan_item, with_plan_items
+from custom_components.orgaia.protocol.plans import (
+    PlanLabels,
+    is_plan_item,
+    lessons_on_day,
+    things_on_day,
+    timetable_holds,
+    with_plan_items,
+    work_minutes,
+)
 from custom_components.orgaia.protocol.recur import occurrence_dates, rotation_assignee
+from custom_components.orgaia.protocol.shopping import aisle_of, by_aisle, guess_aisle, missed_of
 from custom_components.orgaia.protocol.view import build_view, occ_id
 
 VECTORS = json.loads((Path(__file__).parent / "vectors" / "ha-v1.json").read_text())
@@ -209,12 +218,64 @@ def test_plans(case: dict) -> None:
     merge_state(state, case["state"])
     view = build_view("gPlans", "group", state)
     assert [{"id": lst["id"], "type": lst["type"]} for lst in view.lists] == case["lists"]
-    labels = PlanLabels(case["labels"]["pack"], case["labels"]["school"], case["labels"]["work"])
+    lb = case["labels"]
+    labels = PlanLabels(lb["pack"], lb["school"], lb["work"], lb["exam"], lb["learn"], lb["standby"])
     full = with_plan_items(view, labels, case["today"])
     derived = [{k: v for k, v in i.items() if k != "done"} for i in full.items if is_plan_item(i)]
     for mine, theirs in zip(derived, case["items"], strict=True):
         assert mine == theirs, theirs["id"]
     assert sorted(oid for oid, o in full.occs.items() if o.get("skip")) == case["skips"]
+    timetables = [lst for lst in view.lists if lst["type"] == "timetable"]
+    for day in case["days"]:
+        got = [
+            {
+                "id": lst["id"],
+                "holds": timetable_holds(lst["timetable"], day["date"]),
+                "lessons": [x["n"] for x in lessons_on_day(lst["timetable"], day["date"])],
+                "things": [t["name"] for t in things_on_day(lst["timetable"], day["date"]).values()],
+            }
+            for lst in timetables
+        ]
+        assert got == day["timetables"], day["date"]
+    assert [
+        {
+            "id": lst["id"],
+            "days": lst["timetable"]["days"],
+            "exams": lst["timetable"]["exams"],
+            "validFrom": lst["timetable"]["validFrom"],
+            "validUntil": lst["timetable"]["validUntil"],
+        }
+        for lst in timetables
+    ] == case["timetables"]
+    rosters = [lst for lst in view.lists if lst["type"] == "roster"]
+    assert [
+        {
+            "id": lst["id"],
+            "eve": lst["roster"]["eve"],
+            "shifts": sorted(lst["roster"]["shifts"], key=lambda x: x["id"]),
+            "minutes": work_minutes(lst["roster"], "2026-11-16", "2026-11-22"),
+        }
+        for lst in rosters
+    ] == [{**r, "shifts": sorted(r["shifts"], key=lambda x: x["id"])} for r in case["rosters"]]
+
+
+def test_shopping() -> None:
+    """Aisles, articles not got and the last trip, as in the app."""
+    case = VECTORS["shopping"]
+    state = empty_state()
+    for op in VECTORS["views"][0]["ops"]:
+        apply_op(state, op)
+    view = build_view("gVectors", "group", state)
+    assert [{"title": g["title"], "aisle": guess_aisle(g["title"])} for g in case["guesses"]] == case["guesses"]
+    open_items = [i for i in view.items if i["listId"] == "lEinkauf" and not i["done"]]
+    assert [{"id": i["id"], "aisle": aisle_of(view.aisles, i), "missed": missed_of(i)} for i in open_items] == case[
+        "aisles"
+    ]
+    assert [{"aisle": a, "items": [i["id"] for i in group]} for a, group in by_aisle(view.aisles, open_items)] == case[
+        "groups"
+    ]
+    assert view.list_by_id["lEinkauf"].get("lastTrip") == case["lastTrip"]
+    assert [s["name"] for s in view.list_by_id["lEinkauf"]["sets"]] == ["Wocheneinkauf"]
 
 
 def test_feeds() -> None:

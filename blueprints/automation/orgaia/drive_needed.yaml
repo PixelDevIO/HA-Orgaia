@@ -1,0 +1,67 @@
+blueprint:
+  name: "Orgaia: Für einen Termin fährt noch niemand"
+  description: >
+    Braucht ein Termin in den nächsten Tagen eine Fahrt hin oder zurück und hat sie noch niemand
+    übernommen, bekommt das Handy eine Mitteilung mit dem Knopf „Ich fahre“. Ein Tipp darauf übernimmt
+    die Fahrt in Orgaia im Namen dieser Person.
+
+    (EN) Nobody drives yet: ask a person, with an "I'll drive" button.
+  domain: automation
+  source_url: https://github.com/PixelDevIO/HA-Orgaia/blob/main/blueprints/automation/orgaia/drive_needed.yaml
+  input:
+    person:
+      name: Person, die fahren könnte
+      selector:
+        entity:
+          filter:
+            - domain: person
+    notify_device:
+      name: Handy
+      selector:
+        device:
+          filter:
+            - integration: mobile_app
+
+mode: parallel
+max: 20
+
+triggers:
+  - trigger: event
+    event_type: orgaia_event
+    event_data:
+      type: drive_needed
+
+variables:
+  person: !input person
+  data: "{{ trigger.event.data }}"
+  action_id: "ORGAIA_DRIVE_{{ context.id }}"
+  way: "{{ 'hin' if data.way == 'to' else 'zurück' }}"
+
+actions:
+  - domain: mobile_app
+    type: notify
+    device_id: !input notify_device
+    title: "Fahrt {{ way }} gesucht"
+    message: >
+      {{ data.title }}{% if data.assignees %} ({{ data.assignees | join(', ') }}){% endif %},
+      {{ as_timestamp(data.start) | timestamp_custom('%d.%m. %H:%M') if data.start and data.start | length > 10 else data.date }}
+      {%- if data.location %}, {{ data.location }}{% endif %}.
+    data:
+      tag: "orgaia-drive-{{ data.item_id }}-{{ data.date }}-{{ data.way }}"
+      actions:
+        - action: "{{ action_id }}"
+          title: Ich fahre
+  - wait_for_trigger:
+      - trigger: event
+        event_type: mobile_app_notification_action
+        event_data:
+          action: "{{ action_id }}"
+    timeout: "24:00:00"
+    continue_on_timeout: false
+  - action: orgaia.take_drive
+    data:
+      config_entry_id: "{{ data.config_entry_id }}"
+      person: "{{ person }}"
+      item: "{{ data.item_id }}"
+      date: "{{ data.date }}"
+      which: "{{ data.way }}"

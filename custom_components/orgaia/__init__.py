@@ -18,7 +18,14 @@ from .board import async_setup_board, group_loaded, notify_boards
 from .client.engine import GroupEngine
 from .const import CARD_URL, CONF_SPACE, DOMAIN, STORAGE_VERSION, VERSION
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator, storage_key
-from .entity import active_person_ids, group_device_name, person_device_key, person_device_name, space_key
+from .entity import (
+    active_person_ids,
+    group_device_name,
+    person_device_key,
+    person_device_name,
+    person_ids_for,
+    space_key,
+)
 from .events import EventTracker
 from .services import async_setup_services
 
@@ -120,7 +127,7 @@ async def _options_changed(hass: HomeAssistant, entry: OrgaiaConfigEntry) -> Non
 @callback
 def _remove_gone_persons(hass: HomeAssistant, entry: OrgaiaConfigEntry) -> None:
     """A person who left the group takes their device (and so their entities) along."""
-    active = {person_device_key(entry, p) for p in active_person_ids(entry.runtime_data.data)}
+    active = {person_device_key(entry, p) for p in person_ids_for(entry)(entry.runtime_data.data)}
     registry = dr.async_get(hass)
     for device in dr.async_entries_for_config_entry(registry, entry.entry_id):
         if device.model != "Person":

@@ -27,6 +27,7 @@ from .client.engine import (
     STATUS_UPDATE,
     Change,
     GroupEngine,
+    WriteError,
 )
 from .const import DOMAIN
 from .feeds import FeedCache
@@ -73,6 +74,12 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
         )
         self.engine = engine
         self.store = store
+        # For diagnostics: how the live connection fares.
+        self.live_since: float | None = None
+        self.live_reconnects = 0
+        self.live_error: str | None = None
+        # A change was refused because no admin allowed writing: a repair hint says where to switch it on.
+        self.write_refused = False
         self.feeds = FeedCache(hass, entry.entry_id)
         self._feeds_busy = False
         self._view_key: tuple[int, int, str, str] | None = None
@@ -178,8 +185,13 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
         """Makes changes in a person's name and shows them at once. Raises WriteError when it did not work."""
         try:
             await self.engine.write(changes, person_id)
+        except WriteError as err:
+            if err.reason == "read_only":
+                self.write_refused = True
+            raise
         finally:
             # Also after a refusal: it may have told that writing is no longer allowed.
+            self._update_issues()
             self.async_set_updated_data(self.build_view())
             self._save()
 
@@ -214,6 +226,21 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
                 )
             else:
                 ir.async_delete_issue(self.hass, DOMAIN, issue_id)
+        issue_id = f"write_not_allowed_{self.config_entry.entry_id}"
+        if self.engine.can_write:
+            self.write_refused = False
+        if self.write_refused:
+            ir.async_create_issue(
+                self.hass,
+                DOMAIN,
+                issue_id,
+                is_fixable=False,
+                severity=ir.IssueSeverity.WARNING,
+                translation_key="write_not_allowed",
+                translation_placeholders={"group": self.config_entry.title},
+            )
+        else:
+            ir.async_delete_issue(self.hass, DOMAIN, issue_id)
 
     async def run_live(self) -> None:
         """Keeps the live connection open. It only says that something changed; the changes are then fetched."""
@@ -225,6 +252,8 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
                 opened = time.monotonic()
                 async with ws:
                     self.live = True
+                    self.live_since = time.time()
+                    self.live_error = None
                     # Whatever happened while the connection was down.
                     await self.fetch()
                     async for msg in ws:
@@ -243,14 +272,18 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
                 raise
             except ApiError as err:
                 _LOGGER.debug("Live connection refused: %s", err)
+                self.live_error = f"refused {err.status} {err.code}"
                 if err.status in (402, 426):
                     delay = 3600.0
             except (aiohttp.ClientError, TimeoutError, OSError) as err:
                 _LOGGER.debug("Live connection lost: %s", err)
+                self.live_error = type(err).__name__
             except Exception:
                 # Anything unexpected must not end live updates until the next restart.
                 _LOGGER.exception("Live connection failed, trying again")
             self.live = False
+            self.live_since = None
+            self.live_reconnects += 1
             # A connection the service closes right away (too many, or refused) does not count as one:
             # only one that held starts the waiting time over.
             if opened is not None and time.monotonic() - opened >= LIVE_STABLE:

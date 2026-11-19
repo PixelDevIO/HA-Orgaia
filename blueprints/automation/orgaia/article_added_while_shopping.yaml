@@ -1,0 +1,48 @@
+blueprint:
+  name: "Orgaia: Nachträglicher Artikel an den, der gerade einkauft"
+  description: >
+    Kommt ein Artikel auf die Liste, während jemand schon einkauft, bekommt genau diese Person eine
+    Mitteilung, sofern sie die gewählte Person ist.
+
+    (EN) An article added while somebody is out shopping reaches the shopper's phone.
+  domain: automation
+  source_url: https://github.com/PixelDevIO/HA-Orgaia/blob/main/blueprints/automation/orgaia/article_added_while_shopping.yaml
+  input:
+    person:
+      name: Person
+      selector:
+        entity:
+          filter:
+            - domain: person
+    notify_device:
+      name: Handy
+      selector:
+        device:
+          filter:
+            - integration: mobile_app
+
+mode: queued
+max: 20
+
+triggers:
+  - trigger: event
+    event_type: orgaia_event
+    event_data:
+      type: task_created
+      list_type: shopping
+      shopping_state: going
+
+variables:
+  person: !input person
+  data: "{{ trigger.event.data }}"
+
+conditions:
+  - condition: template
+    value_template: "{{ data.shopper_entity == person }}"
+
+actions:
+  - domain: mobile_app
+    type: notify
+    device_id: !input notify_device
+    title: "Noch mitbringen ({{ data.list }})"
+    message: "{{ data.title }}"

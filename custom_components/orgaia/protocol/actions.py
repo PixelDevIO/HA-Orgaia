@@ -9,8 +9,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from .recur import add_days, add_months, days_between, parse_ymd
-from .shopping import STATE_OFF, TAKE_PREFIX, has_gate, trip_of
+from .recur import add_days, add_months, days_between, parse_ymd, weekday
+from .shopping import AISLES, STATE_OFF, TAKE_PREFIX, has_gate, trip_of
 from .view import DONE_PREFIX, SpaceView, each_done, occ_id
 
 # One kind of entity, its id and the fields to set.
@@ -118,7 +118,11 @@ def set_done(
     if repeat:
         out.append(("occ", occ_id(item["id"], occ_date or ""), {"done": mark}))
     else:
-        out.append(("item", item["id"], {"done": mark}))
+        fields: dict[str, Any] = {"done": mark}
+        if done and item.get("missed"):
+            # Got it after all.
+            fields["missed"] = None
+        out.append(("item", item["id"], fields))
     return out
 
 
@@ -153,7 +157,7 @@ def add_article(
     )
     if existing:
         # Something still open on the list is not new just because somebody put it on again.
-        fields = {"done": None, "qty": amount or existing.get("qty") or None, "order": now}
+        fields = {"done": None, "missed": None, "qty": amount or existing.get("qty") or None, "order": now}
         return [("item", existing["id"], {**fields, **(late if existing.get("done") else {})})]
     fields = {"kind": "task", "createdAt": now, "createdBy": person, "listId": list_id, "title": clean, "order": now}
     if amount:
@@ -252,6 +256,190 @@ def finish_trip(view: SpaceView, list_id: str, person: str, now: int) -> list[Ch
     items = [i for i in view.items if i["listId"] == list_id]
     bought = [i for i in items if i.get("done")]
     out: list[Change] = [("item", i["id"], {"deleted": True, "deletedAt": None}) for i in bought]
-    last = {"by": person, "at": now, "n": len(bought), "left": len(items) - len(bought)}
+    missed = sum(1 for i in items if not i.get("done") and i.get("missed"))
+    last: dict[str, Any] = {"by": person, "at": now, "n": len(bought), "left": len(items) - len(bought)}
+    if missed:
+        last["missed"] = missed
+    last["from"] = lst["ready"]["by"]
     out.append(("list", list_id, {"ready": None, "lastTrip": last}))
     return out
+
+
+def _article(view: SpaceView, item: dict[str, Any]) -> dict[str, Any]:
+    lst = view.list_by_id.get(item.get("listId") or "")
+    if not lst or lst["type"] != "shopping":
+        raise ActionError("not_shopping")
+    return lst
+
+
+def set_missed(view: SpaceView, item: dict[str, Any], missed: bool, person: str, now: int) -> list[Change]:
+    """Whoever is out shopping marks an article as not there; it stays on the list for next time."""
+    _article(view, item)
+    return [("item", item["id"], {"missed": {"by": person, "at": now} if missed else None})]
+
+
+def set_quantity(view: SpaceView, item: dict[str, Any], qty: str | None) -> list[Change]:
+    """A new quantity for an article; empty for none."""
+    _article(view, item)
+    amount = qty.strip()[:40] if isinstance(qty, str) and qty.strip() else None
+    return [("item", item["id"], {"qty": amount})]
+
+
+def set_aisle(view: SpaceView, item: dict[str, Any], aisle: str | None) -> list[Change]:
+    """Sorts an article into an aisle by hand; the group remembers it for next time."""
+    _article(view, item)
+    if aisle is not None and aisle not in AISLES:
+        raise ActionError("no_aisle")
+    return [("item", item["id"], {"aisle": aisle})]
+
+
+def add_articles(
+    view: SpaceView,
+    list_id: str,
+    articles: list[dict[str, Any]],
+    person: str,
+    now: int,
+    new_id: Callable[[], str],
+) -> list[Change]:
+    """Several articles at once, each as :func:`add_article`; one already open stays as it is."""
+    out: list[Change] = []
+    seen: set[str] = set()
+    for n, a in enumerate(articles):
+        key = " ".join(str(a.get("title") or "").split()).casefold()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        existing = next(
+            (i for i in view.items if i["listId"] == list_id and i["title"].casefold() == key and not i.get("done")),
+            None,
+        )
+        if existing and not a.get("qty"):
+            continue
+        out.extend(add_article(view, list_id, a["title"], a.get("qty"), person, now + n, new_id))
+    if not out and not seen:
+        raise ActionError("empty")
+    return out
+
+
+def apply_shop_set(
+    view: SpaceView, list_id: str, set_id: str, person: str, now: int, new_id: Callable[[], str]
+) -> list[Change]:
+    """Puts a fixed purchase ("Wocheneinkauf") on the list. Articles already open there stay as they are."""
+    lst = view.list_by_id.get(list_id)
+    if not lst or lst["type"] != "shopping":
+        raise ActionError("not_shopping")
+    chosen = next(
+        (x for x in lst.get("sets") or [] if x["id"] == set_id or x["name"].casefold() == set_id.casefold()), None
+    )
+    if not chosen:
+        raise ActionError("no_set")
+    open_titles = {i["title"].strip().lower() for i in view.items if i["listId"] == list_id and not i.get("done")}
+    out: list[Change] = []
+    for n, a in enumerate(chosen["items"]):
+        if a["title"].lower() in open_titles:
+            continue
+        out.extend(add_article(view, list_id, a["title"], a.get("qty"), person, now + n, new_id))
+    return out
+
+
+def set_driver(
+    view: SpaceView, item: dict[str, Any], which: str, driver: str | None, occ_date: str | None
+) -> list[Change]:
+    """Who takes the participants there (``to``) or picks them up (``from``): the series, or one time of it."""
+    if item.get("kind") != "event":
+        raise ActionError("not_an_event")
+    need = "needTo" if which == "to" else "needFrom"
+    if not item.get(need):
+        raise ActionError("no_drive")
+    field_name = "driveTo" if which == "to" else "driveFrom"
+    if item.get("repeat") and occ_date:
+        return [("occ", occ_id(item["id"], occ_date), {field_name: driver})]
+    return [("item", item["id"], {field_name: driver})]
+
+
+# How an iCalendar repetition reads in the app. Anything the app cannot show is refused, not guessed.
+_RRULE_FREQ = {"DAILY": "day", "WEEKLY": "week", "MONTHLY": "month", "YEARLY": "year"}
+_RRULE_DAYS = {"SU": 0, "MO": 1, "TU": 2, "WE": 3, "TH": 4, "FR": 5, "SA": 6}
+
+
+def repeat_of_rrule(rrule: str, first: str) -> dict[str, Any]:
+    """``FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,TH;UNTIL=20270101`` as the app's repetition."""
+    parts: dict[str, str] = {}
+    for part in rrule.removeprefix("RRULE:").split(";"):
+        key, _, value = part.partition("=")
+        if key:
+            parts[key.upper()] = value.upper()
+    freq = _RRULE_FREQ.get(parts.pop("FREQ", ""))
+    if not freq:
+        raise ActionError("repeat_unknown")
+    out: dict[str, Any] = {"freq": freq, "interval": 1}
+    if "INTERVAL" in parts:
+        try:
+            out["interval"] = max(1, int(parts.pop("INTERVAL")))
+        except ValueError as err:
+            raise ActionError("repeat_unknown") from err
+    if "UNTIL" in parts:
+        raw = parts.pop("UNTIL")[:8]
+        if len(raw) != 8 or not raw.isdigit():
+            raise ActionError("repeat_unknown")
+        out["until"] = f"{raw[:4]}-{raw[4:6]}-{raw[6:]}"
+    if "BYDAY" in parts:
+        days = parts.pop("BYDAY").split(",")
+        if freq != "week" or any(d not in _RRULE_DAYS for d in days):
+            raise ActionError("repeat_unknown")
+        wanted = sorted({_RRULE_DAYS[d] for d in days})
+        if wanted != [weekday(first)]:
+            out["days"] = wanted
+    parts.pop("WKST", None)
+    if parts:
+        # COUNT, BYMONTHDAY and the like: the app has no such repetition.
+        raise ActionError("repeat_unknown")
+    return out
+
+
+def add_event(
+    view: SpaceView,
+    title: str,
+    start: str,
+    end: str | None,
+    all_day: bool,
+    person: str,
+    now: int,
+    new_id: Callable[[], str],
+    assignees: list[str] | None = None,
+    note: str | None = None,
+    location: str | None = None,
+    rrule: str | None = None,
+) -> list[Change]:
+    """A new appointment, on the list where the app also puts new ones: the group's first task list.
+
+    ``start`` and ``end`` are local ``YYYY-MM-DDTHH:mm``; a whole-day appointment ends on its last day.
+    """
+    lst = next((x for x in view.lists if x["type"] == "tasks" and not x.get("inbox")), None)
+    if lst is None:
+        raise ActionError("no_list_for_events")
+    first = start[:10]
+    fields: dict[str, Any] = {
+        "kind": "event",
+        "createdAt": now,
+        "createdBy": person,
+        "listId": lst["id"],
+        "title": _clean(title),
+        "allDay": all_day,
+    }
+    if all_day:
+        fields["start"] = f"{first}T00:00"
+        if end and end[:10] > first:
+            fields["end"] = f"{end[:10]}T00:00"
+    else:
+        fields["start"] = start[:16]
+        fields["end"] = end[:16] if end and end[:16] > start[:16] else None
+    if assignees:
+        fields["assignees"] = assignees
+    if note and note.strip():
+        fields["note"] = note.strip()[:2000]
+    if location and location.strip():
+        fields["location"] = location.strip()[:200]
+    if rrule:
+        fields["repeat"] = repeat_of_rrule(rrule, first)
+    return [("item", new_id(), {k: v for k, v in fields.items() if v is not None})]

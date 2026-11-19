@@ -16,11 +16,21 @@ from .calendar import DONE_MARK, LOOKAHEAD_DAYS, events_between
 from .client.engine import STATUS_NEEDS_PLUS, STATUS_OFFLINE, STATUS_OK, STATUS_REMOVED, STATUS_UPDATE
 from .const import MAX_TITLES
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator
-from .entity import OrgaiaEntity, OrgaiaPlanEntity, active_person_ids, person_entity, plan_list_ids, track_dynamic
-from .protocol.plans import STATUS_FREE, STATUS_HOLIDAY, pack_on, school_day, work_day
-from .protocol.recur import add_days
+from .entity import OrgaiaEntity, OrgaiaPlanEntity, person_entity, person_ids_for, plan_list_ids, track_dynamic
+from .protocol.plans import (
+    STATUS_FREE,
+    STATUS_HOLIDAY,
+    exams_ahead,
+    labels_for,
+    pack_on,
+    school_day,
+    work_day,
+    work_minutes,
+)
+from .protocol.recur import add_days, week_start
 from .protocol.shopping import STATE_READY
-from .summary import Counts, counts, shopping_trips
+from .report import day_report, short_text, speech
+from .summary import Counts, counts, drives_between, shopping_trips
 from .util import from_ms, local_now, minute_of_day, to_date, to_datetime, today
 
 # What a day without school or work reads as; times read "07:55–13:15".
@@ -63,6 +73,8 @@ async def async_setup_entry(
         OrgaiaShoppingWaitingSensor(coordinator),
         OrgaiaNextEventSensor(coordinator),
         OrgaiaConnectionSensor(coordinator),
+        OrgaiaTodaySensor(coordinator),
+        OrgaiaOpenDrivesSensor(coordinator),
     ]
     async_add_entities(entities)
     track_dynamic(
@@ -84,10 +96,12 @@ async def async_setup_entry(
     track_dynamic(
         hass,
         entry,
-        active_person_ids,
+        person_ids_for(entry),
         lambda person_id: [
             *(OrgaiaCountSensor(coordinator, d, person_id) for d in COUNTS if d.key != "shopping"),
             OrgaiaNextTaskSensor(coordinator, person_id),
+            OrgaiaNextEventSensor(coordinator, person_id),
+            OrgaiaTodaySensor(coordinator, person_id),
         ],
         async_add_entities,
         "sensor",
@@ -157,7 +171,9 @@ class OrgaiaSchoolSensor(OrgaiaPlanEntity, SensorEntity):
     _attr_translation_key = "school_today"
     _attr_icon = "mdi:school-outline"
     # Subjects and things say a lot about a child: they stay out of the recorder's database.
-    _unrecorded_attributes = frozenset({"lessons", "tomorrow", "pack_today", "pack_tomorrow", "holiday", "plan"})
+    _unrecorded_attributes = frozenset(
+        {"lessons", "tomorrow", "pack_today", "pack_tomorrow", "holiday", "plan", "note", "exams", "exams_ahead"}
+    )
 
     def __init__(self, coordinator: OrgaiaCoordinator, list_id: str) -> None:
         super().__init__(coordinator, list_id, "today")
@@ -192,9 +208,15 @@ class OrgaiaSchoolSensor(OrgaiaPlanEntity, SensorEntity):
             "lessons": day["lessons"],
             "pack_today": pack_on(plan, off, day["date"]),
             "pack_tomorrow": pack_on(plan, off, nxt["date"]),
-            "tomorrow": {**{k: nxt[k] for k in ("status", "start", "end", "lessons")}, "text": self._text(nxt)},
+            "tomorrow": {
+                **{k: nxt[k] for k in ("status", "start", "end", "lessons")},
+                **{k: nxt[k] for k in ("changed", "note", "exams") if k in nxt},
+                "text": self._text(nxt),
+            },
+            # Class tests of the next two weeks, and whether today is a day to learn for one.
+            "exams_ahead": exams_ahead(plan, day["date"]),
         }
-        for key in ("week", "holiday"):
+        for key in ("week", "holiday", "changed", "note", "exams"):
             if key in day:
                 attrs[key] = day[key]
         if self.person_id is not None:
@@ -210,6 +232,9 @@ class OrgaiaWorkSensor(OrgaiaPlanEntity, SensorEntity):
     _attr_icon = "mdi:briefcase-clock-outline"
     _unrecorded_attributes = frozenset({"spans", "shift", "code", "tomorrow", "next_days", "plan"})
 
+    def _language(self) -> str | None:
+        return self.hass.config.language if self.hass else None
+
     def __init__(self, coordinator: OrgaiaCoordinator, list_id: str) -> None:
         super().__init__(coordinator, list_id, "today")
 
@@ -217,7 +242,11 @@ class OrgaiaWorkSensor(OrgaiaPlanEntity, SensorEntity):
         if not day["spans"]:
             return day_label(self.hass.config.language if self.hass else None, STATUS_FREE)
         times = ", ".join(_span_text(s["start"], s["end"]) for s in day["spans"])
-        return f"{day['shift']} {times}" if day.get("shift") else times
+        if day.get("shift"):
+            return f"{day['shift']} {times}"
+        if day.get("standby"):
+            return f"{labels_for(self._language()).standby} {times}"
+        return times
 
     def _days(self) -> list[dict[str, Any]]:
         plan = self.plan
@@ -246,6 +275,13 @@ class OrgaiaWorkSensor(OrgaiaPlanEntity, SensorEntity):
             "end": day["spans"][-1]["end"] if day["spans"] else None,
             "tomorrow": days[1],
             "next_days": days,
+            "standby": bool(day.get("standby")),
+            # Working hours of this week, Monday to Sunday, on call left out.
+            "hours_week": round(
+                work_minutes(plan["roster"], week_start(days[0]["date"]), add_days(week_start(days[0]["date"]), 6))
+                / 60,
+                2,
+            ),
         }
         for key in ("shift", "code"):
             if key in day:
@@ -288,14 +324,14 @@ class OrgaiaNextEventSensor(OrgaiaEntity, SensorEntity):
     _attr_icon = "mdi:calendar-clock"
     _unrecorded_attributes = frozenset({"title", "location"})
 
-    def __init__(self, coordinator: OrgaiaCoordinator) -> None:
-        super().__init__(coordinator, "next_event")
+    def __init__(self, coordinator: OrgaiaCoordinator, person_id: str | None = None) -> None:
+        super().__init__(coordinator, "next_event", person_id)
 
     def _next(self):
         now = local_now()
         upcoming = [
             e
-            for e in events_between(self.coordinator.data, now, now + timedelta(days=LOOKAHEAD_DAYS))
+            for e in events_between(self.coordinator.data, now, now + timedelta(days=LOOKAHEAD_DAYS), self.person_id)
             # What is ticked off already is not what comes next.
             if e.start_datetime_local >= now and not e.summary.startswith(DONE_MARK)
         ]
@@ -311,12 +347,15 @@ class OrgaiaNextEventSensor(OrgaiaEntity, SensorEntity):
         ev = self._next()
         if ev is None:
             return {}
-        return {
+        attrs: dict[str, Any] = {
             "title": ev.summary,
             "location": ev.location,
             "all_day": ev.all_day,
             "end": ev.end_datetime_local.isoformat(),
         }
+        if self.person_id is not None:
+            attrs["person_entity"] = person_entity(self.coordinator.config_entry, self.person_id)
+        return attrs
 
 
 class OrgaiaConnectionSensor(OrgaiaEntity, SensorEntity):
@@ -347,3 +386,72 @@ class OrgaiaConnectionSensor(OrgaiaEntity, SensorEntity):
         """When the group was last read: what a wall display shows while offline is as of then."""
         synced = from_ms(self.coordinator.engine.synced_at)
         return {"last_sync": synced.isoformat() if synced else None}
+
+
+class OrgaiaTodaySensor(OrgaiaEntity, SensorEntity):
+    """The day in short ("2 Termine, 3 Aufgaben"), and in sentences for a loudspeaker in ``speech``."""
+
+    _attr_translation_key = "today"
+    _attr_icon = "mdi:calendar-today-outline"
+    # Titles and names stay out of the recorder's database; only the short count is kept.
+    _unrecorded_attributes = frozenset({"speech", "appointments", "due", "overdue", "school", "work", "shopping"})
+
+    def __init__(self, coordinator: OrgaiaCoordinator, person_id: str | None = None) -> None:
+        super().__init__(coordinator, "today", person_id)
+
+    def _report(self) -> dict[str, Any]:
+        now = local_now()
+        return day_report(self.coordinator.data, today(), today(), minute_of_day(now), self.person_id)
+
+    def _language(self) -> str | None:
+        return self.hass.config.language if self.hass else None
+
+    @property
+    def native_value(self) -> str:
+        return short_text(self._report(), self._language())[:255]
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        r = self._report()
+        attrs: dict[str, Any] = {
+            "speech": speech(r, self._language(), today()),
+            **{k: r[k] for k in ("appointments", "due", "overdue", "school", "work", "shopping")},
+        }
+        if self.person_id is not None:
+            attrs["person_entity"] = person_entity(self.coordinator.config_entry, self.person_id)
+        return attrs
+
+
+class OrgaiaOpenDrivesSensor(OrgaiaEntity, SensorEntity):
+    """Appointments of the next 7 days that need taking there or picking up, and nobody does it yet."""
+
+    _attr_translation_key = "open_drives"
+    _attr_icon = "mdi:car-clock"
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _unrecorded_attributes = frozenset({"drives"})
+
+    def __init__(self, coordinator: OrgaiaCoordinator) -> None:
+        super().__init__(coordinator, "open_drives")
+
+    def _drives(self) -> list[dict[str, Any]]:
+        view = self.coordinator.data
+        first = today()
+        return [
+            {
+                "title": d.occ.item["title"],
+                "item": d.occ.item["id"],
+                "date": d.occ.start[:10],
+                "start": d.occ.start[11:16] if len(d.occ.start) > 10 else None,
+                "missing": d.missing,
+                "persons": view.names(d.occ.assignees),
+            }
+            for d in drives_between(view, first, add_days(first, 6), open_only=True)
+        ]
+
+    @property
+    def native_value(self) -> int:
+        return len(self._drives())
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return {"drives": self._drives()[:MAX_TITLES]}
