@@ -1,0 +1,63 @@
+blueprint:
+  name: "Orgaia: Erinnerung vor einem Termin, mit Fahrt"
+  description: >
+    Eine gewählte Zeit vor jedem Termin eines Orgaia-Kalenders (der Gruppe oder einer Person) kommt eine
+    Mitteilung mit Ort, Beteiligten und wer hin- und zurückfährt.
+
+    (EN) A reminder before each appointment of an Orgaia calendar, with the drives.
+  domain: automation
+  source_url: https://github.com/PixelDevIO/HA-Orgaia/blob/main/blueprints/automation/orgaia/appointment_reminder.yaml
+  input:
+    calendar:
+      name: Orgaia-Kalender
+      selector:
+        entity:
+          filter:
+            - integration: orgaia
+              domain: calendar
+    notify_device:
+      name: Handy
+      selector:
+        device:
+          filter:
+            - integration: mobile_app
+    before:
+      name: Wie lange vorher
+      description: Mit Minus davor, als Stunden:Minuten:Sekunden. -01:00:00 ist eine Stunde vorher.
+      default: "-01:00:00"
+      selector:
+        text: {}
+    skip_done:
+      name: Erledigte Aufgaben auslassen
+      default: true
+      selector:
+        boolean: {}
+
+mode: queued
+max: 20
+
+triggers:
+  - trigger: calendar
+    event: start
+    entity_id: !input calendar
+    offset: !input before
+
+variables:
+  skip_done: !input skip_done
+  ev: "{{ trigger.calendar_event }}"
+
+conditions:
+  # Whole-day entries and deadlines are no appointments to set off for.
+  - condition: template
+    value_template: "{{ not ev.all_day and not ev.uid.startswith('due|') }}"
+  - condition: template
+    value_template: "{{ not (skip_done and ev.summary.startswith('✓ ')) }}"
+
+actions:
+  - domain: mobile_app
+    type: notify
+    device_id: !input notify_device
+    title: "{{ as_timestamp(ev.start) | timestamp_custom('%H:%M') }} {{ ev.summary }}"
+    message: >
+      {% if ev.location %}📍 {{ ev.location }}
+      {% endif %}{{ ev.description or '' }}

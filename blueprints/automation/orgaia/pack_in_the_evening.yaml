@@ -1,0 +1,58 @@
+blueprint:
+  name: "Orgaia: Am Abend ans Einpacken erinnern"
+  description: >
+    Jeden Abend zur gewählten Zeit: Steht morgen laut Stundenplan etwas zum Einpacken an (Sportzeug,
+    Bücher, Elternbrief) oder wird eine Arbeit geschrieben, bekommt das Handy eine Mitteilung.
+    Ohne etwas zum Einpacken bleibt es still.
+
+    (EN) Every evening: what to pack for school tomorrow, and tomorrow's tests.
+  domain: automation
+  source_url: https://github.com/PixelDevIO/HA-Orgaia/blob/main/blueprints/automation/orgaia/pack_in_the_evening.yaml
+  input:
+    person:
+      name: Kind
+      description: Die Home-Assistant-Person, deren Stundenplan gemeint ist (in den Optionen zugeordnet).
+      selector:
+        entity:
+          filter:
+            - domain: person
+    notify_device:
+      name: Handy
+      selector:
+        device:
+          filter:
+            - integration: mobile_app
+    at:
+      name: Uhrzeit
+      default: "18:30:00"
+      selector:
+        time: {}
+
+mode: single
+
+triggers:
+  - trigger: time
+    at: !input at
+
+variables:
+  person: !input person
+
+actions:
+  - action: orgaia.get_agenda
+    data:
+      person: "{{ person }}"
+      date: "{{ (now() + timedelta(days=1)).date().isoformat() }}"
+    response_variable: agenda
+  - variables:
+      school: "{{ agenda.groups | map(attribute='days') | sum(start=[]) | map(attribute='school') | sum(start=[]) | list }}"
+      pack: "{{ school | map(attribute='pack') | sum(start=[]) | unique | list }}"
+      exams: "{{ school | map(attribute='exams') | sum(start=[]) | unique | list }}"
+  - condition: template
+    value_template: "{{ pack or exams }}"
+  - domain: mobile_app
+    type: notify
+    device_id: !input notify_device
+    title: Für morgen
+    message: >
+      {% if pack %}Einpacken: {{ pack | join(', ') }}.{% endif %}
+      {% if exams %}Morgen wird geschrieben: {{ exams | join(', ') }}.{% endif %}

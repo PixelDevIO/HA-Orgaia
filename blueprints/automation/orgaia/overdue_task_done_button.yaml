@@ -1,0 +1,82 @@
+blueprint:
+  name: "Orgaia: Überfällige Aufgabe aufs Handy, mit „Erledigt“"
+  description: >
+    Wenn eine Aufgabe einer Person überfällig wird, bekommt ihr Handy eine Mitteilung mit dem Knopf
+    „Erledigt“. Ein Tipp darauf hakt die Aufgabe in Orgaia im Namen dieser Person ab.
+    Voraussetzung: Die Person ist in den Optionen der Integration einer Home-Assistant-Person zugeordnet,
+    und ein Admin hat Abhaken für diese Verbindung erlaubt.
+
+    (EN) Overdue task → the person's phone, with a "Done" button that ticks it off in their name.
+  domain: automation
+  source_url: https://github.com/PixelDevIO/HA-Orgaia/blob/main/blueprints/automation/orgaia/overdue_task_done_button.yaml
+  input:
+    person:
+      name: Person
+      description: Die Home-Assistant-Person, deren Aufgaben gemeint sind.
+      selector:
+        entity:
+          filter:
+            - domain: person
+    notify_device:
+      name: Handy
+      description: Das Handy (Home Assistant Companion App), das die Mitteilung bekommt.
+      selector:
+        device:
+          filter:
+            - integration: mobile_app
+    unassigned:
+      name: Auch Aufgaben ohne Zuständige
+      description: Auch melden, wenn die Aufgabe niemandem zugewiesen ist.
+      default: false
+      selector:
+        boolean: {}
+    button:
+      name: Text des Knopfs
+      default: Erledigt
+      selector:
+        text: {}
+
+mode: parallel
+max: 20
+
+triggers:
+  - trigger: event
+    event_type: orgaia_event
+    event_data:
+      type: task_overdue
+
+variables:
+  person: !input person
+  unassigned: !input unassigned
+  data: "{{ trigger.event.data }}"
+  uid: "{{ data.item_id ~ ('|' ~ data.date if data.date else '') }}"
+  action_id: "ORGAIA_DONE_{{ context.id }}"
+
+conditions:
+  - condition: template
+    value_template: >
+      {{ person in (data.assignee_entities or []) or (unassigned and not data.assignees) }}
+
+actions:
+  - domain: mobile_app
+    type: notify
+    device_id: !input notify_device
+    title: "{{ data.group }}: überfällig"
+    message: "{{ data.title }}{{ ' (' ~ data.list ~ ')' if data.list else '' }}"
+    data:
+      tag: "orgaia-{{ uid }}"
+      actions:
+        - action: "{{ action_id }}"
+          title: !input button
+  - wait_for_trigger:
+      - trigger: event
+        event_type: mobile_app_notification_action
+        event_data:
+          action: "{{ action_id }}"
+    timeout: "12:00:00"
+    continue_on_timeout: false
+  - action: orgaia.set_done
+    data:
+      config_entry_id: "{{ data.config_entry_id }}"
+      person: "{{ person }}"
+      item: "{{ uid }}"

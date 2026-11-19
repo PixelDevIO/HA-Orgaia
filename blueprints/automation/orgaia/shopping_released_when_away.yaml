@@ -1,0 +1,77 @@
+blueprint:
+  name: "Orgaia: Einkaufsliste freigegeben, wer unterwegs ist, erfährt es"
+  description: >
+    Wird eine Einkaufsliste freigegeben, bekommt das Handy einer Person eine Mitteilung, wenn sie gerade
+    nicht zu Hause ist. So kann jemand, der ohnehin unterwegs ist, „Mache ich“ sagen.
+    Mit dem Knopf übernimmt die Person den Einkauf in Orgaia.
+
+    (EN) A shopping list was released: tell a person who is out, with a button to take it.
+  domain: automation
+  source_url: https://github.com/PixelDevIO/HA-Orgaia/blob/main/blueprints/automation/orgaia/shopping_released_when_away.yaml
+  input:
+    person:
+      name: Person
+      selector:
+        entity:
+          filter:
+            - domain: person
+    notify_device:
+      name: Handy
+      selector:
+        device:
+          filter:
+            - integration: mobile_app
+    only_away:
+      name: Nur wenn nicht zu Hause
+      default: true
+      selector:
+        boolean: {}
+
+mode: parallel
+max: 10
+
+triggers:
+  - trigger: event
+    event_type: orgaia_event
+    event_data:
+      type: shopping_released
+
+variables:
+  person: !input person
+  only_away: !input only_away
+  data: "{{ trigger.event.data }}"
+  action_id: "ORGAIA_TAKE_{{ context.id }}"
+
+conditions:
+  - condition: template
+    value_template: "{{ not only_away or not is_state(person, 'home') }}"
+  # Released for certain people only: then only for them.
+  - condition: template
+    value_template: "{{ not data.assignees or person in (data.assignee_entities or []) }}"
+
+actions:
+  - domain: mobile_app
+    type: notify
+    device_id: !input notify_device
+    title: "Einkauf: {{ data.list }}"
+    message: >
+      {{ data.released_by or 'Jemand' }} hat die Liste freigegeben, {{ data.open }} Artikel.
+      {% if data.due %}Bis {{ as_timestamp(data.due) | timestamp_custom('%d.%m.') }}.{% endif %}
+      {% if data.note %}{{ data.note }}{% endif %}
+    data:
+      tag: "orgaia-shopping-{{ data.list_id }}"
+      actions:
+        - action: "{{ action_id }}"
+          title: Mache ich
+  - wait_for_trigger:
+      - trigger: event
+        event_type: mobile_app_notification_action
+        event_data:
+          action: "{{ action_id }}"
+    timeout: "06:00:00"
+    continue_on_timeout: false
+  - action: orgaia.take_shopping
+    data:
+      config_entry_id: "{{ data.config_entry_id }}"
+      person: "{{ person }}"
+      list: "{{ data.list_id }}"
