@@ -30,13 +30,35 @@ class PlanLabels:
     exam: str = "Klassenarbeit {subject}"
     learn: str = "Für {subject} lernen"
     standby: str = "Bereitschaft"
+    care_vs: str = "Verlässliche Schule"
+    care_ogs: str = "OGS"
+
+    def care(self, kind: str) -> str:
+        """Title of care after school: reliable school ("vs") or OGS."""
+        return self.care_vs if kind == "vs" else self.care_ogs
 
 
 LABELS = {
     "de": PlanLabels(
-        "{thing} einpacken", "Schule", "Arbeit", "Klassenarbeit {subject}", "Für {subject} lernen", "Bereitschaft"
+        "{thing} einpacken",
+        "Schule",
+        "Arbeit",
+        "Klassenarbeit {subject}",
+        "Für {subject} lernen",
+        "Bereitschaft",
+        "Verlässliche Schule",
+        "OGS",
     ),
-    "en": PlanLabels("Pack {thing}", "School", "Work", "{subject} test", "Study for {subject}", "On call"),
+    "en": PlanLabels(
+        "Pack {thing}",
+        "School",
+        "Work",
+        "{subject} test",
+        "Study for {subject}",
+        "On call",
+        "Reliable school",
+        "After-school care",
+    ),
 }
 
 
@@ -140,6 +162,45 @@ def things_on_day(tt: dict[str, Any], date: str) -> dict[str, dict[str, Any]]:
     for thing in ex.get("things") or []:
         add(thing)
     return out
+
+
+def _last_end(ls: list[dict[str, Any]]) -> str:
+    end = ls[0]["end"]
+    for lesson in ls:
+        if lesson["end"] > end:
+            end = lesson["end"]
+    return end
+
+
+def care_of(tt: dict[str, Any], wd: int, week: str | None) -> dict[str, str] | None:
+    """Care after school on a usual weekday: from the last lesson to the care's end, or None."""
+    care = tt.get("care")
+    end = care["until"].get(wd) if care else None
+    if not care or not end:
+        return None
+    ls = lessons_of(tt, wd, week)
+    if not ls:
+        return None
+    start = _last_end(ls)
+    return {"kind": care["kind"], "start": start, "end": end} if end > start else None
+
+
+def care_on_day(tt: dict[str, Any], date: str) -> dict[str, str] | None:
+    """Care after school on a date, with a single day that differs taken into account. Holidays are up to the caller."""
+    care = tt.get("care")
+    if not care:
+        return None
+    ex = next((d for d in tt.get("days") or [] if d["date"] == date), None)
+    if not ex:
+        return care_of(tt, weekday(date), week_of(tt, date))
+    if ex.get("free") or ex.get("noCare"):
+        return None
+    end = ex.get("careTo") or care["until"].get(weekday(date))
+    ls = lessons_on_day(tt, date)
+    if not end or not ls:
+        return None
+    start = _last_end(ls)
+    return {"kind": care["kind"], "start": start, "end": end} if end > start else None
 
 
 def timetable_holds(tt: dict[str, Any], date: str) -> bool:
@@ -267,6 +328,42 @@ def timetable_items(
             }
         )
 
+    # Care after school: a block of its own from the last lesson on, pale like the school day.
+    care: dict[str, dict[str, Any]] = {}
+    if not tt["noCal"] and tt.get("care"):
+        for week in weeks:
+            for wd in range(7):
+                c = care_of(tt, wd, week)
+                if not c:
+                    continue
+                cid = f"{TT_PREFIX}{lst['id']}~c{c['start'].replace(':', '', 1)}{c['end'].replace(':', '', 1)}" + (
+                    f"~{week}" if week else ""
+                )
+                cur = care.get(cid) or {**c, "week": week, "days": []}
+                cur["days"].append(wd)
+                care[cid] = cur
+    fetch = bool(tt.get("care") and tt["care"]["fetch"])
+    for cid, c in care.items():
+        base = _start_from(_series_base(tt, c["week"]), 2 if c["week"] else 1, valid_from)
+        c["days"].sort()
+        care_repeat: dict[str, Any] = {"freq": "week", "interval": 2 if c["week"] else 1, "days": list(c["days"])}
+        if valid_until:
+            care_repeat["until"] = valid_until
+        block: dict[str, Any] = {
+            "id": cid,
+            "listId": lst["id"],
+            "kind": "event",
+            "title": labels.care(c["kind"]),
+            "assignees": list(who),
+            "start": f"{base}T{c['start']}",
+            "end": f"{base}T{c['end']}",
+            "repeat": care_repeat,
+            "fromTimetable": lst["id"],
+        }
+        if fetch:
+            block["needFrom"] = True
+        items.append(block)
+
     skips: list[tuple[str, str]] = []
     first, last = add_days(today, -14), add_days(today, 400)
 
@@ -309,6 +406,26 @@ def timetable_items(
         for sid, s in school.items():
             if wd in s["days"] and s["week"] == (week if tt["abStart"] else None):
                 skips.append((sid, d))
+        for cid, c in care.items():
+            if wd in c["days"] and c["week"] == (week if tt["abStart"] else None):
+                skips.append((cid, d))
+        c_day = care_on_day(tt, d)
+        if c_day:
+            single: dict[str, Any] = {
+                "id": f"{TT_PREFIX}{lst['id']}~y{d}",
+                "listId": lst["id"],
+                "kind": "event",
+                "title": labels.care(c_day["kind"]),
+                "assignees": list(who),
+                "start": f"{d}T{c_day['start']}",
+                "end": f"{d}T{c_day['end']}",
+                # One date only, but as a series, so that who picks up is kept like on every other day.
+                "repeat": {"freq": "day", "interval": 1, "until": d},
+                "fromTimetable": lst["id"],
+            }
+            if fetch:
+                single["needFrom"] = True
+            items.append(single)
         ls = lessons_on_day(tt, d)
         if not ls:
             continue
@@ -378,6 +495,9 @@ def timetable_items(
             for sid, s in school.items():
                 if wd in s["days"]:
                     skips.append((sid, d))
+            for cid, c in care.items():
+                if wd in c["days"]:
+                    skips.append((cid, d))
             d = add_days(d, 1)
             guard += 1
     return items, skips
@@ -591,6 +711,9 @@ def school_day(lst: dict[str, Any], off: list[dict[str, Any]], date: str) -> dic
     if lessons:
         out["start"] = lessons[0]["start"]
         out["end"] = max(lesson["end"] for lesson in lessons)
+        care = care_on_day(tt, date)
+        if care:
+            out["care"] = care
     return out
 
 
@@ -678,6 +801,14 @@ def at_school(lst: dict[str, Any], off: list[dict[str, Any]], date: str, minute:
     day = school_day(lst, off, date)
     if day["start"] and _minutes(day["start"]) <= minute < _minutes(day["end"]):
         return day["end"]
+    return None
+
+
+def in_care(lst: dict[str, Any], off: list[dict[str, Any]], date: str, minute: int) -> str | None:
+    """When care after school ends today, while it is on; None otherwise."""
+    care = school_day(lst, off, date).get("care")
+    if care and _minutes(care["start"]) <= minute < _minutes(care["end"]):
+        return care["end"]
     return None
 
 

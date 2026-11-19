@@ -102,16 +102,17 @@ card:
 
 They show as in the app, worked out on your Home Assistant; nothing extra is fetched for them.
 
-- A **timetable** is a to-do list with today's packing tasks ("Pack sports kit"), due at the packing time. They count in the sensors, appear in the person's to-do list and fire `task_overdue` when not ticked off in time. The school day is in the person's calendar, holidays left out.
+- A **timetable** is a to-do list with today's packing tasks ("Pack sports kit"), due at the packing time. They count in the sensors, appear in the person's to-do list and fire `task_overdue` when not ticked off in time. The school day is in the person's calendar, holidays left out, and so is care after school (reliable school or OGS) when the timetable has it. With "Plan pick-up" in the app, care asks "who picks up?" like a drive, on the card too.
 - A **roster** puts working time into the person's calendar: the fixed week with its days off, or the shifts entered day by day (with the shift's name unless the roster shows "busy" only). It has no to-do list.
 
 Each plan also has entities of its own, on the device of the person it is for:
 
 | Entity | Description |
 |---|---|
-| `sensor.<person>_<group>_school_today` | Today at school: from when to when ("08:00–13:05"), or that there is no school. Attributes: `status` (`school`, `free`, `holiday`), `start`, `end`, `lessons` (period, start, end, subject, room), `pack_today`, `pack_tomorrow`, `tomorrow`, `week` (A/B weeks), `holiday`, `changed` (today differs from the usual week), `note`, `exams` (tests today) and `exams_ahead` (the next ones). Single changed days and timetables valid for a half-year only are taken into account. |
-| `binary_sensor.<person>_<group>_at_school` | On between the first and the last lesson of today. |
-| `calendar.<person>_<group>_timetable` | The timetable lesson by lesson, for a calendar card of its own. |
+| `sensor.<person>_<group>_school_today` | Today at school: from when to when ("08:00–13:05"), or that there is no school. Attributes: `status` (`school`, `free`, `holiday`), `start`, `end`, `lessons` (period, start, end, subject, room), `pack_today`, `pack_tomorrow`, `tomorrow`, `week` (A/B weeks), `holiday`, `changed` (today differs from the usual week), `note`, `exams` (tests today), `exams_ahead` (the next ones) and `care` (care after school today: `kind` `vs` for reliable school or `ogs`, `start`, `end`). Single changed days and timetables valid for a half-year only are taken into account. |
+| `binary_sensor.<person>_<group>_at_school` | On between the first and the last lesson of today. Attribute `care_until`: when care after school ends today. |
+| `binary_sensor.<person>_<group>_in_care_after_school` | On from the end of school to the end of care (reliable school or OGS), only for timetables with care. Attributes: `until`, `kind`. |
+| `calendar.<person>_<group>_timetable` | The timetable lesson by lesson, for a calendar card of its own, with care after school as one more entry. |
 | `sensor.<person>_<group>_work_today` | Today's working time or shift. Attributes: `spans`, `start`, `end`, `shift`, `code`, `standby`, `tomorrow`, `next_days` (seven days), `hours_week`. |
 | `binary_sensor.<person>_<group>_at_work` | On during working time, night shifts included; on-call shifts are not working time. |
 | `binary_sensor.<person>_<group>_on_call` | On during an on-call shift (only for rosters that have one). |
@@ -397,7 +398,7 @@ Alles bleibt Ende-zu-Ende-verschlüsselt: Home Assistant tritt der Gruppe mit ei
 
 Home Assistant zählt nicht als Person; pro Gruppe gehen bis zu 3 Integrationen. Für jede Person der Gruppe gibt es eine eigene To-do-Liste, einen Kalender und Sensoren; unter **Konfigurieren** ordnest du ihr eine Person in Home Assistant zu. Für Automationen gibt es das Ereignis `orgaia_event` (auch als Geräte-Auslöser), zum Beispiel wenn eine Aufgabe erledigt oder überfällig ist oder ein Termin beginnt. Stundenpläne erscheinen als To-do-Liste mit den Pack-Aufgaben von heute, Schulzeit und Arbeitszeit aus Dienstplänen stehen im Kalender der Person. Abonnierte Kalender (Schule, Verein, Müllabfuhr) holt Home Assistant selbst alle 6 Stunden und zeigt sie bei den Personen, für die sie gelten. Ist der Orgaia-Dienst nicht erreichbar, bleibt der letzte Stand sichtbar und der Sensor „Verbindung“ zeigt `offline`. Nach einem Neustart von höchstens 15 Minuten kommen die Ereignisse von zwischendurch nach, mit `late: true`. Dieselbe Markierung bekommt, was sich geändert hat, während der Dienst länger als 15 Minuten nicht erreichbar war. „Überfällig“ umfasst auch Serien- und Pack-Aufgaben nach ihrer Uhrzeit und verpasste Zeitfenster. Home Assistant sollte auf die Zeitzone eingestellt sein, in der ihr lebt.
 
-**Stunden- und Dienstpläne:** Je Plan gibt es zusätzlich `sensor.…_school_today` (Stunden von heute mit Fach, Raum und Zeiten, was zu packen ist, morgen) und `binary_sensor.…_at_school`, einen eigenen Kalender mit den einzelnen Stunden, `sensor.…_work_today` (Arbeitszeit oder Schicht, die nächsten 7 Tage) und `binary_sensor.…_at_work`, außerdem `binary_sensor.<gruppe>_school_holidays`. Ein Beispiel-Dashboard mit Standardkarten steht oben unter *Timetables and rosters*.
+**Stunden- und Dienstpläne:** Je Plan gibt es zusätzlich `sensor.…_school_today` (Stunden von heute mit Fach, Raum und Zeiten, was zu packen ist, morgen) und `binary_sensor.…_at_school`, bei Betreuung (verlässliche Schule oder OGS) `binary_sensor.…_in_care_after_school` und das Attribut `care`, einen eigenen Kalender mit den einzelnen Stunden, `sensor.…_work_today` (Arbeitszeit oder Schicht, die nächsten 7 Tage) und `binary_sensor.…_at_work`, außerdem `binary_sensor.<gruppe>_school_holidays`. Ein Beispiel-Dashboard mit Standardkarten steht oben unter *Timetables and rosters*.
 
 **Einkaufslisten:** Die To-do-Entität zeigt in `shopping_state`, ob an der Liste noch geschrieben wird (`draft`), ob sie freigegeben ist (`ready`) oder jemand einkauft (`going`), dazu wer freigegeben hat, bis wann und wer einkauft. Mengen stehen im Titel, später dazugekommene Artikel tragen 🆕.
 

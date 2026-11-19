@@ -19,7 +19,7 @@ from .entity import OrgaiaPlanEntity, person_ids_for, plan_list_ids, track_dynam
 from .protocol import actions
 from .protocol.actions import ActionError
 from .protocol.agenda import DEFAULT_DURATION, Deadline, Occurrence
-from .protocol.plans import school_day
+from .protocol.plans import PlanLabels, labels_for, school_day
 from .protocol.recur import add_days, date_of
 from .protocol.view import SpaceView, occ_id
 from .summary import calendar_deadlines, calendar_occurrences
@@ -257,15 +257,28 @@ class OrgaiaCalendar(Writer, CalendarEntity):
 MAX_LESSON_DAYS = 400
 
 
-def lessons_between(lst: dict, off: list[dict], start: datetime, end: datetime) -> list[CalendarEvent]:
-    """Every lesson of a timetable between two moments, holidays left out."""
+def lessons_between(
+    lst: dict, off: list[dict], start: datetime, end: datetime, labels: PlanLabels | None = None
+) -> list[CalendarEvent]:
+    """Every lesson of a timetable between two moments, holidays left out, and care after school as one more."""
+    labels = labels or labels_for(None)
     out: list[CalendarEvent] = []
     day = add_days(start.date().isoformat(), -1)
     last = end.date().isoformat()
     for _ in range(MAX_LESSON_DAYS):
         if day > last:
             break
-        for lesson in school_day(lst, off, day)["lessons"]:
+        today = school_day(lst, off, day)
+        care = today.get("care")
+        if care:
+            begins, ends = to_datetime(f"{day}T{care['start']}"), to_datetime(f"{day}T{care['end']}")
+            if ends > start and begins < end:
+                out.append(
+                    CalendarEvent(
+                        start=begins, end=ends, summary=labels.care(care["kind"]), uid=f"{lst['id']}|{day}|care"
+                    )
+                )
+        for lesson in today["lessons"]:
             begins, ends = to_datetime(f"{day}T{lesson['start']}"), to_datetime(f"{day}T{lesson['end']}")
             if ends <= begins:
                 ends = begins + timedelta(minutes=15)
@@ -281,6 +294,7 @@ def lessons_between(lst: dict, off: list[dict], start: datetime, end: datetime) 
                     )
                 )
         day = add_days(day, 1)
+    out.sort(key=lambda e: e.start)
     return out
 
 
@@ -298,7 +312,8 @@ class OrgaiaTimetableCalendar(OrgaiaPlanEntity, CalendarEntity):
         plan = self.plan
         if plan is None:
             return []
-        return lessons_between(plan, self.coordinator.data.meta.get("schoolOff") or [], start, end)
+        labels = labels_for(self.hass.config.language if self.hass else None)
+        return lessons_between(plan, self.coordinator.data.meta.get("schoolOff") or [], start, end, labels)
 
     @property
     def event(self) -> CalendarEvent | None:

@@ -11,6 +11,7 @@ from pytest_homeassistant_custom_component.common import async_capture_events, a
 
 from custom_components.orgaia.board import board
 from custom_components.orgaia.const import DOMAIN, EVENT_ORGAIA
+from custom_components.orgaia.report import day_report, speech
 
 from .fake_service import SPACE, FakeService
 from .test_init import setup_group
@@ -110,6 +111,65 @@ async def test_timetable_and_roster(hass: HomeAssistant, service: FakeService, f
     service.write("list", "tt", {"deleted": True})
     await refresh(hass, entry)
     assert er.async_get(hass).async_get_entity_id("sensor", DOMAIN, f"{SPACE}_ben_timetable_tt_today") is None
+
+
+async def test_care_after_school(hass: HomeAssistant, service: FakeService, freezer) -> None:
+    """OGS after school: own sensor, school sensors, calendar, report and as a drive back."""
+    # 17 November 2026 is a Tuesday, noon.
+    entry = await setup_group(hass, service, freezer)
+    service.write(
+        "list",
+        "tt",
+        {
+            "name": "Stundenplan Ben",
+            "type": "timetable",
+            "order": 3,
+            "ttFor": "ben",
+            "subj.ma": {"name": "Mathe"},
+            "les.2.1": "ma",
+            "les.2.2": "ma",
+            "les.3.1": "ma",
+            "careKind": "ogs",
+            "care.2": "16:00",
+            "careFetch": True,
+        },
+    )
+    await refresh(hass, entry)
+
+    in_care = entity(hass, "binary_sensor", f"{SPACE}_ben_timetable_tt_care")
+    state = hass.states.get(in_care)
+    assert state.state == "on" and state.attributes["until"] == "16:00" and state.attributes["kind"] == "ogs"
+    at_school = hass.states.get(entity(hass, "binary_sensor", f"{SPACE}_ben_timetable_tt_now"))
+    assert at_school.state == "off" and at_school.attributes["care_until"] == "16:00"
+    school = hass.states.get(entity(hass, "sensor", f"{SPACE}_ben_timetable_tt_today"))
+    assert school.attributes["care"] == {"kind": "ogs", "start": "09:30", "end": "16:00"}
+    # Wednesday has no care.
+    assert "care" not in school.attributes["tomorrow"]
+
+    calendar = entity(hass, "calendar", f"{SPACE}_ben_timetable_tt_lessons")
+    midnight = dt_util.start_of_local_day()
+    got = await hass.services.async_call(
+        "calendar",
+        "get_events",
+        {"start_date_time": midnight, "end_date_time": midnight + timedelta(days=1)},
+        target={"entity_id": calendar},
+        blocking=True,
+        return_response=True,
+    )
+    assert [e["summary"] for e in got[calendar]["events"]] == ["Mathe", "Mathe", "After-school care"]
+
+    view = entry.runtime_data.data
+    report = day_report(view, "2026-11-17", "2026-11-17", 12 * 60)
+    assert "Ben hat Schule von 07:55 bis 09:30, danach OGS bis 16:00" in speech(report, "de", "2026-11-17")
+
+    # Who picks Ben up is asked like a drive back, on the card too.
+    rows = [r for r in board(view, "2026-11-17")["agenda"] if r["title"] == "After-school care"]
+    assert rows[0]["drive"]["date"] == "2026-11-17" and rows[0]["drive"]["from"] is None
+
+    freezer.move_to("2026-11-17T16:30:00+01:00")
+    async_fire_time_changed(hass, dt_util.utcnow())
+    await hass.async_block_till_done()
+    assert hass.states.get(in_care).state == "off"
 
 
 async def test_deadlines_and_ticks_in_the_calendar(hass: HomeAssistant, service: FakeService, freezer) -> None:

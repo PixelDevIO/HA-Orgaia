@@ -178,6 +178,9 @@
       }
     },
     "binary_sensor": {
+      "in_care": {
+        "name": "In care after school"
+      },
       "at_school": {
         "name": "At school"
       },
