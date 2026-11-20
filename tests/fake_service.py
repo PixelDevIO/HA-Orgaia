@@ -73,7 +73,9 @@ class FakeService:
             "e": eid,
             "set": fields,
         }
-        self.rows.append({"seq": len(self.rows) + 1, "rec": seal_record(SPACE, self.epoch, self.key, author, op)})
+        self.rows.append(
+            {"seq": len(self.rows) + 1, "id": op["id"], "rec": seal_record(SPACE, self.epoch, self.key, author, op)}
+        )
 
     def sent(self) -> list[dict[str, Any]]:
         """What Home Assistant wrote, opened as a member of the group opens it."""
@@ -117,7 +119,12 @@ class FakeService:
                 raise ApiError(403, "not-member")
             if self.block:
                 raise ApiError(*self.block)
-            after = int(parse_qs(url.query).get("after", ["0"])[0])
+            query = parse_qs(url.query)
+            after = int(query.get("after", ["0"])[0])
+            at = query.get("at", [None])[0]
+            # Like the service after a restore from a backup: its history does not go on from `after`.
+            if after > len(self.rows) or (at and after and self.rows[after - 1].get("id") not in (None, at)):
+                return {"ops": [], "more": False, "floor": 0, "reset": True}
             return {"ops": [r for r in self.rows if r["seq"] > after], "more": False, "floor": 0}
         if method == "POST" and url.path == f"/v1/spaces/{SPACE}/ops":
             if self.removed:
@@ -132,7 +139,7 @@ class FakeService:
             assert body["ops"] and len(body["ops"]) <= 200
             for op in body["ops"]:
                 assert op["rec"]["a"] == self.ha_sign and op["rec"]["e"] == self.epoch
-                self.rows.append({"seq": len(self.rows) + 1, "rec": op["rec"]})
+                self.rows.append({"seq": len(self.rows) + 1, "id": op["id"], "rec": op["rec"]})
             return {"head": len(self.rows)}
         if method == "POST" and url.path == f"/v1/spaces/{SPACE}/leave":
             self.left = True

@@ -15,6 +15,7 @@ from collections.abc import Callable
 import logging
 import secrets
 from typing import Any
+from urllib.parse import quote
 
 import aiohttp
 
@@ -86,6 +87,8 @@ class GroupEngine:
         self.epoch: int = int(data.get("epoch", 0))
         self.keys: dict[int, str] = {int(k): v for k, v in (data.get("keys") or {}).items()}
         self.cursor: int = int(data.get("cursor", 0))
+        # Id of the change at ``cursor``: the service tells by it when its history no longer goes on from there.
+        self.cursor_id: str | None = data.get("cursorId")
         self.members: list[dict[str, Any]] = data.get("members") or []
         self.plan: dict[str, Any] | None = data.get("plan")
         self.state: State = data.get("state") or empty_state()
@@ -123,6 +126,7 @@ class GroupEngine:
             "epoch": self.epoch,
             "keys": {str(k): v for k, v in self.keys.items()},
             "cursor": self.cursor,
+            "cursorId": self.cursor_id,
             "members": self.members,
             "plan": self.plan,
             "state": self.state,
@@ -363,7 +367,10 @@ class GroupEngine:
         except CryptoError:
             return False
         changed = merge_state(self.state, other) if isinstance(other, dict) else False
-        self.cursor = max(self.cursor, int(snap.get("uptoSeq") or 0))
+        upto = int(snap.get("uptoSeq") or 0)
+        if upto > self.cursor:
+            self.cursor_id = None
+        self.cursor = max(self.cursor, upto)
         return changed
 
     async def sync(self) -> bool:
@@ -406,8 +413,22 @@ class GroupEngine:
         asked_for_keys = False
         first_pull = self.cursor == 0
         tried_snapshot = False
+        reset = False
         for _ in range(1000):
-            res = await self.api.req("GET", f"{path}?after={self.cursor}")
+            at = f"&at={quote(self.cursor_id, safe='')}" if self.cursor_id else ""
+            res = await self.api.req("GET", f"{path}?after={self.cursor}{at}")
+            if res.get("reset"):
+                # The service was restored from a backup: its history no longer goes on from what was read.
+                # Read it from the start again; what is here stays, the newest value of each field wins.
+                if reset:
+                    break
+                reset = True
+                self.cursor = 0
+                self.cursor_id = None
+                first_pull = True
+                tried_snapshot = False
+                changed = True
+                continue
             # A new member of a group with a long history starts from the snapshot.
             if first_pull and self.cursor == 0 and res.get("more") and not tried_snapshot:
                 tried_snapshot = True
@@ -418,6 +439,7 @@ class GroupEngine:
             if floor > self.cursor:
                 changed = await self._load_snapshot() or changed
                 self.cursor = max(self.cursor, floor)
+                self.cursor_id = None
                 continue
             missing = False
             waiting = False
@@ -442,6 +464,7 @@ class GroupEngine:
                 if self._apply_remote(rec):
                     changed = True
                 self.cursor = int(row.get("seq") or self.cursor)
+                self.cursor_id = row.get("id") or None
             if missing:
                 asked_for_keys = True
                 if not await self.refresh_space():
