@@ -43,6 +43,10 @@ STATUS_REMOVED = "removed"
 STATUS_OFFLINE = "offline"
 
 
+# How long reading waits at a change whose group key has not reached this Home Assistant.
+KEY_WAIT_MS = 3 * 24 * 60 * 60 * 1000
+
+
 class JoinError(Exception):
     """Joining did not work: the invitation is wrong, used up, or the group cannot take a service."""
 
@@ -90,6 +94,8 @@ class GroupEngine:
         self.synced_at: int | None = data.get("syncedAt")
         # When Home Assistant last stopped with this group, in ms; set only on a clean stop.
         self.stopped_at: int | None = data.get("stoppedAt")
+        # Since when changes wait that need a group key this Home Assistant has not got; reading stops there.
+        self.key_wait: int | None = data.get("keyWait")
         self.api = Api(session, self.server, self.identity, self.device_id)
         # The service's time when this machine's clock is far off: a clock a day behind would
         # otherwise make every change of the others look like it came from the future.
@@ -123,6 +129,7 @@ class GroupEngine:
             "status": self.status,
             "syncedAt": self.synced_at,
             "stoppedAt": self.stopped_at,
+            "keyWait": self.key_wait,
         }
 
     @staticmethod
@@ -413,16 +420,25 @@ class GroupEngine:
                 self.cursor = max(self.cursor, floor)
                 continue
             missing = False
+            waiting = False
             for row in res.get("ops") or []:
                 rec = row.get("rec") or {}
                 epoch = rec.get("e")
+                keyless = isinstance(epoch, int) and epoch > self.epoch and epoch not in self.keys
                 # Written with a key or by a member Home Assistant does not know yet: read the group again first.
-                if not asked_for_keys and (
-                    (isinstance(epoch, int) and epoch > self.epoch and epoch not in self.keys)
-                    or not self._known_author(rec.get("a", ""))
-                ):
+                if not asked_for_keys and (keyless or not self._known_author(rec.get("a", ""))):
                     missing = True
                     break
+                # Still no key after asking: its envelope is not there yet. Reading waits at this change for a
+                # few days instead of passing it for good; after that it is given up, as before.
+                if keyless:
+                    if self.key_wait is None:
+                        self.key_wait = self._now()
+                    if self._now() - self.key_wait < KEY_WAIT_MS:
+                        waiting = True
+                        break
+                elif self.key_wait is not None and epoch in self.keys:
+                    self.key_wait = None
                 if self._apply_remote(rec):
                     changed = True
                 self.cursor = int(row.get("seq") or self.cursor)
@@ -431,7 +447,7 @@ class GroupEngine:
                 if not await self.refresh_space():
                     return True
                 continue
-            if not res.get("more"):
+            if waiting or not res.get("more"):
                 break
         return changed
 

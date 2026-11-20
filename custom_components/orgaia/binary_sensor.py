@@ -1,4 +1,4 @@
-"""On/off states for automations: at school, in care, at work, on call, school holidays, busy, shopping, may write."""
+"""On/off states for automations: school, care, work, on call, away, child without care, holidays, busy, shopping."""
 
 from __future__ import annotations
 
@@ -13,7 +13,18 @@ from homeassistant.helpers.event import async_track_time_change
 
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator
 from .entity import OrgaiaEntity, OrgaiaPlanEntity, person_entity, person_ids_for, plan_list_ids, track_dynamic
-from .protocol.plans import at_school, at_work, holiday_on, in_care, is_plan_item, next_holiday, on_call, school_day
+from .protocol.people import absence_on, care_gaps
+from .protocol.plans import (
+    at_school,
+    at_work,
+    holiday_on,
+    in_care,
+    is_plan_item,
+    next_holiday,
+    on_call,
+    school_day,
+    school_off_for,
+)
 from .protocol.recur import add_days
 from .protocol.shopping import STATE_GOING
 from .protocol.view import SpaceView
@@ -36,6 +47,28 @@ def care_timetables(view: SpaceView) -> list[str]:
         lst["id"]
         for lst in view.lists
         if lst["type"] == "timetable" and lst.get("timetable") and lst["timetable"].get("care")
+    ]
+
+
+def gap_groups(view: SpaceView) -> list[str]:
+    """Groups with a timetable and a roster: only there can a child be on its own while everybody works."""
+    types = {lst["type"] for lst in view.lists if lst.get("timetable") or lst.get("roster")}
+    return ["care_gap"] if {"timetable", "roster"} <= types else []
+
+
+def clock(minute: int) -> str:
+    return f"{minute // 60:02d}:{minute % 60:02d}"
+
+
+def gaps_on(view: SpaceView, date: str) -> list[dict[str, Any]]:
+    """The hours of a day a child is neither at school nor in care while every grown-up works."""
+    return [
+        {
+            "child": (view.person_by_id.get(g["childId"]) or {}).get("name"),
+            "start": clock(g["start"]),
+            "end": clock(g["end"]),
+        }
+        for g in care_gaps(view, date)
     ]
 
 
@@ -94,9 +127,16 @@ async def async_setup_entry(
         hass,
         entry,
         person_ids_for(entry),
-        lambda person_id: [OrgaiaBusySensor(coordinator, person_id), OrgaiaShoppingSensor(coordinator, person_id)],
+        lambda person_id: [
+            OrgaiaBusySensor(coordinator, person_id),
+            OrgaiaShoppingSensor(coordinator, person_id),
+            OrgaiaAwaySensor(coordinator, person_id),
+        ],
         async_add_entities,
         "binary_sensor",
+    )
+    track_dynamic(
+        hass, entry, gap_groups, lambda _key: [OrgaiaCareGapSensor(coordinator)], async_add_entities, "binary_sensor"
     )
     async_add_entities([OrgaiaCanWriteSensor(coordinator)])
 
@@ -128,7 +168,7 @@ class OrgaiaAtSchoolSensor(OrgaiaPlanEntity, _ByTheMinute):
         plan = self.plan
         if plan is None:
             return None
-        off = self.coordinator.data.meta.get("schoolOff") or []
+        off = school_off_for(self.coordinator.data, plan["timetable"])
         return at_school(plan, off, today(), minute_of_day(local_now()))
 
     @property
@@ -141,7 +181,7 @@ class OrgaiaAtSchoolSensor(OrgaiaPlanEntity, _ByTheMinute):
         plan = self.plan
         if plan is not None:
             # Care after school today, so that an automation knows school ends but the child is not home yet.
-            care = school_day(plan, self.coordinator.data.meta.get("schoolOff") or [], today()).get("care")
+            care = school_day(plan, school_off_for(self.coordinator.data, plan["timetable"]), today()).get("care")
             attrs["care_until"] = care["end"] if care else None
         if self.person_id is not None:
             attrs["person_entity"] = person_entity(self.coordinator.config_entry, self.person_id)
@@ -162,7 +202,7 @@ class OrgaiaInCareSensor(OrgaiaPlanEntity, _ByTheMinute):
         plan = self.plan
         if plan is None:
             return None
-        off = self.coordinator.data.meta.get("schoolOff") or []
+        off = school_off_for(self.coordinator.data, plan["timetable"])
         return in_care(plan, off, today(), minute_of_day(local_now()))
 
     @property
@@ -289,6 +329,73 @@ class OrgaiaShoppingSensor(OrgaiaEntity, BinarySensorEntity):
             "lists": [x["list"] for x in lists],
             "open": sum(x["open"] for x in lists),
             "person_entity": person_entity(self.coordinator.config_entry, self.person_id or ""),
+        }
+
+
+class OrgaiaAwaySensor(OrgaiaEntity, _ByTheMinute):
+    """On on the days the person is entered as away in the app (trip, class trip, hospital)."""
+
+    _attr_translation_key = "away"
+    _attr_icon = "mdi:bag-suitcase"
+    _unrecorded_attributes = frozenset({"note", "next"})
+
+    def __init__(self, coordinator: OrgaiaCoordinator, person_id: str) -> None:
+        super().__init__(coordinator, "away", person_id)
+
+    def _person(self) -> dict[str, Any] | None:
+        return self.coordinator.data.person_by_id.get(self.person_id or "")
+
+    @property
+    def is_on(self) -> bool:
+        return absence_on(self._person(), today()) is not None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        day = today()
+        person = self._person()
+        now = absence_on(person, day)
+        later = sorted((a for a in (person or {}).get("absences") or [] if a["from"] > day), key=lambda a: a["from"])
+        nxt = later[0] if later else None
+        return {
+            "from": now["from"] if now else None,
+            "until": now["to"] if now else None,
+            "note": now.get("note") if now else None,
+            "next": {"from": nxt["from"], "to": nxt["to"], "note": nxt.get("note")} if nxt else None,
+            "person_entity": person_entity(self.coordinator.config_entry, self.person_id or ""),
+        }
+
+
+class OrgaiaCareGapSensor(OrgaiaEntity, _ByTheMinute):
+    """On while a child is neither at school nor in care and every grown-up of the group works.
+
+    As in the app under "Who is home when": only when every grown-up has a roster, between 7 and 19 o'clock.
+    """
+
+    _attr_translation_key = "care_gap"
+    _attr_icon = "mdi:human-child"
+    _unrecorded_attributes = frozenset({"today", "tomorrow", "children"})
+
+    def __init__(self, coordinator: OrgaiaCoordinator) -> None:
+        super().__init__(coordinator, "care_gap")
+
+    def _now(self) -> list[dict[str, Any]]:
+        minute = clock(minute_of_day(local_now()))
+        return [g for g in gaps_on(self.coordinator.data, today()) if g["start"] <= minute < g["end"]]
+
+    @property
+    def is_on(self) -> bool:
+        return bool(self._now())
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        view = self.coordinator.data
+        day = today()
+        running = self._now()
+        return {
+            "children": [g["child"] for g in running],
+            "until": max((g["end"] for g in running), default=None),
+            "today": gaps_on(view, day),
+            "tomorrow": gaps_on(view, add_days(day, 1)),
         }
 
 

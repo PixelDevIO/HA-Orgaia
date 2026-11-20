@@ -91,3 +91,33 @@ async def test_live_events(service: FakeService) -> None:
     assert await engine.on_event({"t": "ops", "spaceId": SPACE, "head": engine.cursor}) is False
     assert await engine.on_event({"t": "ops", "spaceId": SPACE, "head": engine.cursor + 1}) is True
     assert await engine.on_event({"t": "members", "spaceId": SPACE}) is True
+
+
+async def test_waits_for_a_group_key_it_has_not_got(service: FakeService) -> None:
+    """A change written with a newer group key is not passed for good while its key is on the way."""
+    from custom_components.orgaia.protocol.b64 import to_b64
+    from custom_components.orgaia.protocol.crypto import random_bytes, seal_record
+
+    fill_group(service, "2026-11-17")
+    engine = await joined(service)
+    await engine.sync()
+    before = engine.cursor
+    new_key = random_bytes(32)
+    op = {
+        "id": to_b64(random_bytes(9)),
+        "ts": service.clock.tick(),
+        "by": service.admin.sign_pub,
+        "k": "item",
+        "e": "s9",
+        "set": {"title": "Butter", "listId": "shop"},
+    }
+    service.rows.append({"seq": len(service.rows) + 1, "rec": seal_record(SPACE, 2, new_key, service.admin, op)})
+    # The envelope with the new key has not arrived: reading stops in front of the change.
+    await engine.sync()
+    assert engine.cursor == before and engine.key_wait is not None
+    assert "s9" not in engine.view().item_by_id
+    # It survives a restart, and the change is read once the key is there.
+    again = GroupEngine(MagicMock(), engine.to_dict())
+    service.epoch, service.key = 2, new_key
+    assert await again.sync() is True
+    assert "s9" in again.view().item_by_id and again.key_wait is None

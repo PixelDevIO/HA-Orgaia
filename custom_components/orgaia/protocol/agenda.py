@@ -5,7 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from .recur import add_days, date_of, days_between, occurrence_dates, rotation_assignee, time_of, to_min
+from .people import turn_of, with_occasion
+from .recur import add_days, date_of, days_between, occurrence_dates, time_of, to_min
 from .view import SpaceView, occ_id
 
 DEFAULT_DURATION = 60
@@ -47,7 +48,7 @@ def resolve_occurrence(view: SpaceView, item: dict[str, Any], occ_date: str | No
     occ = view.occs.get(occ_id(item["id"], occ_date)) if occ_date else None
     assignees = list(item.get("assignees") or [])
     if occ_date:
-        turn = rotation_assignee(item, occ_date)
+        turn = turn_of(view, item, occ_date)
         if turn:
             assignees = [turn]
     if occ and isinstance(occ.get("assignees"), list):
@@ -73,7 +74,11 @@ def resolve_occurrence(view: SpaceView, item: dict[str, Any], occ_date: str | No
     start = (occ or {}).get("start") or f"{d}T{start_time}"
     end = (occ or {}).get("end") or (f"{add_days(d, span) if span else d}T{end_time}" if end_time else None)
     done = bool((occ or {}).get("done")) if occ_date else bool(item.get("done"))
-    return Occurrence(with_overrides(item, occ), occ_date, start, end, assignees, done, bool((occ or {}).get("skip")))
+    shown = with_overrides(item, occ)
+    if item.get("occasion"):
+        # A birthday reads with the age on that day: "Oma (75)".
+        shown = with_occasion(shown, d)
+    return Occurrence(shown, occ_date, start, end, assignees, done, bool((occ or {}).get("skip")))
 
 
 @dataclass
@@ -240,7 +245,7 @@ def deadlines(view: SpaceView, start: str, end: str) -> list[Deadline]:
                     continue
                 done = bool((occ or {}).get("done"))
                 # Whose turn it is on that day, as in the calendar: a rotation, or someone set for that day only.
-                turn = rotation_assignee(item, d)
+                turn = turn_of(view, item, d)
                 who = (occ or {}).get("assignees")
                 if not isinstance(who, list):
                     who = [turn] if turn else item.get("assignees") or []

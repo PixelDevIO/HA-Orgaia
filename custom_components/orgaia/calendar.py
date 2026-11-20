@@ -19,7 +19,7 @@ from .entity import OrgaiaPlanEntity, person_ids_for, plan_list_ids, track_dynam
 from .protocol import actions
 from .protocol.actions import ActionError
 from .protocol.agenda import DEFAULT_DURATION, Deadline, Occurrence
-from .protocol.plans import PlanLabels, labels_for, school_day
+from .protocol.plans import PlanLabels, labels_for, school_day, school_off_for
 from .protocol.recur import add_days, date_of
 from .protocol.view import SpaceView, occ_id
 from .summary import calendar_deadlines, calendar_occurrences
@@ -313,7 +313,7 @@ class OrgaiaTimetableCalendar(OrgaiaPlanEntity, CalendarEntity):
         if plan is None:
             return []
         labels = labels_for(self.hass.config.language if self.hass else None)
-        return lessons_between(plan, self.coordinator.data.meta.get("schoolOff") or [], start, end, labels)
+        return lessons_between(plan, school_off_for(self.coordinator.data, plan["timetable"]), start, end, labels)
 
     @property
     def event(self) -> CalendarEvent | None:
