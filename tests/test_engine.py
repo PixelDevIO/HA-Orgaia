@@ -91,3 +91,25 @@ async def test_live_events(service: FakeService) -> None:
     assert await engine.on_event({"t": "ops", "spaceId": SPACE, "head": engine.cursor}) is False
     assert await engine.on_event({"t": "ops", "spaceId": SPACE, "head": engine.cursor + 1}) is True
     assert await engine.on_event({"t": "members", "spaceId": SPACE}) is True
+
+
+async def test_reads_again_after_a_restore(service: FakeService) -> None:
+    fill_group(service, "2026-11-17")
+    engine = await joined(service)
+    await engine.sync()
+    kept = len(service.rows)
+    service.write("item", "lost", {"title": "Nach dem Backup", "listId": "shop"})
+    await engine.sync()
+    assert engine.cursor_id
+    # The service is restored from a backup taken before the last change, then someone writes something new.
+    service.rows = service.rows[:kept]
+    service.write("item", "s9", {"title": "Nach dem Restore", "listId": "shop"})
+    assert await engine.sync() is True
+    assert "s9" in engine.view().item_by_id
+    # What Home Assistant read before stays; an app device sends it back to the service.
+    assert "lost" in engine.view().item_by_id
+    assert engine.cursor == len(service.rows)
+    # And it goes on normally afterwards.
+    service.write("item", "s10", {"title": "Danach", "listId": "shop"})
+    assert await engine.sync() is True
+    assert "s10" in engine.view().item_by_id
