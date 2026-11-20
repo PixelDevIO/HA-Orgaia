@@ -87,6 +87,7 @@ const TEXT = {
     careShort: 'Care',
     careUntil: 'until {time}',
     holidays: 'Holidays',
+    away: 'Away',
     free: 'off',
     packToday: 'Pack today',
     nothingAhead: 'Nothing in the next {n} days.',
@@ -216,6 +217,7 @@ const TEXT = {
     careShort: 'Betreuung',
     careUntil: 'bis {time}',
     holidays: 'Ferien',
+    away: 'Weg',
     free: 'frei',
     packToday: 'Heute einpacken',
     nothingAhead: 'Nichts in den nächsten {n} Tagen.',
@@ -273,7 +275,7 @@ const TEXT = {
 };
 
 // The integration this card came with. A browser that still has an older card says so.
-const CARD_VERSION = '0.9.0';
+const CARD_VERSION = '0.10.0';
 
 // The people's colours of the app. All carry white text.
 const COLORS = ['#2F5FD0', '#B4500B', '#7B3FB5', '#0B6F6A', '#B02C63', '#56681A', '#8A5A00', '#3F4B8C'];
@@ -831,7 +833,7 @@ class OrgaiaCard extends HTMLElement {
       const c = day.care;
       const careLive = c && day.date === today && c.start <= now && now < c.end;
       const care = c ? `<div class="slot${careLive ? ' live' : ''}"><span class="when"><span class="sub">${esc(c.start)}–${esc(c.end)}</span></span><div class="lesson care${careLive ? ' live' : ''}"><span class="name">${esc(c.kind === 'vs' ? t.careVs : t.careOgs)}</span></div></div>` : '';
-      const none = day.status === 'holiday' ? day.holiday || t.holidays : t.noSchool;
+      const none = day.status === 'holiday' ? day.holiday || t.holidays : day.status === 'away' ? day.away || t.away : t.noSchool;
       return head + (rows ? rows + care : `<p class="hint">${esc(none)}</p>`) + foot;
     }
 
@@ -857,8 +859,8 @@ class OrgaiaCard extends HTMLElement {
     cols.forEach((i, c) => {
       const d = week.days[i];
       const col = `grid-column:${c + 2}`;
-      if (d.status === 'holiday') {
-        grid += `<div class="off${d.date === today ? ' today' : ''}" style="${col};grid-row:2 / span ${last}"><span>${esc(d.holiday || t.holidays)}</span></div>`;
+      if (d.status === 'holiday' || d.status === 'away') {
+        grid += `<div class="off${d.date === today ? ' today' : ''}" style="${col};grid-row:2 / span ${last}"><span>${esc(d.status === 'away' ? d.away || t.away : d.holiday || t.holidays)}</span></div>`;
         return;
       }
       for (let n = 1; n <= last; n++) {

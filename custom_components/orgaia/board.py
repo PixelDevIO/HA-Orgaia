@@ -14,7 +14,7 @@ import voluptuous as vol
 from .const import COMPLETED_DAYS, CONF_PERSONS, DOMAIN, VERSION
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator
 from .protocol.agenda import Occurrence
-from .protocol.plans import pack_on, school_day, work_day
+from .protocol.plans import pack_on, school_day, school_off_for, work_day
 from .protocol.recur import add_days, date_of, week_start
 from .protocol.shopping import AISLE_NAMES, AISLES, can_step, missed_of, trip_of, trip_overdue
 from .protocol.view import SpaceView, occ_id
@@ -110,7 +110,6 @@ def _plan_person(view: SpaceView, plan: dict[str, Any]) -> str | None:
 
 def timetables(view: SpaceView, day: str) -> list[dict[str, Any]]:
     """Every timetable as whole weeks from Monday: the lessons of each day, and what to pack on it."""
-    off = view.meta.get("schoolOff") or []
     monday = week_start(day)
     out = []
     for lst in view.lists:
@@ -120,7 +119,10 @@ def timetables(view: SpaceView, day: str) -> list[dict[str, Any]]:
         for w in range(TIMETABLE_WEEKS):
             start = add_days(monday, 7 * w)
             days = [
-                {**school_day(lst, off, d), "pack": pack_on(lst, off, d)}
+                {
+                    **school_day(lst, school_off_for(view, lst["timetable"]), d),
+                    "pack": pack_on(lst, school_off_for(view, lst["timetable"]), d),
+                }
                 for d in (add_days(start, i) for i in range(7))
             ]
             weeks.append({"start": start, "days": days})

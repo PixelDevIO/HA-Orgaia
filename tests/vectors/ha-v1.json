@@ -4044,6 +4044,1741 @@
    }
   ]
  },
+ "people": {
+  "today": "2026-11-17",
+  "awayLabel": "{name} weg",
+  "state": {
+   "meta": {
+    "space": {
+     "name": {
+      "ts": "0mubbs7i8000vecnode1",
+      "v": "Familie"
+     },
+     "schoolOff": {
+      "ts": "0mubbs7i8000vecnode1",
+      "v": [
+       {
+        "id": "o1",
+        "name": "Herbstferien",
+        "from": "2026-11-23",
+        "to": "2026-11-27"
+       },
+       {
+        "id": "bad",
+        "from": "x",
+        "to": "y"
+       }
+      ]
+     },
+     "schoolOff.o2": {
+      "ts": "0mubbs7i8000vecnode1",
+      "v": {
+       "name": "Weihnachten",
+       "from": "2026-12-21",
+       "to": "2027-01-02"
+      }
+     },
+     "schoolOff.o3": {
+      "ts": "0mubbs7i8000vecnode1",
+      "v": null
+     }
+    }
+   },
+   "person": {
+    "pA": {
+     "away.a1": {
+      "ts": "0mubbsfzs000vecnode1",
+      "v": {
+       "from": "2026-11-20",
+       "to": "2026-11-19",
+       "note": "  Dienstreise  "
+      }
+     },
+     "away.bad": {
+      "ts": "0mubbsfzs000vecnode1",
+      "v": {
+       "from": "x",
+       "to": "y"
+      }
+     },
+     "away.gone": {
+      "ts": "0mubbsfzs000vecnode1",
+      "v": null
+     },
+     "away.old": {
+      "ts": "0mubbsfzs000vecnode1",
+      "v": {
+       "from": "2024-01-01",
+       "to": "2024-01-03"
+      }
+     },
+     "color": {
+      "ts": "0mubbs8a0000vecnode1",
+      "v": 0
+     },
+     "name": {
+      "ts": "0mubbs8a0000vecnode1",
+      "v": "Anna"
+     },
+     "order": {
+      "ts": "0mubbs8a0000vecnode1",
+      "v": 0
+     },
+     "pub": {
+      "ts": "0mubbs8a0000vecnode1",
+      "v": "pubA"
+     },
+     "role": {
+      "ts": "0mubbs8a0000vecnode1",
+      "v": "admin"
+     }
+    },
+    "pC": {
+     "away.c1": {
+      "ts": "0mubbsgrk000vecnode1",
+      "v": {
+       "from": "2026-11-17",
+       "to": "2026-11-17"
+      }
+     },
+     "away.c2": {
+      "ts": "0mubbsgrk000vecnode1",
+      "v": {
+       "from": "2026-12-01",
+       "to": "2026-12-02",
+       "note": "Klassenfahrt"
+      }
+     },
+     "child": {
+      "ts": "0mubbs91s000vecnode1",
+      "v": true
+     },
+     "color": {
+      "ts": "0mubbs91s000vecnode1",
+      "v": 2
+     },
+     "name": {
+      "ts": "0mubbs91s000vecnode1",
+      "v": "Cleo"
+     },
+     "order": {
+      "ts": "0mubbs91s000vecnode1",
+      "v": 2
+     },
+     "role": {
+      "ts": "0mubbs91s000vecnode1",
+      "v": "member"
+     }
+    },
+    "pX": {
+     "away.x1": {
+      "ts": "0mubbshjc000vecnode1",
+      "v": {
+       "from": "2026-11-17",
+       "to": "2026-11-18"
+      }
+     },
+     "color": {
+      "ts": "0mubbshjc000vecnode1",
+      "v": 4
+     },
+     "name": {
+      "ts": "0mubbshjc000vecnode1",
+      "v": "Weg"
+     },
+     "order": {
+      "ts": "0mubbshjc000vecnode1",
+      "v": 9
+     },
+     "removed": {
+      "ts": "0mubbshjc000vecnode1",
+      "v": true
+     },
+     "role": {
+      "ts": "0mubbshjc000vecnode1",
+      "v": "member"
+     }
+    }
+   },
+   "list": {
+    "lBusy": {
+     "busyOnly": {
+      "ts": "0mubbsdog000vecnode1",
+      "v": true
+     },
+     "color": {
+      "ts": "0mubbsdog000vecnode1",
+      "v": 7
+     },
+     "d.2026-11-17": {
+      "ts": "0mubbsdog000vecnode1",
+      "v": "f"
+     },
+     "d.2026-11-18": {
+      "ts": "0mubbsdog000vecnode1",
+      "v": "b"
+     },
+     "d.2026-11-19": {
+      "ts": "0mubbsdog000vecnode1",
+      "v": "c"
+     },
+     "mode": {
+      "ts": "0mubbsdog000vecnode1",
+      "v": "shifts"
+     },
+     "name": {
+      "ts": "0mubbsdog000vecnode1",
+      "v": "Nur belegt"
+     },
+     "order": {
+      "ts": "0mubbsdog000vecnode1",
+      "v": 5
+     },
+     "rsFor": {
+      "ts": "0mubbsdog000vecnode1",
+      "v": "pC"
+     },
+     "shift.b": {
+      "ts": "0mubbsdog000vecnode1",
+      "v": {
+       "name": "Bereit",
+       "code": "B",
+       "start": "08:00",
+       "end": "12:00",
+       "standby": "yes"
+      }
+     },
+     "shift.c": {
+      "ts": "0mubbsdog000vecnode1",
+      "v": {
+       "name": "Bereit 2",
+       "code": "C",
+       "start": "13:00",
+       "end": "15:00",
+       "standby": true
+      }
+     },
+     "shift.f": {
+      "ts": "0mubbsdog000vecnode1",
+      "v": {
+       "name": "Früh",
+       "code": "F",
+       "start": "06:00",
+       "end": "14:00"
+      }
+     },
+     "type": {
+      "ts": "0mubbsdog000vecnode1",
+      "v": "roster"
+     }
+    },
+    "lFam": {
+     "color": {
+      "ts": "0mubbsib4000vecnode1",
+      "v": 1
+     },
+     "name": {
+      "ts": "0mubbsib4000vecnode1",
+      "v": "Familie"
+     },
+     "order": {
+      "ts": "0mubbsib4000vecnode1",
+      "v": 0
+     },
+     "type": {
+      "ts": "0mubbsib4000vecnode1",
+      "v": "tasks"
+     }
+    },
+    "lHalf": {
+     "care.1": {
+      "ts": "0mubbsalc000vecnode1",
+      "v": "16:00"
+     },
+     "care.3": {
+      "ts": "0mubbsalc000vecnode1",
+      "v": "16:00"
+     },
+     "color": {
+      "ts": "0mubbsalc000vecnode1",
+      "v": 9
+     },
+     "les.1.1": {
+      "ts": "0mubbsalc000vecnode1",
+      "v": "h1"
+     },
+     "les.3.2": {
+      "ts": "0mubbsalc000vecnode1",
+      "v": "h2"
+     },
+     "les.5.1": {
+      "ts": "0mubbsalc000vecnode1",
+      "v": "h1"
+     },
+     "name": {
+      "ts": "0mubbsalc000vecnode1",
+      "v": "Zweites Halbjahr"
+     },
+     "order": {
+      "ts": "0mubbsalc000vecnode1",
+      "v": 7
+     },
+     "packTime": {
+      "ts": "0mubbsalc000vecnode1",
+      "v": "18:30"
+     },
+     "subj.h1": {
+      "ts": "0mubbsalc000vecnode1",
+      "v": {
+       "name": "Bio",
+       "things": [
+        "Kittel"
+       ]
+      }
+     },
+     "subj.h2": {
+      "ts": "0mubbsalc000vecnode1",
+      "v": {
+       "name": "Sport",
+       "things": [
+        "Sportzeug"
+       ]
+      }
+     },
+     "ttFor": {
+      "ts": "0mubbsalc000vecnode1",
+      "v": "pC"
+     },
+     "ttFrom": {
+      "ts": "0mubbsalc000vecnode1",
+      "v": "2026-11-18"
+     },
+     "ttUntil": {
+      "ts": "0mubbsalc000vecnode1",
+      "v": "2026-12-11"
+     },
+     "type": {
+      "ts": "0mubbsalc000vecnode1",
+      "v": "timetable"
+     }
+    },
+    "lOff": {
+     "color": {
+      "ts": "0mubbseg8000vecnode1",
+      "v": 8
+     },
+     "mode": {
+      "ts": "0mubbseg8000vecnode1",
+      "v": "week"
+     },
+     "name": {
+      "ts": "0mubbseg8000vecnode1",
+      "v": "Kein Kalender"
+     },
+     "noCal": {
+      "ts": "0mubbseg8000vecnode1",
+      "v": true
+     },
+     "order": {
+      "ts": "0mubbseg8000vecnode1",
+      "v": 6
+     },
+     "type": {
+      "ts": "0mubbseg8000vecnode1",
+      "v": "roster"
+     },
+     "wk.1": {
+      "ts": "0mubbseg8000vecnode1",
+      "v": [
+       {
+        "start": "08:00",
+        "end": "16:00"
+       }
+      ]
+     }
+    },
+    "lShift": {
+     "color": {
+      "ts": "0mubbscwo000vecnode1",
+      "v": 6
+     },
+     "d.2025-01-01": {
+      "ts": "0mubbscwo000vecnode1",
+      "v": "f"
+     },
+     "d.2026-11-17": {
+      "ts": "0mubbscwo000vecnode1",
+      "v": "f"
+     },
+     "d.2026-11-18": {
+      "ts": "0mubbscwo000vecnode1",
+      "v": "n"
+     },
+     "d.2026-11-19": {
+      "ts": "0mubbscwo000vecnode1",
+      "v": "u"
+     },
+     "d.2026-11-20": {
+      "ts": "0mubbscwo000vecnode1",
+      "v": "gone"
+     },
+     "d.2026-11-21": {
+      "ts": "0mubbscwo000vecnode1",
+      "v": "09:00-12:00"
+     },
+     "d.2026-11-22": {
+      "ts": "0mubbscwo000vecnode1",
+      "v": "b"
+     },
+     "eve": {
+      "ts": "0mubbscwo000vecnode1",
+      "v": true
+     },
+     "mode": {
+      "ts": "0mubbscwo000vecnode1",
+      "v": "shifts"
+     },
+     "name": {
+      "ts": "0mubbscwo000vecnode1",
+      "v": "Dienste Anna"
+     },
+     "order": {
+      "ts": "0mubbscwo000vecnode1",
+      "v": 4
+     },
+     "rsFor": {
+      "ts": "0mubbscwo000vecnode1",
+      "v": "pA"
+     },
+     "shift.b": {
+      "ts": "0mubbscwo000vecnode1",
+      "v": {
+       "name": "Rufdienst",
+       "code": "R",
+       "start": "18:00",
+       "end": "08:00",
+       "standby": true
+      }
+     },
+     "shift.f": {
+      "ts": "0mubbscwo000vecnode1",
+      "v": {
+       "name": "Früh",
+       "code": "F",
+       "start": "06:00",
+       "end": "14:00"
+      }
+     },
+     "shift.n": {
+      "ts": "0mubbscwo000vecnode1",
+      "v": {
+       "name": "Nacht",
+       "code": "n",
+       "start": "22:00",
+       "end": "06:00"
+      }
+     },
+     "shift.u": {
+      "ts": "0mubbscwo000vecnode1",
+      "v": {
+       "name": "Urlaub",
+       "code": "U"
+      }
+     },
+     "type": {
+      "ts": "0mubbscwo000vecnode1",
+      "v": "roster"
+     }
+    },
+    "lTT": {
+     "abStart": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": "2026-11-16"
+     },
+     "care.1": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": "13:30"
+     },
+     "care.2": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": "12:00"
+     },
+     "care.3": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": "1pm"
+     },
+     "care.4": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": "14:00"
+     },
+     "care.5": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": "08:30"
+     },
+     "careFetch": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": true
+     },
+     "careKind": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": "vs"
+     },
+     "color": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": 3
+     },
+     "day.5": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": [
+       "Trinkflasche",
+       "sportzeug"
+      ]
+     },
+     "ex.2026-11-19": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": {
+       "from": 2,
+       "things": [
+        "Brotdose",
+        "Sportzeug"
+       ]
+      }
+     },
+     "ex.2026-11-20": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": {
+       "free": true
+      }
+     },
+     "ex.2026-11-24": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": {
+       "free": true
+      }
+     },
+     "ex.2026-11-30": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": {
+       "note": "Ausflug",
+       "things": [
+        "Regenjacke"
+       ],
+       "noCare": true
+      }
+     },
+     "ex.2026-12-01": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": {
+       "to": 1,
+       "note": "Hitzefrei"
+      }
+     },
+     "ex.2026-12-03": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": {
+       "careTo": "15:15"
+      }
+     },
+     "exam.x1": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": {
+       "subjectId": "s2",
+       "date": "2026-12-01",
+       "learn": 3,
+       "note": "Bruchrechnen"
+      }
+     },
+     "exam.x2": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": {
+       "subjectId": "s3",
+       "date": "2026-11-18",
+       "learn": 0
+      }
+     },
+     "exam.x3": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": {
+       "subjectId": "gone",
+       "date": "2026-11-19",
+       "learn": 2
+      }
+     },
+     "exam.x4": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": {
+       "subjectId": "s1",
+       "date": "bad",
+       "learn": 2
+      }
+     },
+     "les.1.1": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": "s2"
+     },
+     "les.1.2": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": "s1"
+     },
+     "les.2.1": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": "s2"
+     },
+     "les.3.3": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": "s4"
+     },
+     "les.4.5.A": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": "s3"
+     },
+     "les.4.5.B": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": "s1"
+     },
+     "les.5.1": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": "s2"
+     },
+     "les.5.2": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": ""
+     },
+     "name": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": "Stundenplan Cleo"
+     },
+     "order": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": 1
+     },
+     "packMon": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": "fri"
+     },
+     "packTime": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": "19:00"
+     },
+     "periods": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": [
+       {
+        "start": "08:00",
+        "end": "08:45"
+       },
+       {
+        "start": "08:50",
+        "end": "09:35"
+       },
+       {
+        "start": "09:55",
+        "end": "10:40"
+       },
+       {
+        "start": "10:45",
+        "end": "11:30"
+       },
+       {
+        "start": "11:45",
+        "end": "12:30"
+       }
+      ]
+     },
+     "subj.s1": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": {
+       "name": "Sport",
+       "things": [
+        "Sportzeug",
+        " turnschuhe ",
+        "Sportzeug"
+       ]
+      }
+     },
+     "subj.s2": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": {
+       "name": "Mathe",
+       "things": [
+        "Taschenrechner"
+       ],
+       "room": "204"
+      }
+     },
+     "subj.s3": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": {
+       "name": "Kunst",
+       "things": [
+        "Malkasten"
+       ]
+      }
+     },
+     "subj.s4": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": {
+       "name": "Weg",
+       "things": [
+        "Nichts"
+       ],
+       "deleted": true
+      }
+     },
+     "ttFor": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": "pC"
+     },
+     "type": {
+      "ts": "0mubbs9tk000vecnode1",
+      "v": "timetable"
+     }
+    },
+    "lTT2": {
+     "color": {
+      "ts": "0mubbsbd4000vecnode1",
+      "v": 4
+     },
+     "les.3.1": {
+      "ts": "0mubbsbd4000vecnode1",
+      "v": "x"
+     },
+     "name": {
+      "ts": "0mubbsbd4000vecnode1",
+      "v": "Ohne Kalender"
+     },
+     "noCal": {
+      "ts": "0mubbsbd4000vecnode1",
+      "v": true
+     },
+     "order": {
+      "ts": "0mubbsbd4000vecnode1",
+      "v": 2
+     },
+     "subj.x": {
+      "ts": "0mubbsbd4000vecnode1",
+      "v": {
+       "name": "Musik",
+       "things": [
+        "Flöte"
+       ]
+      }
+     },
+     "type": {
+      "ts": "0mubbsbd4000vecnode1",
+      "v": "timetable"
+     }
+    },
+    "lWeek": {
+     "color": {
+      "ts": "0mubbsc4w000vecnode1",
+      "v": 5
+     },
+     "d.2026-11-18": {
+      "ts": "0mubbsc4w000vecnode1",
+      "v": "10:00-14:00"
+     },
+     "d.2026-11-19": {
+      "ts": "0mubbsc4w000vecnode1",
+      "v": ""
+     },
+     "mode": {
+      "ts": "0mubbsc4w000vecnode1",
+      "v": "week"
+     },
+     "name": {
+      "ts": "0mubbsc4w000vecnode1",
+      "v": "Arbeit Anna"
+     },
+     "off.u1": {
+      "ts": "0mubbsc4w000vecnode1",
+      "v": {
+       "name": "Urlaub",
+       "from": "2026-11-25",
+       "to": "2026-11-26"
+      }
+     },
+     "order": {
+      "ts": "0mubbsc4w000vecnode1",
+      "v": 3
+     },
+     "rsFor": {
+      "ts": "0mubbsc4w000vecnode1",
+      "v": "pA"
+     },
+     "type": {
+      "ts": "0mubbsc4w000vecnode1",
+      "v": "roster"
+     },
+     "wk.1": {
+      "ts": "0mubbsc4w000vecnode1",
+      "v": [
+       {
+        "start": "08:00",
+        "end": "16:30"
+       }
+      ]
+     },
+     "wk.2": {
+      "ts": "0mubbsc4w000vecnode1",
+      "v": [
+       {
+        "start": "08:00",
+        "end": "12:00"
+       },
+       {
+        "start": "13:00",
+        "end": "17:00"
+       }
+      ]
+     },
+     "wk.3": {
+      "ts": "0mubbsc4w000vecnode1",
+      "v": [
+       {
+        "start": "08:00",
+        "end": "16:30"
+       }
+      ]
+     },
+     "wk.5": {
+      "ts": "0mubbsc4w000vecnode1",
+      "v": [
+       {
+        "start": "22:00",
+        "end": "06:00"
+       }
+      ]
+     }
+    }
+   },
+   "item": {
+    "iBaby": {
+     "allDay": {
+      "ts": "0mubbskmg000vecnode1",
+      "v": true
+     },
+     "kind": {
+      "ts": "0mubbskmg000vecnode1",
+      "v": "event"
+     },
+     "listId": {
+      "ts": "0mubbskmg000vecnode1",
+      "v": "lFam"
+     },
+     "occasion": {
+      "ts": "0mubbskmg000vecnode1",
+      "v": "birthday"
+     },
+     "repeat": {
+      "ts": "0mubbskmg000vecnode1",
+      "v": {
+       "freq": "year",
+       "interval": 1
+      }
+     },
+     "start": {
+      "ts": "0mubbskmg000vecnode1",
+      "v": "2026-11-19T00:00"
+     },
+     "title": {
+      "ts": "0mubbskmg000vecnode1",
+      "v": "Noch nicht geboren"
+     },
+     "year": {
+      "ts": "0mubbskmg000vecnode1",
+      "v": 2027
+     }
+    },
+    "iFalsch": {
+     "end": {
+      "ts": "0mubbsm60000vecnode1",
+      "v": "2026-11-18T11:00"
+     },
+     "kind": {
+      "ts": "0mubbsm60000vecnode1",
+      "v": "event"
+     },
+     "listId": {
+      "ts": "0mubbsm60000vecnode1",
+      "v": "lFam"
+     },
+     "occasion": {
+      "ts": "0mubbsm60000vecnode1",
+      "v": "party"
+     },
+     "start": {
+      "ts": "0mubbsm60000vecnode1",
+      "v": "2026-11-18T10:00"
+     },
+     "title": {
+      "ts": "0mubbsm60000vecnode1",
+      "v": "Unbekannter Anlass"
+     },
+     "year": {
+      "ts": "0mubbsm60000vecnode1",
+      "v": 2000
+     }
+    },
+    "iFort": {
+     "deleted": {
+      "ts": "0mubbsmxs000vecnode1",
+      "v": true
+     },
+     "done": {
+      "ts": "0mubbsmxs000vecnode1",
+      "v": null
+     },
+     "kind": {
+      "ts": "0mubbsmxs000vecnode1",
+      "v": null
+     },
+     "listId": {
+      "ts": "0mubbsmxs000vecnode1",
+      "v": null
+     },
+     "purged": {
+      "ts": "0mubbsmxs000vecnode1",
+      "v": true
+     },
+     "title": {
+      "ts": "0mubbsmxs000vecnode1",
+      "v": null
+     }
+    },
+    "iKein": {
+     "dueDate": {
+      "ts": "0mubbsle8000vecnode1",
+      "v": "2026-11-18"
+     },
+     "kind": {
+      "ts": "0mubbsle8000vecnode1",
+      "v": "task"
+     },
+     "listId": {
+      "ts": "0mubbsle8000vecnode1",
+      "v": "lFam"
+     },
+     "occasion": {
+      "ts": "0mubbsle8000vecnode1",
+      "v": "birthday"
+     },
+     "title": {
+      "ts": "0mubbsle8000vecnode1",
+      "v": "Kein Anlass"
+     },
+     "year": {
+      "ts": "0mubbsle8000vecnode1",
+      "v": 2000
+     }
+    },
+    "iOma": {
+     "allDay": {
+      "ts": "0mubbsj2w000vecnode1",
+      "v": true
+     },
+     "kind": {
+      "ts": "0mubbsj2w000vecnode1",
+      "v": "event"
+     },
+     "listId": {
+      "ts": "0mubbsj2w000vecnode1",
+      "v": "lFam"
+     },
+     "occasion": {
+      "ts": "0mubbsj2w000vecnode1",
+      "v": "birthday"
+     },
+     "repeat": {
+      "ts": "0mubbsj2w000vecnode1",
+      "v": {
+       "freq": "year",
+       "interval": 1
+      }
+     },
+     "start": {
+      "ts": "0mubbsj2w000vecnode1",
+      "v": "2026-11-21T00:00"
+     },
+     "title": {
+      "ts": "0mubbsj2w000vecnode1",
+      "v": "Oma Hildegard"
+     },
+     "year": {
+      "ts": "0mubbsj2w000vecnode1",
+      "v": 1951
+     }
+    },
+    "iRota": {
+     "dueDate": {
+      "ts": "0mubbsnpk000vecnode1",
+      "v": "2026-11-16"
+     },
+     "kind": {
+      "ts": "0mubbsnpk000vecnode1",
+      "v": "task"
+     },
+     "listId": {
+      "ts": "0mubbsnpk000vecnode1",
+      "v": "lFam"
+     },
+     "repeat": {
+      "ts": "0mubbsnpk000vecnode1",
+      "v": {
+       "freq": "day",
+       "interval": 1
+      }
+     },
+     "rotation": {
+      "ts": "0mubbsnpk000vecnode1",
+      "v": [
+       "pC",
+       "pA"
+      ]
+     },
+     "title": {
+      "ts": "0mubbsnpk000vecnode1",
+      "v": "Müll rausbringen"
+     }
+    },
+    "iTag": {
+     "allDay": {
+      "ts": "0mubbsjuo000vecnode1",
+      "v": true
+     },
+     "kind": {
+      "ts": "0mubbsjuo000vecnode1",
+      "v": "event"
+     },
+     "listId": {
+      "ts": "0mubbsjuo000vecnode1",
+      "v": "lFam"
+     },
+     "occasion": {
+      "ts": "0mubbsjuo000vecnode1",
+      "v": "anniversary"
+     },
+     "repeat": {
+      "ts": "0mubbsjuo000vecnode1",
+      "v": {
+       "freq": "year",
+       "interval": 1
+      }
+     },
+     "start": {
+      "ts": "0mubbsjuo000vecnode1",
+      "v": "2020-11-18T00:00"
+     },
+     "title": {
+      "ts": "0mubbsjuo000vecnode1",
+      "v": "Hochzeitstag"
+     }
+    }
+   },
+   "sub": {},
+   "occ": {
+    "tt~lTT~s08000935|2026-11-30": {
+     "note": {
+      "ts": "0mubbsf80000vecnode1",
+      "v": "nur ein Feld"
+     }
+    }
+   },
+   "tpl": {},
+   "inv": {}
+  },
+  "persons": [
+   {
+    "id": "pA",
+    "absences": [
+     {
+      "id": "old",
+      "from": "2024-01-01",
+      "to": "2024-01-03"
+     },
+     {
+      "id": "a1",
+      "from": "2026-11-19",
+      "to": "2026-11-20",
+      "note": "Dienstreise"
+     }
+    ]
+   },
+   {
+    "id": "pC",
+    "absences": [
+     {
+      "id": "c1",
+      "from": "2026-11-17",
+      "to": "2026-11-17"
+     },
+     {
+      "id": "c2",
+      "from": "2026-12-01",
+      "to": "2026-12-02",
+      "note": "Klassenfahrt"
+     }
+    ]
+   },
+   {
+    "id": "pX",
+    "absences": [
+     {
+      "id": "x1",
+      "from": "2026-11-17",
+      "to": "2026-11-18"
+     }
+    ]
+   }
+  ],
+  "items": [
+   {
+    "id": "iBaby",
+    "occasion": "birthday",
+    "year": 2027
+   },
+   {
+    "id": "iFalsch",
+    "occasion": null,
+    "year": 2000
+   },
+   {
+    "id": "iKein",
+    "occasion": null,
+    "year": 2000
+   },
+   {
+    "id": "iOma",
+    "occasion": "birthday",
+    "year": 1951
+   },
+   {
+    "id": "iRota",
+    "occasion": null,
+    "year": null
+   },
+   {
+    "id": "iTag",
+    "occasion": "anniversary",
+    "year": null
+   }
+  ],
+  "absenceItems": [
+   {
+    "id": "aw~pA~a1",
+    "listId": "",
+    "kind": "event",
+    "title": "Anna weg · Dienstreise",
+    "start": "2026-11-19T00:00",
+    "end": "2026-11-20T00:00",
+    "allDay": true,
+    "assignees": [
+     "pA"
+    ],
+    "fromAbsence": "pA"
+   },
+   {
+    "id": "aw~pC~c1",
+    "listId": "",
+    "kind": "event",
+    "title": "Cleo weg",
+    "start": "2026-11-17T00:00",
+    "allDay": true,
+    "assignees": [
+     "pC"
+    ],
+    "fromAbsence": "pC"
+   },
+   {
+    "id": "aw~pC~c2",
+    "listId": "",
+    "kind": "event",
+    "title": "Cleo weg · Klassenfahrt",
+    "start": "2026-12-01T00:00",
+    "end": "2026-12-02T00:00",
+    "allDay": true,
+    "assignees": [
+     "pC"
+    ],
+    "fromAbsence": "pC"
+   }
+  ],
+  "skips": [
+   "rs~lWeek~w08001630|2026-11-18",
+   "rs~lWeek~w08001630|2026-11-25",
+   "tt~lHalf~c08401600|2026-11-23",
+   "tt~lHalf~c08401600|2026-12-21",
+   "tt~lHalf~c08401600|2026-12-28",
+   "tt~lHalf~c09301600|2026-11-25",
+   "tt~lHalf~c09301600|2026-12-02",
+   "tt~lHalf~c09301600|2026-12-23",
+   "tt~lHalf~c09301600|2026-12-30",
+   "tt~lHalf~p4wf44o|2026-11-24",
+   "tt~lHalf~p4wf44o|2026-12-01",
+   "tt~lHalf~p4wf44o|2026-12-22",
+   "tt~lHalf~p4wf44o|2026-12-29",
+   "tt~lHalf~pdtk2js|2026-11-22",
+   "tt~lHalf~pdtk2js|2026-11-26",
+   "tt~lHalf~pdtk2js|2026-12-20",
+   "tt~lHalf~pdtk2js|2026-12-24",
+   "tt~lHalf~pdtk2js|2026-12-27",
+   "tt~lHalf~pdtk2js|2026-12-31",
+   "tt~lHalf~s07550840|2026-11-23",
+   "tt~lHalf~s07550840|2026-11-27",
+   "tt~lHalf~s07550840|2026-12-21",
+   "tt~lHalf~s07550840|2026-12-25",
+   "tt~lHalf~s07550840|2026-12-28",
+   "tt~lHalf~s07550840|2027-01-01",
+   "tt~lHalf~s08450930|2026-11-25",
+   "tt~lHalf~s08450930|2026-12-02",
+   "tt~lHalf~s08450930|2026-12-23",
+   "tt~lHalf~s08450930|2026-12-30",
+   "tt~lTT2~p1v5wa2w|2026-11-24",
+   "tt~lTT2~p1v5wa2w|2026-12-22",
+   "tt~lTT2~p1v5wa2w|2026-12-29",
+   "tt~lTT~c08451200~A|2026-11-17",
+   "tt~lTT~c08451200~A|2026-11-24",
+   "tt~lTT~c08451200~A|2026-12-01",
+   "tt~lTT~c08451200~A|2026-12-22",
+   "tt~lTT~c08451200~A|2026-12-29",
+   "tt~lTT~c08451200~B|2026-11-17",
+   "tt~lTT~c08451200~B|2026-11-24",
+   "tt~lTT~c08451200~B|2026-12-01",
+   "tt~lTT~c08451200~B|2026-12-22",
+   "tt~lTT~c08451200~B|2026-12-29",
+   "tt~lTT~c09351330~A|2026-11-23",
+   "tt~lTT~c09351330~A|2026-11-30",
+   "tt~lTT~c09351330~A|2026-12-21",
+   "tt~lTT~c09351330~A|2026-12-28",
+   "tt~lTT~c09351330~B|2026-11-23",
+   "tt~lTT~c09351330~B|2026-12-21",
+   "tt~lTT~c09351330~B|2026-12-28",
+   "tt~lTT~c12301400~A|2026-11-19",
+   "tt~lTT~c12301400~A|2026-11-26",
+   "tt~lTT~c12301400~A|2026-12-03",
+   "tt~lTT~c12301400~A|2026-12-24",
+   "tt~lTT~c12301400~A|2026-12-31",
+   "tt~lTT~c12301400~B|2026-11-26",
+   "tt~lTT~c12301400~B|2026-12-24",
+   "tt~lTT~c12301400~B|2026-12-31",
+   "tt~lTT~p1o011kr~A|2026-11-19",
+   "tt~lTT~p1o011kr~A|2026-12-31",
+   "tt~lTT~p1o011kr~B|2026-11-26",
+   "tt~lTT~p1o011kr~B|2026-12-24",
+   "tt~lTT~p4wf44o~A|2026-11-19",
+   "tt~lTT~p4wf44o~A|2026-11-20",
+   "tt~lTT~p4wf44o~A|2026-12-18",
+   "tt~lTT~p4wf44o~A|2026-12-31",
+   "tt~lTT~p4wf44o~B|2026-11-25",
+   "tt~lTT~p4wf44o~B|2026-11-26",
+   "tt~lTT~p4wf44o~B|2026-12-23",
+   "tt~lTT~p4wf44o~B|2026-12-24",
+   "tt~lTT~p4wf44o~B|2026-12-25",
+   "tt~lTT~p76r9n9~A|2026-12-30",
+   "tt~lTT~p77vd9s~A|2026-11-20",
+   "tt~lTT~p77vd9s~A|2026-12-18",
+   "tt~lTT~p77vd9s~B|2026-11-25",
+   "tt~lTT~p77vd9s~B|2026-12-23",
+   "tt~lTT~p77vd9s~B|2026-12-25",
+   "tt~lTT~pt3rg82~A|2026-11-16",
+   "tt~lTT~pt3rg82~A|2026-11-19",
+   "tt~lTT~pt3rg82~A|2026-11-20",
+   "tt~lTT~pt3rg82~A|2026-11-30",
+   "tt~lTT~pt3rg82~A|2026-12-18",
+   "tt~lTT~pt3rg82~A|2026-12-28",
+   "tt~lTT~pt3rg82~A|2026-12-31",
+   "tt~lTT~pt3rg82~B|2026-11-23",
+   "tt~lTT~pt3rg82~B|2026-11-26",
+   "tt~lTT~pt3rg82~B|2026-12-21",
+   "tt~lTT~pt3rg82~B|2026-12-24",
+   "tt~lTT~pt3rg82~B|2026-12-25",
+   "tt~lTT~s08000845~A|2026-11-17",
+   "tt~lTT~s08000845~A|2026-11-20",
+   "tt~lTT~s08000845~A|2026-11-24",
+   "tt~lTT~s08000845~A|2026-11-27",
+   "tt~lTT~s08000845~A|2026-12-01",
+   "tt~lTT~s08000845~A|2026-12-22",
+   "tt~lTT~s08000845~A|2026-12-25",
+   "tt~lTT~s08000845~A|2026-12-29",
+   "tt~lTT~s08000845~A|2027-01-01",
+   "tt~lTT~s08000845~B|2026-11-17",
+   "tt~lTT~s08000845~B|2026-11-24",
+   "tt~lTT~s08000845~B|2026-11-27",
+   "tt~lTT~s08000845~B|2026-12-01",
+   "tt~lTT~s08000845~B|2026-12-22",
+   "tt~lTT~s08000845~B|2026-12-25",
+   "tt~lTT~s08000845~B|2026-12-29",
+   "tt~lTT~s08000845~B|2027-01-01",
+   "tt~lTT~s08000935~A|2026-11-23",
+   "tt~lTT~s08000935~A|2026-11-30",
+   "tt~lTT~s08000935~A|2026-12-21",
+   "tt~lTT~s08000935~A|2026-12-28",
+   "tt~lTT~s08000935~B|2026-11-23",
+   "tt~lTT~s08000935~B|2026-12-21",
+   "tt~lTT~s08000935~B|2026-12-28",
+   "tt~lTT~s11451230~A|2026-11-19",
+   "tt~lTT~s11451230~A|2026-11-26",
+   "tt~lTT~s11451230~A|2026-12-03",
+   "tt~lTT~s11451230~A|2026-12-24",
+   "tt~lTT~s11451230~A|2026-12-31",
+   "tt~lTT~s11451230~B|2026-11-26",
+   "tt~lTT~s11451230~B|2026-12-24",
+   "tt~lTT~s11451230~B|2026-12-31"
+  ],
+  "occasions": [
+   {
+    "itemId": "iTag",
+    "date": "2026-11-18",
+    "years": null,
+    "title": "Hochzeitstag"
+   },
+   {
+    "itemId": "iBaby",
+    "date": "2026-11-19",
+    "years": null,
+    "title": "Noch nicht geboren"
+   },
+   {
+    "itemId": "iOma",
+    "date": "2026-11-21",
+    "years": 75,
+    "title": "Oma Hildegard (75)"
+   },
+   {
+    "itemId": "iTag",
+    "date": "2027-11-18",
+    "years": null,
+    "title": "Hochzeitstag"
+   },
+   {
+    "itemId": "iBaby",
+    "date": "2027-11-19",
+    "years": null,
+    "title": "Noch nicht geboren"
+   },
+   {
+    "itemId": "iOma",
+    "date": "2027-11-21",
+    "years": 76,
+    "title": "Oma Hildegard (76)"
+   }
+  ],
+  "days": [
+   {
+    "date": "2026-11-16",
+    "titles": [
+     "Schule",
+     "Arbeit",
+     "Verlässliche Schule"
+    ],
+    "turn": "pC",
+    "due": [
+     [
+      "pC"
+     ]
+    ],
+    "away": [
+     {
+      "personId": "pA",
+      "start": 480,
+      "end": 990,
+      "what": "work",
+      "label": null,
+      "care": null
+     },
+     {
+      "personId": "pC",
+      "start": 480,
+      "end": 575,
+      "what": "school",
+      "label": null,
+      "care": null
+     },
+     {
+      "personId": "pC",
+      "start": 575,
+      "end": 810,
+      "what": "care",
+      "label": null,
+      "care": "vs"
+     }
+    ],
+    "gaps": [
+     {
+      "childId": "pC",
+      "start": 810,
+      "end": 990,
+      "adults": [
+       "pA"
+      ]
+     }
+    ]
+   },
+   {
+    "date": "2026-11-17",
+    "titles": [
+     "Cleo weg",
+     "Arbeit",
+     "Früh",
+     "Arbeit",
+     "Arbeit"
+    ],
+    "turn": "pA",
+    "due": [
+     [
+      "pA"
+     ]
+    ],
+    "away": [
+     {
+      "personId": "pC",
+      "start": 0,
+      "end": 1440,
+      "what": "absent",
+      "label": null,
+      "care": null
+     },
+     {
+      "personId": "pA",
+      "start": 360,
+      "end": 840,
+      "what": "work",
+      "label": "Früh",
+      "care": null
+     },
+     {
+      "personId": "pC",
+      "start": 360,
+      "end": 840,
+      "what": "work",
+      "label": "Früh",
+      "care": null
+     },
+     {
+      "personId": "pA",
+      "start": 480,
+      "end": 720,
+      "what": "work",
+      "label": null,
+      "care": null
+     },
+     {
+      "personId": "pA",
+      "start": 780,
+      "end": 1020,
+      "what": "work",
+      "label": null,
+      "care": null
+     }
+    ],
+    "gaps": []
+   },
+   {
+    "date": "2026-11-18",
+    "titles": [
+     "Hochzeitstag",
+     "Klassenarbeit Kunst",
+     "Arbeit",
+     "Schule",
+     "OGS",
+     "Unbekannter Anlass",
+     "Arbeit",
+     "Nacht"
+    ],
+    "turn": "pC",
+    "due": [
+     [
+      "pC"
+     ]
+    ],
+    "away": [
+     {
+      "personId": "pC",
+      "start": 480,
+      "end": 720,
+      "what": "work",
+      "label": "Bereit",
+      "care": null
+     },
+     {
+      "personId": "pC",
+      "start": 525,
+      "end": 570,
+      "what": "school",
+      "label": null,
+      "care": null
+     },
+     {
+      "personId": "pC",
+      "start": 570,
+      "end": 960,
+      "what": "care",
+      "label": null,
+      "care": "ogs"
+     },
+     {
+      "personId": "pA",
+      "start": 600,
+      "end": 840,
+      "what": "work",
+      "label": null,
+      "care": null
+     },
+     {
+      "personId": "pA",
+      "start": 1320,
+      "end": 1440,
+      "what": "work",
+      "label": "Nacht",
+      "care": null
+     }
+    ],
+    "gaps": []
+   },
+   {
+    "date": "2026-11-19",
+    "titles": [
+     "Nacht",
+     "Anna weg · Dienstreise",
+     "Noch nicht geboren",
+     "Schule",
+     "Verlässliche Schule",
+     "Bereitschaft"
+    ],
+    "turn": "pC",
+    "due": [
+     [
+      "pC"
+     ]
+    ],
+    "away": [
+     {
+      "personId": "pA",
+      "start": 0,
+      "end": 1440,
+      "what": "absent",
+      "label": "Dienstreise",
+      "care": null
+     },
+     {
+      "personId": "pA",
+      "start": 0,
+      "end": 360,
+      "what": "work",
+      "label": "Nacht",
+      "care": null
+     },
+     {
+      "personId": "pC",
+      "start": 705,
+      "end": 750,
+      "what": "school",
+      "label": null,
+      "care": null
+     },
+     {
+      "personId": "pC",
+      "start": 750,
+      "end": 840,
+      "what": "care",
+      "label": null,
+      "care": "vs"
+     },
+     {
+      "personId": "pC",
+      "start": 780,
+      "end": 900,
+      "what": "standby",
+      "label": "Bereit 2",
+      "care": null
+     }
+    ],
+    "gaps": [
+     {
+      "childId": "pC",
+      "start": 420,
+      "end": 705,
+      "adults": [
+       "pA"
+      ]
+     },
+     {
+      "childId": "pC",
+      "start": 840,
+      "end": 1140,
+      "adults": [
+       "pA"
+      ]
+     }
+    ]
+   },
+   {
+    "date": "2026-11-20",
+    "titles": [
+     "Anna weg · Dienstreise",
+     "Schule",
+     "Arbeit"
+    ],
+    "turn": "pC",
+    "due": [
+     [
+      "pC"
+     ]
+    ],
+    "away": [
+     {
+      "personId": "pA",
+      "start": 0,
+      "end": 1440,
+      "what": "absent",
+      "label": "Dienstreise",
+      "care": null
+     },
+     {
+      "personId": "pC",
+      "start": 475,
+      "end": 520,
+      "what": "school",
+      "label": null,
+      "care": null
+     },
+     {
+      "personId": "pA",
+      "start": 1320,
+      "end": 1440,
+      "what": "work",
+      "label": null,
+      "care": null
+     }
+    ],
+    "gaps": [
+     {
+      "childId": "pC",
+      "start": 420,
+      "end": 475,
+      "adults": [
+       "pA"
+      ]
+     },
+     {
+      "childId": "pC",
+      "start": 520,
+      "end": 1140,
+      "adults": [
+       "pA"
+      ]
+     }
+    ]
+   },
+   {
+    "date": "2026-11-21",
+    "titles": [
+     "Arbeit",
+     "Oma Hildegard (75)",
+     "Arbeit"
+    ],
+    "turn": "pA",
+    "due": [
+     [
+      "pA"
+     ]
+    ],
+    "away": [
+     {
+      "personId": "pA",
+      "start": 0,
+      "end": 360,
+      "what": "work",
+      "label": null,
+      "care": null
+     },
+     {
+      "personId": "pA",
+      "start": 540,
+      "end": 720,
+      "what": "work",
+      "label": null,
+      "care": null
+     }
+    ],
+    "gaps": [
+     {
+      "childId": "pC",
+      "start": 540,
+      "end": 720,
+      "adults": [
+       "pA"
+      ]
+     }
+    ]
+   },
+   {
+    "date": "2026-11-22",
+    "titles": [
+     "Rufdienst"
+    ],
+    "turn": "pC",
+    "due": [
+     [
+      "pC"
+     ]
+    ],
+    "away": [
+     {
+      "personId": "pA",
+      "start": 1080,
+      "end": 1440,
+      "what": "standby",
+      "label": "Rufdienst",
+      "care": null
+     }
+    ],
+    "gaps": []
+   },
+   {
+    "date": "2026-12-01",
+    "titles": [
+     "Cleo weg · Klassenfahrt",
+     "Klassenarbeit Mathe",
+     "Arbeit",
+     "Arbeit"
+    ],
+    "turn": "pA",
+    "due": [
+     [
+      "pA"
+     ]
+    ],
+    "away": [
+     {
+      "personId": "pC",
+      "start": 0,
+      "end": 1440,
+      "what": "absent",
+      "label": "Klassenfahrt",
+      "care": null
+     },
+     {
+      "personId": "pA",
+      "start": 480,
+      "end": 720,
+      "what": "work",
+      "label": null,
+      "care": null
+     },
+     {
+      "personId": "pA",
+      "start": 780,
+      "end": 1020,
+      "what": "work",
+      "label": null,
+      "care": null
+     }
+    ],
+    "gaps": []
+   }
+  ]
+ },
  "plans": [
   {
    "today": "2026-11-17",

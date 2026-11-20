@@ -17,13 +17,16 @@ from .client.engine import STATUS_NEEDS_PLUS, STATUS_OFFLINE, STATUS_OK, STATUS_
 from .const import MAX_TITLES
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator
 from .entity import OrgaiaEntity, OrgaiaPlanEntity, person_entity, person_ids_for, plan_list_ids, track_dynamic
+from .protocol.people import upcoming_occasions, with_occasion
 from .protocol.plans import (
+    STATUS_AWAY,
     STATUS_FREE,
     STATUS_HOLIDAY,
     exams_ahead,
     labels_for,
     pack_on,
     school_day,
+    school_off_for,
     work_day,
     work_minutes,
 )
@@ -35,9 +38,11 @@ from .util import from_ms, local_now, minute_of_day, to_date, to_datetime, today
 
 # What a day without school or work reads as; times read "07:55–13:15".
 DAY_LABELS = {
-    "de": {STATUS_FREE: "frei", STATUS_HOLIDAY: "Ferien"},
-    "en": {STATUS_FREE: "off", STATUS_HOLIDAY: "holidays"},
+    "de": {STATUS_FREE: "frei", STATUS_HOLIDAY: "Ferien", STATUS_AWAY: "weg"},
+    "en": {STATUS_FREE: "off", STATUS_HOLIDAY: "holidays", STATUS_AWAY: "away"},
 }
+# How many days ahead birthdays and anniversaries are listed.
+OCCASION_DAYS = 30
 # How many days ahead a roster's sensor lists.
 WORK_AHEAD_DAYS = 7
 
@@ -75,6 +80,7 @@ async def async_setup_entry(
         OrgaiaConnectionSensor(coordinator),
         OrgaiaTodaySensor(coordinator),
         OrgaiaOpenDrivesSensor(coordinator),
+        OrgaiaOccasionsSensor(coordinator),
     ]
     async_add_entities(entities)
     track_dynamic(
@@ -182,7 +188,7 @@ class OrgaiaSchoolSensor(OrgaiaPlanEntity, SensorEntity):
         plan = self.plan
         if plan is None:
             return None
-        return school_day(plan, self.coordinator.data.meta.get("schoolOff") or [], add_days(today(), ahead))
+        return school_day(plan, school_off_for(self.coordinator.data, plan["timetable"]), add_days(today(), ahead))
 
     def _text(self, day: dict[str, Any]) -> str:
         if day["start"]:
@@ -199,7 +205,7 @@ class OrgaiaSchoolSensor(OrgaiaPlanEntity, SensorEntity):
         plan, day, nxt = self.plan, self._day(), self._day(1)
         if plan is None or day is None or nxt is None:
             return {}
-        off = self.coordinator.data.meta.get("schoolOff") or []
+        off = school_off_for(self.coordinator.data, plan["timetable"])
         attrs: dict[str, Any] = {
             "plan": plan["name"],
             "status": day["status"],
@@ -218,7 +224,7 @@ class OrgaiaSchoolSensor(OrgaiaPlanEntity, SensorEntity):
         }
         # Care after school (reliable school or OGS): {"kind", "start", "end"}, or None on a day without.
         attrs["care"] = day.get("care")
-        for key in ("week", "holiday", "changed", "note", "exams"):
+        for key in ("week", "holiday", "away", "changed", "note", "exams"):
             if key in day:
                 attrs[key] = day[key]
         if self.person_id is not None:
@@ -457,3 +463,42 @@ class OrgaiaOpenDrivesSensor(OrgaiaEntity, SensorEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         return {"drives": self._drives()[:MAX_TITLES]}
+
+
+class OrgaiaOccasionsSensor(OrgaiaEntity, SensorEntity):
+    """Birthdays and anniversaries of the next 30 days; ``today`` holds those of today with the age."""
+
+    _attr_translation_key = "occasions"
+    _attr_icon = "mdi:cake-variant-outline"
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _unrecorded_attributes = frozenset({"today", "upcoming"})
+
+    def __init__(self, coordinator: OrgaiaCoordinator) -> None:
+        super().__init__(coordinator, "occasions")
+
+    def _upcoming(self) -> list[dict[str, Any]]:
+        day = today()
+        first = to_date(day)
+        return [
+            {
+                "title": o["item"]["title"],
+                "text": with_occasion(o["item"], o["date"])["title"],
+                "kind": o["item"]["occasion"],
+                "date": o["date"],
+                "years": o["years"],
+                "in_days": (to_date(o["date"]) - first).days,
+            }
+            for o in upcoming_occasions(self.coordinator.data, day, OCCASION_DAYS)
+        ]
+
+    @property
+    def native_value(self) -> int:
+        return len(self._upcoming())
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        upcoming = self._upcoming()
+        return {
+            "today": [o["text"] for o in upcoming if o["in_days"] == 0],
+            "upcoming": upcoming[:MAX_TITLES],
+        }

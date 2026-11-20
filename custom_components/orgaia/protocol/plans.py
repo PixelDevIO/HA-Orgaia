@@ -610,20 +610,35 @@ def roster_items(
 # --- Into the view ----------------------------------------------------------------------------
 
 
+def school_off_for(view: SpaceView, tt: dict[str, Any]) -> list[dict[str, Any]]:
+    """Days without school for one timetable: the holidays of the group, and the days its child is away.
+
+    Nothing is packed and no school day shows on them.
+    """
+    off = view.meta.get("schoolOff") or []
+    person = view.person_by_id.get(tt.get("personId") or "")
+    away = (person or {}).get("absences") or []
+    if not away:
+        return off
+    return [
+        *off,
+        *({"id": f"aw~{a['id']}", "name": a.get("note") or "", "from": a["from"], "to": a["to"]} for a in away),
+    ]
+
+
 def is_plan_item(item: dict[str, Any]) -> bool:
-    """Worked out from a timetable or roster: never created, changed or assigned by a person."""
-    return bool(item.get("fromTimetable") or item.get("fromRoster"))
+    """Worked out from a timetable, a roster or a person's absence: never created, changed or assigned as an entry."""
+    return bool(item.get("fromTimetable") or item.get("fromRoster") or item.get("fromAbsence"))
 
 
 def with_plan_items(view: SpaceView, labels: PlanLabels, today: str) -> SpaceView:
     """A copy of the view that also holds what its timetables and rosters stand for."""
     extra: list[dict[str, Any]] = []
     skips: list[tuple[str, str]] = []
-    off = view.meta.get("schoolOff") or []
     # All timetables first, then all rosters, as the app adds them.
     for lst in view.lists:
         if lst["type"] == "timetable" and lst.get("timetable"):
-            items, sk = timetable_items(lst, off, labels, today)
+            items, sk = timetable_items(lst, school_off_for(view, lst["timetable"]), labels, today)
             extra.extend(items)
             skips.extend(sk)
     for lst in view.lists:
@@ -649,6 +664,8 @@ STATUS_SCHOOL = "school"
 STATUS_WORK = "work"
 STATUS_FREE = "free"
 STATUS_HOLIDAY = "holiday"
+# The child of the timetable is away that day (see school_off_for).
+STATUS_AWAY = "away"
 STATUS_STANDBY = "standby"
 
 
@@ -670,12 +687,13 @@ def school_day(lst: dict[str, Any], off: list[dict[str, Any]], date: str) -> dic
     tt = lst["timetable"]
     week = week_of(tt, date)
     holiday = holiday_on(off, date)
+    away = bool(holiday) and str(holiday.get("id", "")).startswith("aw~")
     holds = timetable_holds(tt, date)
     ex = school_day_of(tt, date)
     lessons = [] if holiday or not holds else lessons_on_day(tt, date)
     out: dict[str, Any] = {
         "date": date,
-        "status": STATUS_HOLIDAY if holiday else STATUS_SCHOOL if lessons else STATUS_FREE,
+        "status": (STATUS_AWAY if away else STATUS_HOLIDAY) if holiday else STATUS_SCHOOL if lessons else STATUS_FREE,
         "start": None,
         "end": None,
         "lessons": [
@@ -692,7 +710,7 @@ def school_day(lst: dict[str, Any], off: list[dict[str, Any]], date: str) -> dic
     if week:
         out["week"] = week
     if holiday and holiday["name"]:
-        out["holiday"] = holiday["name"]
+        out["away" if away else "holiday"] = holiday["name"]
     if ex and not holiday and holds:
         out["changed"] = True
         if ex.get("note"):

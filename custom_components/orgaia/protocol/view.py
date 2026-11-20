@@ -7,6 +7,7 @@ defaults of a project list resolved), subtasks and the exceptions of repeating e
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import re
 from typing import Any
 
 from . import plan_read as plans
@@ -24,6 +25,28 @@ _PUNCT = {"_": 0, "-": 1}
 
 
 SCHOOL_OFF_PREFIX = "schoolOff."
+ABSENCE_PREFIX = "away."
+_YMD = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def _absences_of(raw: dict[str, Any]) -> list[dict[str, Any]]:
+    """Days away of a person, from its ``away.<id>`` fields, earliest first. Removed ones are null."""
+    out: list[dict[str, Any]] = []
+    for k, v in raw.items():
+        if not k.startswith(ABSENCE_PREFIX) or not isinstance(v, dict):
+            continue
+        start, end = v.get("from"), v.get("to")
+        if not (isinstance(start, str) and isinstance(end, str) and _YMD.match(start) and _YMD.match(end)):
+            continue
+        if start > end:
+            start, end = end, start
+        a: dict[str, Any] = {"id": k[len(ABSENCE_PREFIX) :], "from": start, "to": end}
+        note = v.get("note")
+        if isinstance(note, str) and note.strip():
+            a["note"] = note.strip()[:80]
+        out.append(a)
+    out.sort(key=lambda a: (a["from"], locale_key(a["id"])))
+    return out
 
 
 def locale_key(text: str) -> tuple[tuple[int, ...], tuple[int, ...]]:
@@ -83,7 +106,8 @@ def _split_personal(raw: dict[str, Any]) -> dict[str, Any]:
 def _latest(marks: list[dict[str, Any]]) -> dict[str, Any] | None:
     best: dict[str, Any] | None = None
     for m in marks:
-        if best is None or _num(m.get("at")) > _num(best.get("at")):
+        # Of two in the same millisecond the later one in the list counts, as in the app.
+        if best is None or _num(m.get("at")) >= _num(best.get("at")):
             best = m
     return best
 
@@ -180,6 +204,7 @@ def build_view(space_id: str, kind: str, state: State) -> SpaceView:
             "removed": bool(p.get("removed")),
             "order": _num(p.get("order")),
             "teams": _strings(p.get("teams")) or [],
+            "absences": _absences_of(p),
         }
         persons.append(person)
     persons.sort(key=lambda p: (p["order"], locale_key(p["id"])))
@@ -267,6 +292,9 @@ def build_view(space_id: str, kind: str, state: State) -> SpaceView:
         if lst is None:
             continue
         item = {**i, "id": iid, "kind": "event" if i.get("kind") == "event" else "task"}
+        # A birthday or anniversary is an appointment; anything else carries no occasion.
+        if item.get("occasion") and (item["kind"] != "event" or item["occasion"] not in ("birthday", "anniversary")):
+            item["occasion"] = None
         if not isinstance(item.get("assignees"), list):
             item["assignees"] = []
         else:
