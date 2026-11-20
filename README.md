@@ -376,6 +376,7 @@ A change reaches the service at once or fails with a message; nothing is kept fo
 - **Repairs and diagnostics**: when writing was refused because an admin switched it off, a repair notice says where to switch it on. The diagnostics download shows the live connection, the last read, subscribed calendars and options, without any content.
 - **Plus ended**: Home Assistant stops reading and shows a repair notice. Once Plus is renewed it picks up again by itself.
 - **Removed from the group**: Home Assistant shows a notice under Settings → Devices & services that asks for a new link from the app.
+- **Service restored from a backup**: the integration reads the group anew by itself. Do not remove and re-add it: if the group was created after the backup, it exists again only once an admin's phone has synced. Until then the connection sensor may show an error; removing the integration in that time ends in "group not found" and needs a new link.
 - **Removing the integration** leaves the group, so the admins see Home Assistant is gone.
 - **Privacy**: titles and names are decrypted on your Home Assistant. The lists of titles on the count sensors and the title and place of the next appointment are kept out of the recorder. What stays in its history: the state of the "next task" sensor (a title), and the data of `orgaia_event` in the logbook. Exclude `sensor.*_next_task` in the `recorder:` settings if you do not want that. The integration's storage file (`.storage/orgaia.*`) holds the group keys and every entry in plain text and goes into every Home Assistant backup: keep backups encrypted. Private lists in Orgaia never reach Home Assistant. Diagnostics hold only counts, no content and no keys.
 
@@ -416,6 +417,8 @@ Home Assistant zählt nicht als Person; pro Gruppe gehen bis zu 3 Integrationen.
 **Neue Ereignisse und Sensoren:** `drive_needed`, `drive_taken`, `rsvp_changed`, `poll_decided`; `sensor.<gruppe>_today` und je Person (Tag in Sätzen), `sensor.<gruppe>_open_drives`, je Person „Termin gerade“, „Kauft gerade ein“ und „Nächster Termin“, bei Dienstplänen „Bereitschaft“. Der Schul-Sensor kennt einzelne geänderte Tage, Arbeiten und Halbjahrespläne.
 
 **Vorlagen (Blueprints):** überfällige Aufgabe aufs Handy mit „Erledigt“, abends ans Einpacken erinnern, Einkauf freigegeben an wer unterwegs ist, nachträglicher Artikel an den Einkäufer, „Für einen Termin fährt noch niemand“ mit „Ich fahre“, Erinnerung vor Terminen mit Fahrt. Die Import-Knöpfe stehen oben unter *Blueprints*.
+
+**Dienst aus einer Sicherung wiederhergestellt:** Die Integration liest die Gruppe von selbst neu. Nicht entfernen und neu verbinden: Wurde die Gruppe erst nach der Sicherung angelegt, gibt es sie beim Dienst erst wieder, wenn das Handy eines Admins abgeglichen hat. Bis dahin kann der Verbindungssensor einen Fehler zeigen; wer in dieser Zeit entfernt, bekommt „Gruppe nicht gefunden“ und braucht einen neuen Link.
 
 **Neu verbinden:** **⋮ › Neu konfigurieren** verbindet mit einem neuen Link aus der App, ohne Entitäten und Dashboards zu verlieren. In der App kopiert **„Kopieren und in Home Assistant öffnen“** den Link und öffnet direkt „Integration hinzufügen: Orgaia“.
 
