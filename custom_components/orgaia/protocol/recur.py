@@ -6,6 +6,7 @@ Dates are local wall-clock strings: YYYY-MM-DD, times HH:mm, date-times YYYY-MM-
 from __future__ import annotations
 
 import calendar
+from collections.abc import Callable
 from datetime import date, timedelta
 from typing import Any
 
@@ -174,11 +175,17 @@ def occurrence_index(item: dict[str, Any], d: str) -> int:
     return -1
 
 
-def rotation_assignee(item: dict[str, Any], d: str) -> str | None:
+def rotation_assignee(item: dict[str, Any], d: str, away: Callable[[str], bool] | None = None) -> str | None:
+    """Whose turn it is on a date. With ``away``, the turn passes on to the next who is not away that day."""
     rota = item.get("rotation")
     if not isinstance(rota, list) or not rota:
         return None
     n = occurrence_index(item, d)
     if n < 0:
         return None
+    if away:
+        for k in range(len(rota)):
+            p = rota[(n + k) % len(rota)]
+            if not away(p):
+                return p
     return rota[n % len(rota)]

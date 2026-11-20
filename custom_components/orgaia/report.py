@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .protocol.plans import pack_on, school_day, work_day
+from .protocol.plans import pack_on, school_day, school_off_for, work_day
 from .protocol.recur import add_days, date_of
 from .protocol.shopping import STATE_GOING, STATE_READY
 from .protocol.view import SpaceView
@@ -70,7 +70,6 @@ def _who(view: SpaceView, person: str | None) -> str:
 
 def day_report(view: SpaceView, day: str, today: str, minute: int, person: str | None = None) -> dict[str, Any]:
     """Everything of one day, as plain data. With ``person``, only what concerns them."""
-    off = view.meta.get("schoolOff") or []
     appointments = []
     for occ in calendar_occurrences(view, day, day, person):
         item = occ.item
@@ -112,6 +111,7 @@ def day_report(view: SpaceView, day: str, today: str, minute: int, person: str |
             who = lst["timetable"].get("personId")
             if person is not None and who != person:
                 continue
+            off = school_off_for(view, lst["timetable"])
             s = school_day(lst, off, day)
             school.append(
                 {

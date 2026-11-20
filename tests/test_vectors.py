@@ -298,3 +298,60 @@ def test_feeds() -> None:
     for c in case["cases"]:
         got = [e.to_json() for e in parse_ics(c["text"], c["from"], c["to"], zone)]
         assert got == c["expect"]
+
+
+def test_people() -> None:
+    """Absences, birthdays with the age, whose turn it is and the hours nobody looks after a child, as in the app."""
+    from custom_components.orgaia.protocol import people
+    from custom_components.orgaia.summary import calendar_occurrences
+
+    case = VECTORS["people"]
+    state = empty_state()
+    merge_state(state, case["state"])
+    base = build_view("gPeople", "group", state)
+    assert [{"id": p["id"], "absences": p.get("absences") or []} for p in base.persons] == case["persons"]
+    assert [{"id": i["id"], "occasion": i.get("occasion"), "year": i.get("year")} for i in base.items] == case["items"]
+    lb = VECTORS["plans"][0]["labels"]
+    labels = PlanLabels(
+        lb["pack"], lb["school"], lb["work"], lb["exam"], lb["learn"], lb["standby"], lb["careVs"], lb["careOgs"]
+    )
+    today = case["today"]
+    view = people.with_absence_items(with_plan_items(base, labels, today), case["awayLabel"], today)
+    assert [i for i in view.items if i.get("fromAbsence")] == case["absenceItems"]
+    assert all(is_plan_item(i) for i in view.items if i.get("fromAbsence"))
+    assert sorted(oid for oid, o in view.occs.items() if o.get("skip")) == case["skips"]
+    assert [
+        {
+            "itemId": o["item"]["id"],
+            "date": o["date"],
+            "years": o["years"],
+            "title": people.with_occasion(o["item"], o["date"])["title"],
+        }
+        for o in people.upcoming_occasions(view, today, 400)
+    ] == case["occasions"]
+    rota = view.item_by_id["iRota"]
+    for day in case["days"]:
+        date = day["date"]
+        shown = [o.item["title"] for o in calendar_occurrences(view, date, date) if not o.skip]
+        assert sorted(shown) == sorted(day["titles"]), date
+        assert people.turn_of(view, rota, date) == day["turn"], date
+        assert [d.item.get("assignees") or [] for d in deadlines(view, date, date) if d.item["id"] == "iRota"] == day[
+            "due"
+        ], date
+        away = [
+            {
+                "personId": a["personId"],
+                "start": a["start"],
+                "end": a["end"],
+                "what": a["what"],
+                "label": a.get("label"),
+                "care": a.get("care"),
+            }
+            for a in people.away_on(view, date)
+        ]
+        assert away == day["away"], date
+        gaps = [
+            {"childId": g["childId"], "start": g["start"], "end": g["end"], "adults": g["adults"]}
+            for g in people.care_gaps(view, date)
+        ]
+        assert gaps == day["gaps"], date

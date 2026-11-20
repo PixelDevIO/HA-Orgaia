@@ -32,6 +32,7 @@ from .client.engine import (
 from .const import DOMAIN
 from .feeds import FeedCache
 from .protocol.feeds import with_feed_items
+from .protocol.people import with_absence_items
 from .protocol.plans import labels_for, with_plan_items
 from .protocol.view import SpaceView
 from .util import today
@@ -52,6 +53,11 @@ LIVE_STABLE = 30.0
 LATE_AFTER = 15 * 60.0
 
 type OrgaiaConfigEntry = ConfigEntry[OrgaiaCoordinator]
+
+
+def away_label(language: str | None) -> str:
+    """What an absence reads as in the calendar, as in the app."""
+    return "{name} weg" if (language or "de").split("-")[0].lower() == "de" else "{name} away"
 
 
 def spread(delay: float) -> float:
@@ -105,7 +111,8 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
         if self._view is None or self._view_key != key:
             view = self.engine.view()
             view = with_feed_items(view, self.feeds.events(view))
-            self._view = with_plan_items(view, labels_for(language), day)
+            view = with_plan_items(view, labels_for(language), day)
+            self._view = with_absence_items(view, away_label(language), day)
             self._view_key = key
         return self._view
 

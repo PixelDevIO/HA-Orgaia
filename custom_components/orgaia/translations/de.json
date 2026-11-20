@@ -175,6 +175,9 @@
       },
       "open_drives": {
         "name": "Offene Fahrten"
+      },
+      "occasions": {
+        "name": "Geburtstage und Jahrestage"
       }
     },
     "binary_sensor": {
@@ -201,6 +204,12 @@
       },
       "can_write": {
         "name": "Darf abhaken und eintragen"
+      },
+      "away": {
+        "name": "Weg"
+      },
+      "care_gap": {
+        "name": "Kind ohne Betreuung"
       }
     }
   },

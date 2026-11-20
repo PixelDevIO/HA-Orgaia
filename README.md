@@ -63,6 +63,8 @@ Per group (device named after the group):
 | `sensor.<group>_next_appointment` | Start of the next appointment, with title and location. |
 | `sensor.<group>_today` | Today in a few words ("2 appointments, 3 tasks"). Attributes: `speech` (the day in sentences, for a loudspeaker), `appointments`, `due`, `overdue`, `school`, `work` and `shopping`. For tomorrow or another day use `orgaia.get_agenda`. |
 | `sensor.<group>_open_drives` | Drives in the next 14 days nobody took yet. Attribute `drives`: title, item, date, start, `missing` (`to`/`from`) and who it is for. |
+| `sensor.<group>_birthdays_and_anniversaries` | Birthdays and anniversaries of the next 30 days. Attributes: `today` (those of today, with the age: "Oma Hildegard (75)") and `upcoming` (title, kind, date, `years`, `in_days`). In the calendars the age stands after the title. |
+| `binary_sensor.<group>_child_without_care` | On while a child is neither at school nor in care and every grown-up works, as in the app under "Who is home when". Only for groups with a timetable and a roster. Attributes: `children`, `until`, `today` and `tomorrow` (child, start, end). |
 | `sensor.<group>_connection` | Diagnostic: `ok`, `offline`, `needs_plus`, `update_required` or `removed`. Attribute `last_sync`: when the group was last read. |
 | `binary_sensor.<group>_may_tick_off_and_add` | Diagnostic: on when an admin allowed Home Assistant to write. |
 
@@ -78,6 +80,7 @@ Per person of the group (device named "<person> (<group>)"):
 | `sensor.<person>_<group>_today` | The person's day, as `sensor.<group>_today`. |
 | `binary_sensor.<person>_<group>_appointment_now` | On while an appointment of the person is on. |
 | `binary_sensor.<person>_<group>_out_shopping` | On while the person said "I'll do it" and is out shopping. |
+| `binary_sensor.<person>_<group>_away` | On on the days the person is entered as away in the app. Attributes: `from`, `until`, `note` and `next`. Days away also stand in the calendars ("Anna away"); a child that is away has no school, no care and nothing to pack on those days, and a rotating task passes over whoever is away. |
 
 New lists and people appear by themselves; deleted lists and people who left disappear.
 
@@ -399,6 +402,8 @@ Alles bleibt Ende-zu-Ende-verschlüsselt: Home Assistant tritt der Gruppe mit ei
 Home Assistant zählt nicht als Person; pro Gruppe gehen bis zu 3 Integrationen. Für jede Person der Gruppe gibt es eine eigene To-do-Liste, einen Kalender und Sensoren; unter **Konfigurieren** ordnest du ihr eine Person in Home Assistant zu. Für Automationen gibt es das Ereignis `orgaia_event` (auch als Geräte-Auslöser), zum Beispiel wenn eine Aufgabe erledigt oder überfällig ist oder ein Termin beginnt. Stundenpläne erscheinen als To-do-Liste mit den Pack-Aufgaben von heute, Schulzeit und Arbeitszeit aus Dienstplänen stehen im Kalender der Person. Abonnierte Kalender (Schule, Verein, Müllabfuhr) holt Home Assistant selbst alle 6 Stunden und zeigt sie bei den Personen, für die sie gelten. Ist der Orgaia-Dienst nicht erreichbar, bleibt der letzte Stand sichtbar und der Sensor „Verbindung“ zeigt `offline`. Nach einem Neustart von höchstens 15 Minuten kommen die Ereignisse von zwischendurch nach, mit `late: true`. Dieselbe Markierung bekommt, was sich geändert hat, während der Dienst länger als 15 Minuten nicht erreichbar war. „Überfällig“ umfasst auch Serien- und Pack-Aufgaben nach ihrer Uhrzeit und verpasste Zeitfenster. Home Assistant sollte auf die Zeitzone eingestellt sein, in der ihr lebt.
 
 **Stunden- und Dienstpläne:** Je Plan gibt es zusätzlich `sensor.…_school_today` (Stunden von heute mit Fach, Raum und Zeiten, was zu packen ist, morgen) und `binary_sensor.…_at_school`, bei Betreuung (verlässliche Schule oder OGS) `binary_sensor.…_in_care_after_school` und das Attribut `care`, einen eigenen Kalender mit den einzelnen Stunden, `sensor.…_work_today` (Arbeitszeit oder Schicht, die nächsten 7 Tage) und `binary_sensor.…_at_work`, außerdem `binary_sensor.<gruppe>_school_holidays`. Ein Beispiel-Dashboard mit Standardkarten steht oben unter *Timetables and rosters*.
+
+**Abwesenheiten, Geburtstage, Betreuungslücke:** `binary_sensor.…_away` ist an den Tagen an, an denen die Person in der App als weg eingetragen ist; die Tage stehen auch im Kalender („Anna weg“), ein Kind hat dann keine Schule, keine Betreuung und nichts zu packen, und bei Aufgaben im Wechsel wird übersprungen, wer weg ist. `sensor.<gruppe>_birthdays_and_anniversaries` zählt Geburtstage und Jahrestage der nächsten 30 Tage, im Attribut `today` stehen die von heute mit Alter. `binary_sensor.<gruppe>_child_without_care` ist an, solange ein Kind weder in der Schule noch in der Betreuung ist und alle Erwachsenen arbeiten (nur mit Stunden- und Dienstplan).
 
 **Einkaufslisten:** Die To-do-Entität zeigt in `shopping_state`, ob an der Liste noch geschrieben wird (`draft`), ob sie freigegeben ist (`ready`) oder jemand einkauft (`going`), dazu wer freigegeben hat, bis wann und wer einkauft. Mengen stehen im Titel, später dazugekommene Artikel tragen 🆕.
 

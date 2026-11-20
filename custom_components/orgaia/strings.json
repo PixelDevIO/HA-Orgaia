@@ -175,6 +175,9 @@
       },
       "open_drives": {
         "name": "Open drives"
+      },
+      "occasions": {
+        "name": "Birthdays and anniversaries"
       }
     },
     "binary_sensor": {
@@ -201,6 +204,12 @@
       },
       "can_write": {
         "name": "May tick off and add"
+      },
+      "away": {
+        "name": "Away"
+      },
+      "care_gap": {
+        "name": "Child without care"
       }
     }
   },
