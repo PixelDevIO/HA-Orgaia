@@ -14,8 +14,8 @@
 const TEXT = {
   en: {
     who: 'Who are you?',
-    whoFirst: 'First tap who you are.',
-    readOnly: 'Display only. An admin can allow ticking off and adding in the Orgaia app under Manage › Home Assistant.',
+    whoWas: 'Who was it? Tap your name and it is done.',
+    readOnly: 'Display only. An admin can allow ticking off and adding in the Orgaia app under Group › Home Assistant.',
     notLoaded: 'The group is not connected right now.',
     offline: 'Orgaia is not reachable. This is the last state.',
     empty: 'Nothing open.',
@@ -97,6 +97,9 @@ const TEXT = {
     room: 'Room {room}',
     more: '{n} more',
     look: 'Appearance',
+    style: 'Style',
+    styleHa: 'Like Home Assistant',
+    styleTinte: 'Tinte (like the Orgaia app)',
     accent: 'Accent colour (today, buttons, ticks)',
     background: 'Background colour',
     opacity: 'Background opacity (%)',
@@ -116,6 +119,7 @@ const TEXT = {
     kindDue: 'Due',
     kindShopping: 'Shopping',
     viewToday: 'Today',
+    dashWeek: 'This week',
     showTomorrow: 'Show tomorrow too',
     nothingToday: 'Nothing planned.',
     overdueN: '{n} overdue',
@@ -144,8 +148,8 @@ const TEXT = {
   },
   de: {
     who: 'Wer bist du?',
-    whoFirst: 'Tippe zuerst an, wer du bist.',
-    readOnly: 'Nur Anzeige. Ein Admin kann Abhaken und Eintragen in der Orgaia-App unter Verwalten › Home Assistant erlauben.',
+    whoWas: 'Wer war’s? Tippe deinen Namen an, dann ist es erledigt.',
+    readOnly: 'Nur Anzeige. Ein Admin kann Abhaken und Eintragen in der Orgaia-App unter Gruppe › Home Assistant erlauben.',
     notLoaded: 'Die Gruppe ist gerade nicht verbunden.',
     offline: 'Orgaia ist nicht erreichbar. Das ist der letzte Stand.',
     empty: 'Nichts offen.',
@@ -227,6 +231,9 @@ const TEXT = {
     room: 'Raum {room}',
     more: '{n} weitere',
     look: 'Aussehen',
+    style: 'Stil',
+    styleHa: 'Wie Home Assistant',
+    styleTinte: 'Tinte (wie die Orgaia-App)',
     accent: 'Akzentfarbe (heute, Knöpfe, Haken)',
     background: 'Hintergrundfarbe',
     opacity: 'Deckkraft des Hintergrunds (%)',
@@ -246,6 +253,7 @@ const TEXT = {
     kindDue: 'Fällig',
     kindShopping: 'Einkauf',
     viewToday: 'Heute',
+    dashWeek: 'Diese Woche',
     showTomorrow: 'Auch morgen zeigen',
     nothingToday: 'Nichts geplant.',
     overdueN: '{n} überfällig',
@@ -275,7 +283,7 @@ const TEXT = {
 };
 
 // The integration this card came with. A browser that still has an older card says so.
-const CARD_VERSION = '0.10.2';
+const CARD_VERSION = '0.11.0';
 
 // The people's colours of the app. All carry white text.
 const COLORS = ['#2F5FD0', '#B4500B', '#7B3FB5', '#0B6F6A', '#B02C63', '#56681A', '#8A5A00', '#3F4B8C'];
@@ -392,6 +400,20 @@ const STYLE = `
   h2 { font-size: 1rem; font-weight: 500; margin: 0; flex: 1 1 auto; min-width: 0; overflow-wrap: break-word; }
   .hint { color: var(--secondary-text-color); font-size: 0.875rem; margin: 0 0 8px; }
   .warn { color: var(--error-color); }
+  .hint.asking { color: var(--primary-text-color); font-weight: 500; }
+  /* Tinte, the look of the app: paper and ink, fine lines, no round corners. */
+  ha-card.tinte {
+    --primary-color: #111; --text-primary-color: #fff; --primary-text-color: #111; --secondary-text-color: #555;
+    --divider-color: #d6d6d6; --card-background-color: #fff;
+    background: #fff; border: 1px solid #111; border-radius: 0; box-shadow: none;
+  }
+  ha-card.tinte.dark {
+    --primary-color: #f2f2f2; --text-primary-color: #111; --primary-text-color: #f2f2f2; --secondary-text-color: #a8a8a8;
+    --divider-color: #3a3a3a; --card-background-color: #111;
+    background: #111; border-color: #f2f2f2;
+  }
+  ha-card.tinte * { border-radius: 0 !important; }
+  ha-card.tinte .dot { border-radius: 50% !important; }
   .who { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 4px; }
   .who.ask .chip { animation: ask 0.35s ease-in-out 2; }
   @keyframes ask { 50% { transform: scale(1.08); } }
@@ -533,7 +555,8 @@ class OrgaiaCard extends HTMLElement {
   /** Asking for the group first means the editor that opens next can offer its lists and plans. */
   static async getStubConfig(hass) {
     if (hass) await known(hass, undefined);
-    return { view: 'lists' };
+    // What the app promises, who does what today, is what a new card shows.
+    return { view: 'today' };
   }
 
   static getConfigElement() {
@@ -1045,6 +1068,8 @@ class OrgaiaCard extends HTMLElement {
     const t = this._t;
     const chips = this._data.persons.map((p) => `<button class="chip" style="--c:${colorOf(p.color)}" aria-pressed="${p.id === this._who}" data-act="who" data-person="${esc(p.id)}">${esc(p.name)}</button>`).join('');
     const error = this._error ? `<p class="error" role="alert">${esc(this._error)}</p>` : '';
+    // A tap without a name is kept: the question is "who was it?", and the name finishes the tap.
+    if (this._pending && !this._who) return `<p class="hint asking" id="ask" role="status">${esc(t.whoWas)}</p><div class="who ask" role="group" aria-labelledby="ask">${chips}</div>${error}`;
     return `<p class="hint" id="ask">${esc(this._who ? t.notYou : t.who)}</p><div class="who" role="group" aria-labelledby="ask">${chips}</div>${error}`;
   }
 
@@ -1079,7 +1104,8 @@ class OrgaiaCard extends HTMLElement {
     const data = this._data;
     const title = this._config.title != null ? this._config.title : data && data.title;
     const look = this._look();
-    let html = `<style>${STYLE}</style><ha-card${look ? ` style="${esc(look)}"` : ''}>${title ? `<h1>${esc(title)}</h1>` : ''}`;
+    const tinte = this._config.style === 'tinte' ? ` class="tinte${this._hass.themes && this._hass.themes.darkMode ? ' dark' : ''}"` : '';
+    let html = `<style>${STYLE}</style><ha-card${tinte}${look ? ` style="${esc(look)}"` : ''}>${title ? `<h1>${esc(title)}</h1>` : ''}`;
     if (data && data.version && data.version !== CARD_VERSION) {
       html += `<p class="hint warn">${esc(t.reload)} <button class="btn small" data-act="reload">${esc(t.reloadNow)}</button></p>`;
     }
@@ -1110,27 +1136,33 @@ class OrgaiaCard extends HTMLElement {
     });
   }
 
-  /** Nothing is done in nobody's name: without a chosen person the names are pointed at. */
-  _needWho() {
+  /** Nothing is done in nobody's name: the tap waits, and the names ask who it was. Never an error. */
+  _needWho(pending) {
     if (this._who) return true;
-    this._error = this._t.whoFirst;
+    this._pending = pending || null;
+    this._error = '';
     this._render();
     const who = this.shadowRoot.querySelector('.who');
-    if (who) {
-      who.classList.add('ask');
-      who.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    }
+    if (who) who.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    // A tap nobody answers is forgotten, so that a name tapped much later does not tick off something old.
+    clearTimeout(this._pendingTimer);
+    this._pendingTimer = setTimeout(() => {
+      if (!this._pending) return;
+      this._pending = null;
+      this._render();
+    }, 30000);
     return false;
   }
 
-  async _call(service, data, busy) {
-    if (!this._needWho()) return false;
+  async _call(service, data, busy, then) {
+    if (!this._needWho({ service, data, busy, then })) return false;
     this._error = '';
     if (busy) this._busy.add(busy);
     this._touch();
     this._render();
     try {
       await this._hass.callService('orgaia', service, { config_entry_id: this._data.entry_id, person: this._who, ...data });
+      if (then) then();
       return true;
     } catch (err) {
       this._error = (err && err.message) || this._t.failed;
@@ -1148,11 +1180,16 @@ class OrgaiaCard extends HTMLElement {
     if (!el || el.disabled) return;
     const act = el.dataset.act;
     if (act === 'who') {
-      this._who = this._who === el.dataset.person ? null : el.dataset.person;
+      const pending = this._pending;
+      this._pending = null;
+      clearTimeout(this._pendingTimer);
+      this._who = pending ? el.dataset.person : this._who === el.dataset.person ? null : el.dataset.person;
       this._chosen = true;
       this._error = '';
       this._touch();
       this._render();
+      // The tap that was waiting for a name is done now, in that name.
+      if (pending) this._call(pending.service, pending.data, pending.busy, pending.then);
     } else if (act === 'week') {
       this._week = Number(el.dataset.week);
       this._render();
@@ -1183,17 +1220,15 @@ class OrgaiaCard extends HTMLElement {
     const title = (this._drafts[list] || '').trim();
     if (!title) return;
     const qty = (this._drafts[list + '#qty'] || '').trim();
-    const ok =
-      form.dataset.kind === 'article'
-        ? await this._call('add_article', { list, title, ...(qty ? { quantity: qty } : {}) })
-        : await this._call('add_task', { list, title });
-    if (ok) {
+    const added = () => {
       delete this._drafts[list];
       delete this._drafts[list + '#qty'];
       this._render();
       const input = this.shadowRoot.querySelector(`form[data-list="${CSS.escape(list)}"] input.title`);
       if (input) input.focus();
-    }
+    };
+    if (form.dataset.kind === 'article') await this._call('add_article', { list, title, ...(qty ? { quantity: qty } : {}) }, undefined, added);
+    else await this._call('add_task', { list, title }, undefined, added);
   }
 }
 
@@ -1289,11 +1324,18 @@ class OrgaiaCardEditor extends HTMLElement {
     }
     const color = (name) => ({ name, selector: { ui_color: {} } });
     const section = (name, title, fields) => ({ type: 'expandable', name, title, flatten: true, schema: fields });
-    const look = [color('accent_color'), color('background_color'), { name: 'background_opacity', selector: { number: { min: 0, max: 100, step: 5, mode: 'slider' } } }, color('text_color')];
-    if (view === 'timetable' || view === 'roster') look.push({ name: 'fill', selector: { number: { min: 0, max: 100, step: 2, mode: 'slider' } } });
+    // One choice for the look. Colours come from the app; a card that already carries colours of its
+    // own (set in an earlier version, or in YAML) keeps them and still offers them here.
+    const c = this._config;
+    const own = ['accent_color', 'background_color', 'text_color', 'background_opacity', 'fill'].some((k) => c[k] != null && c[k] !== '') || Object.values(MAPS).some((m) => c[m] && Object.keys(c[m]).length);
+    const look = [choice('style', [['ha', t.styleHa], ['tinte', t.styleTinte]])];
     if (view === 'agenda') look.push(choice('color_by', [['none', t.colorNone], ['person', t.colorPerson], ['kind', t.colorKind]]));
+    if (own) {
+      look.push(color('accent_color'), color('background_color'), { name: 'background_opacity', selector: { number: { min: 0, max: 100, step: 5, mode: 'slider' } } }, color('text_color'));
+      if (view === 'timetable' || view === 'roster') look.push({ name: 'fill', selector: { number: { min: 0, max: 100, step: 2, mode: 'slider' } } });
+    }
     schema.push(section('look', t.look, look));
-    const names = this._names();
+    const names = own ? this._names() : [];
     if (names.length) schema.push(section('colors', t[{ timetable: 'subjectColors', roster: 'shiftColors', agenda: 'kindColors' }[view]], names.map((n) => color(MAPS[view] + SEP + n))));
     return schema;
   }
@@ -1348,6 +1390,7 @@ class OrgaiaCardEditor extends HTMLElement {
       fill('forget_after', 60);
     }
     if (shown.background_opacity == null) shown.background_opacity = 100;
+    fill('style', 'ha');
     if ((view === 'timetable' || view === 'roster') && shown.fill == null) shown.fill = 16;
     if (view === 'agenda') fill('color_by', 'none');
     // The form knows no nested values: every colour of a subject, shift or kind is a field of its own.
@@ -1367,7 +1410,7 @@ class OrgaiaCardEditor extends HTMLElement {
     const key = {
       view: 'view', entry: 'entry', title: 'title', lists: 'lists', person: 'person', show_done: 'showDone', add_tasks: 'addTasks',
       ask: 'ask', forget_after: 'forget', plan: 'plan', layout: 'layout', show_rooms: 'showRooms', show_pack: 'showPack', plans: 'plans',
-      accent_color: 'accent', background_color: 'background', background_opacity: 'opacity', text_color: 'textColor', fill: 'fill', color_by: 'colorBy',
+      style: 'style', accent_color: 'accent', background_color: 'background', background_opacity: 'opacity', text_color: 'textColor', fill: 'fill', color_by: 'colorBy',
       days: 'days', start: 'startAt', show_plans: 'showPlans', show_deadlines: 'showDeadlines', show_persons: 'showPersons', max: 'max',
       by_aisle: 'byAisle', show_drives: 'showDrives', show_tomorrow: 'showTomorrow',
     }[field.name];
@@ -1379,7 +1422,7 @@ class OrgaiaCardEditor extends HTMLElement {
     const before = viewOf(this._config);
     const value = { ...ev.detail.value };
     // Another view reads from other places: what was chosen for the old one does not carry over.
-    if (viewOf(value) !== before) for (const key of Object.keys(value)) if (!['view', 'entry', 'title', 'accent_color', 'background_color', 'background_opacity', 'text_color'].includes(key)) delete value[key];
+    if (viewOf(value) !== before) for (const key of Object.keys(value)) if (!['view', 'entry', 'title', 'style', 'accent_color', 'background_color', 'background_opacity', 'text_color'].includes(key)) delete value[key];
     for (const key of Object.keys(value)) {
       if (!key.includes(SEP)) continue;
       const [map, name] = key.split(SEP);
@@ -1389,6 +1432,7 @@ class OrgaiaCardEditor extends HTMLElement {
     if (Number(value.background_opacity) === 100) delete value.background_opacity;
     if (Number(value.fill) === 16) delete value.fill;
     if (value.color_by === 'none') delete value.color_by;
+    if (value.style === 'ha') delete value.style;
     for (const key of Object.keys(value)) {
       const v = value[key];
       if (v == null || v === '' || (Array.isArray(v) && !v.length)) delete value[key];
@@ -1417,6 +1461,38 @@ class OrgaiaCardEditor extends HTMLElement {
     this._form.schema = this._schema();
   }
 }
+
+/*
+ * The ready-made dashboard: today on the left, the shopping to tick off on the right, the week below.
+ * The integration puts it into the sidebar when that was chosen in the setup; in a dashboard of one's
+ * own it is `strategy: { type: custom:orgaia }`. It is Tinte unless told `style: ha`.
+ */
+class OrgaiaDashboardStrategy extends HTMLElement {
+  static async generate(config, hass) {
+    const t = textsFor(hass);
+    const base = { type: 'custom:orgaia-card', ...(config && config.entry ? { entry: config.entry } : {}), ...(config && config.style === 'ha' ? {} : { style: 'tinte' }) };
+    const section = (title, card) => ({ type: 'grid', cards: [{ type: 'heading', heading: title }, { ...base, ...card, title: '' }] });
+    return {
+      title: (config && config.title) || 'Orgaia',
+      views: [
+        {
+          title: (config && config.title) || 'Orgaia',
+          path: 'home',
+          icon: 'mdi:calendar-check',
+          type: 'sections',
+          max_columns: 2,
+          sections: [
+            section(t.viewToday, { view: 'today', show_tomorrow: true }),
+            section(t.viewShopping, { view: 'shopping' }),
+            { ...section(t.dashWeek, { view: 'agenda', days: 7 }), column_span: 2 },
+          ],
+        },
+      ],
+    };
+  }
+}
+
+if (!customElements.get('ll-strategy-dashboard-orgaia')) customElements.define('ll-strategy-dashboard-orgaia', OrgaiaDashboardStrategy);
 
 if (!customElements.get('orgaia-card-editor')) customElements.define('orgaia-card-editor', OrgaiaCardEditor);
 

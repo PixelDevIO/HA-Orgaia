@@ -15,6 +15,13 @@ def auto_enable_custom_integrations(enable_custom_integrations):
     return
 
 
+@pytest.fixture(autouse=True)
+def all_entities():
+    """The tests look at every entity, also those a new group starts without."""
+    with patch("homeassistant.helpers.entity.Entity.entity_registry_enabled_default", new=True):
+        yield
+
+
 @pytest.fixture
 def service():
     svc = FakeService()

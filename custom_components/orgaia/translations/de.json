@@ -3,26 +3,22 @@
     "step": {
       "user": {
         "title": "Orgaia-Gruppe verbinden",
-        "description": "Öffne in der Orgaia-App die Gruppe, gehe zu **Verwalten › Home Assistant** und erstelle einen Link. Füge ihn hier ein. Ein Admin der Gruppe bestätigt Home Assistant danach in der App.\n\nAlles bleibt Ende-zu-Ende-verschlüsselt: Home Assistant bekommt einen eigenen Schlüssel und liest die Gruppe wie ein Mitglied. Es zählt nicht als Person.",
+        "description": "Öffne in der Orgaia-App **Gruppe › Home Assistant** und tippe auf „In Home Assistant öffnen“. Der Link ist dann schon kopiert: Füge ihn hier ein. Danach bestätigt ein Admin der Gruppe Home Assistant in der App.\n\nAlles bleibt Ende-zu-Ende-verschlüsselt: Home Assistant bekommt einen eigenen Schlüssel und liest die Gruppe wie ein Mitglied. Es zählt nicht als Person.",
         "data": {
-          "link": "Einladungslink",
-          "name": "Name in der Gruppe"
+          "link": "Einladungslink"
         },
         "data_description": {
-          "link": "Der Link aus der App, beginnt mit https://…/join# oder orgaia://join?",
-          "name": "So sehen die Admins der Gruppe Home Assistant."
+          "link": "Der Link aus der App, beginnt mit https://…/join# oder orgaia://join?"
         }
       },
       "reauth_confirm": {
         "title": "{group} neu verbinden",
         "description": "Home Assistant ist nicht mehr Mitglied von {group}. Erstelle in der App einen neuen Link für Home Assistant und füge ihn hier ein.",
         "data": {
-          "link": "Einladungslink",
-          "name": "Name in der Gruppe"
+          "link": "Einladungslink"
         },
         "data_description": {
-          "link": "Der Link aus der App, beginnt mit https://…/join# oder orgaia://join?",
-          "name": "So sehen die Admins der Gruppe Home Assistant."
+          "link": "Der Link aus der App, beginnt mit https://…/join# oder orgaia://join?"
         }
       },
       "wait": {
@@ -32,22 +28,31 @@
         "title": "{group} neu verbinden",
         "description": "Tritt {group} mit neuem Link und neuem Schlüssel wieder bei. Entitäten und Automationen bleiben; der alte Schlüssel verlässt die Gruppe. Erstelle in der App einen neuen Link für Home Assistant und füge ihn hier ein.",
         "data": {
-          "link": "Einladungslink",
-          "name": "Name in der Gruppe"
+          "link": "Einladungslink"
+        }
+      },
+      "ready": {
+        "title": "{group} ist verbunden",
+        "description": "Noch ein Blick, dann hängt der Tag an der Wand.\n\n**Wer ist wer?** Personen mit gleichem Namen sind schon zugeordnet. So weiß Home Assistant, wer am eigenen Handy abhakt, und Mitteilungen erreichen die richtige Person.\n\n**Dashboard:** Heute, Einkauf und die Woche als fertige Seite in der Seitenleiste. Wer lieber selbst baut, nimmt die Orgaia-Karte in ein eigenes Dashboard.",
+        "data": {
+          "dashboard": "Orgaia-Dashboard in der Seitenleiste zeigen"
+        },
+        "data_description": {
+          "dashboard": "Heute, Einkauf und die Woche auf einer fertigen Seite. Lässt sich jederzeit wieder abschalten."
         }
       }
     },
     "progress": {
-      "wait_for_admin": "Die Anfrage ist raus. Ein Admin von **{group}** bestätigt Home Assistant jetzt in der Orgaia-App. Dieses Fenster wartet bis zu 10 Minuten. Vergleiche die Sicherheitsnummer mit der in der App: **{code}**"
+      "wait_for_admin": "Fast fertig. Öffne die Orgaia-App: Dort fragt **{group}**, ob Home Assistant sich verbinden darf.\n\nSteht in der App dasselbe wie hier?\n\n# {code}\n\nWenn ja, dort bestätigen. Dieses Fenster wartet bis zu 10 Minuten."
     },
     "error": {
       "invalid_link": "Das ist kein Orgaia-Einladungslink.",
-      "cannot_connect": "Der Orgaia-Dienst ist nicht erreichbar.",
+      "cannot_connect": "Der Orgaia-Server ist nicht erreichbar.",
       "needs_plus": "Home Assistant kann nur Gruppen mit Orgaia Plus beitreten.",
       "too_many": "Mit dieser Gruppe sind schon so viele Integrationen verbunden wie erlaubt.",
       "invite_invalid": "Der Link ist abgelaufen oder wurde schon benutzt. Erstelle in der App einen neuen.",
       "already_member": "Home Assistant ist schon Mitglied dieser Gruppe.",
-      "update_required": "Diese Version der Integration ist für den Orgaia-Dienst zu alt. Bitte in HACS aktualisieren.",
+      "update_required": "Diese Version der Integration ist für den Orgaia-Server zu alt. Bitte in HACS aktualisieren.",
       "unknown": "Etwas ist schiefgelaufen. Bitte versuche es noch einmal."
     },
     "abort": {
@@ -57,6 +62,9 @@
       "wrong_group": "Der Link gehört zu einer anderen Gruppe.",
       "reauth_successful": "Die Gruppe ist wieder verbunden.",
       "reconfigure_successful": "Wieder verbunden."
+    },
+    "create_entry": {
+      "default": "**{group}** ist verbunden. In der Seitenleiste steht jetzt das Dashboard der Gruppe (wenn gewählt), und die **Orgaia-Karte** lässt sich in jedes Dashboard setzen.\n\nHome Assistant liest die Gruppe nur. Abhaken und Eintragen erlaubt ein Admin in der Orgaia-App unter **Gruppe › Home Assistant**."
     }
   },
   "entity": {
@@ -220,11 +228,11 @@
     },
     "update_required": {
       "title": "Orgaia-Integration aktualisieren",
-      "description": "Der Orgaia-Dienst nimmt diese Version der Integration nicht mehr an, deshalb wird **{group}** nicht aktualisiert. Installiere in HACS die neueste Version und starte Home Assistant neu."
+      "description": "Der Orgaia-Server nimmt diese Version der Integration nicht mehr an, deshalb wird **{group}** nicht aktualisiert. Installiere in HACS die neueste Version und starte Home Assistant neu."
     },
     "write_not_allowed": {
       "title": "{group}: Home Assistant darf noch nicht abhaken",
-      "description": "Aus Home Assistant sollte etwas abgehakt oder eingetragen werden, aber kein Admin von {group} hat das bisher erlaubt. Öffne in der Orgaia-App die Gruppe, dann Verwalten › Home Assistant, und schalte „Darf abhaken und eintragen“ ein. Dieser Hinweis verschwindet von selbst, sobald es erlaubt ist."
+      "description": "Aus Home Assistant sollte etwas abgehakt oder eingetragen werden, aber kein Admin von {group} hat das bisher erlaubt. Öffne in der Orgaia-App Gruppe › Home Assistant und schalte „Darf abhaken und eintragen“ ein. Dieser Hinweis verschwindet von selbst, sobald es erlaubt ist."
     }
   },
   "options": {
@@ -246,13 +254,15 @@
           "voice_person": "Artikel per Sprache im Namen von",
           "lists": "Listen als To-do-Listen",
           "person_devices": "Ein Gerät je Person",
-          "completed_days": "Tage, die Erledigtes sichtbar bleibt"
+          "completed_days": "Tage, die Erledigtes sichtbar bleibt",
+          "dashboard": "Orgaia-Dashboard in der Seitenleiste zeigen"
         },
         "data_description": {
           "voice_person": "Ein Sprachassistent weiß nicht, wer spricht. Artikel, die er auf eine Einkaufsliste setzt, kommen im Namen dieser Person dazu („—“: gar nicht). Abhaken kann er nie.",
           "lists": "Keine gewählt: alle Aufgaben- und Einkaufslisten und Stundenpläne.",
           "person_devices": "Aus: keine To-do-Liste, kein Kalender und keine Sensoren je Person, nur für die Gruppe. Für große Gruppen.",
-          "completed_days": "0 bis 60, normal 14."
+          "completed_days": "0 bis 60, normal 14.",
+          "dashboard": "Heute, Einkauf und die Woche auf einer fertigen Seite. Lässt sich jederzeit wieder abschalten."
         }
       }
     },
@@ -661,7 +671,7 @@
       "message": "Es gibt keine Aufgabe {item}, die sich gerade abhaken ließe."
     },
     "read_only": {
-      "message": "Home Assistant darf {group} nur lesen. Ein Admin kann Abhaken und Eintragen in der Orgaia-App unter Verwalten › Home Assistant erlauben."
+      "message": "Home Assistant darf {group} nur lesen. Ein Admin kann Abhaken und Eintragen in der Orgaia-App unter Gruppe › Home Assistant erlauben."
     },
     "not_a_task": {
       "message": "Nur Aufgaben lassen sich abhaken."
@@ -703,7 +713,7 @@
       "message": "{group} ist voll und nimmt gerade keine Änderungen an."
     },
     "write_update_required": {
-      "message": "Diese Version der Integration ist zu alt für den Orgaia-Dienst. Bitte in HACS aktualisieren."
+      "message": "Diese Version der Integration ist zu alt für den Orgaia-Server. Bitte in HACS aktualisieren."
     },
     "write_unknown": {
       "message": "Orgaia hat die Änderung nicht angenommen."

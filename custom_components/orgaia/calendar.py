@@ -303,6 +303,8 @@ class OrgaiaTimetableCalendar(OrgaiaPlanEntity, CalendarEntity):
 
     plan_type = "timetable"
     _attr_translation_key = "timetable"
+    # Off until somebody wants it: a new group starts with the few entities a household looks at.
+    _attr_entity_registry_enabled_default = False
     _attr_icon = "mdi:timetable"
 
     def __init__(self, coordinator: OrgaiaCoordinator, list_id: str) -> None:

@@ -18,6 +18,7 @@ from .board import async_setup_board, group_loaded, notify_boards
 from .client.engine import GroupEngine
 from .const import CARD_URL, CONF_SPACE, DOMAIN, STORAGE_VERSION, VERSION
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator, storage_key
+from .dashboard import hide_dashboard, show_dashboard
 from .entity import (
     active_person_ids,
     group_device_name,
@@ -117,6 +118,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: OrgaiaConfigEntry) -> bo
     entry.async_on_unload(entry.add_update_listener(_options_changed))
     entry.async_on_unload(coordinator.async_add_listener(lambda: notify_boards(hass)))
     group_loaded(hass, entry, True)
+    if show_dashboard(hass, entry):
+        entry.async_on_unload(lambda: hide_dashboard(hass, entry))
     return True
 
 

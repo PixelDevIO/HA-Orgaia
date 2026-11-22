@@ -4,7 +4,7 @@ from __future__ import annotations
 
 DOMAIN = "orgaia"
 NAME = "Orgaia"
-VERSION = "0.10.2"
+VERSION = "0.11.0"
 
 CONF_LINK = "link"
 CONF_NAME = "name"
@@ -36,6 +36,9 @@ CONF_VOICE_PERSON = "voice_person"
 CONF_LISTS = "lists"
 CONF_PERSON_DEVICES = "person_devices"
 CONF_COMPLETED_DAYS = "completed_days"
+# Options: whether the ready-made dashboard of the group stands in the sidebar. New setups offer it;
+# groups connected before are asked in the settings, so that nothing appears by itself after an update.
+CONF_DASHBOARD = "dashboard"
 
 # Fired on the event bus for automations; also offered as device triggers on the group's device.
 EVENT_ORGAIA = "orgaia_event"

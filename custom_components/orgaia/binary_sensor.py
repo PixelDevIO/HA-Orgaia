@@ -159,6 +159,8 @@ class OrgaiaAtSchoolSensor(OrgaiaPlanEntity, _ByTheMinute):
 
     plan_type = "timetable"
     _attr_translation_key = "at_school"
+    # Off until somebody wants it: a new group starts with the few entities a household looks at.
+    _attr_entity_registry_enabled_default = False
     _attr_icon = "mdi:school"
 
     def __init__(self, coordinator: OrgaiaCoordinator, list_id: str) -> None:
@@ -193,6 +195,8 @@ class OrgaiaInCareSensor(OrgaiaPlanEntity, _ByTheMinute):
 
     plan_type = "timetable"
     _attr_translation_key = "in_care"
+    # Off until somebody wants it: a new group starts with the few entities a household looks at.
+    _attr_entity_registry_enabled_default = False
     _attr_icon = "mdi:account-child-outline"
 
     def __init__(self, coordinator: OrgaiaCoordinator, list_id: str) -> None:
@@ -227,6 +231,8 @@ class OrgaiaAtWorkSensor(OrgaiaPlanEntity, _ByTheMinute):
 
     plan_type = "roster"
     _attr_translation_key = "at_work"
+    # Off until somebody wants it: a new group starts with the few entities a household looks at.
+    _attr_entity_registry_enabled_default = False
     _attr_icon = "mdi:briefcase"
 
     def __init__(self, coordinator: OrgaiaCoordinator, list_id: str) -> None:
@@ -253,6 +259,8 @@ class OrgaiaOnCallSensor(OrgaiaPlanEntity, _ByTheMinute):
 
     plan_type = "roster"
     _attr_translation_key = "on_call"
+    # Off until somebody wants it: a new group starts with the few entities a household looks at.
+    _attr_entity_registry_enabled_default = False
     _attr_icon = "mdi:phone-alert"
 
     def __init__(self, coordinator: OrgaiaCoordinator, list_id: str) -> None:
@@ -278,6 +286,8 @@ class OrgaiaBusySensor(OrgaiaEntity, _ByTheMinute):
     """On while an appointment of the person is on: for "do not disturb" and the like."""
 
     _attr_translation_key = "busy"
+    # Off until somebody wants it: a new group starts with the few entities a household looks at.
+    _attr_entity_registry_enabled_default = False
     _attr_icon = "mdi:account-clock"
     _unrecorded_attributes = frozenset({"titles"})
 
@@ -306,6 +316,8 @@ class OrgaiaShoppingSensor(OrgaiaEntity, BinarySensorEntity):
     """On while the person has taken over a shopping list ("I'll do it") and not finished it yet."""
 
     _attr_translation_key = "out_shopping"
+    # Off until somebody wants it: a new group starts with the few entities a household looks at.
+    _attr_entity_registry_enabled_default = False
     _attr_icon = "mdi:cart-arrow-right"
 
     def __init__(self, coordinator: OrgaiaCoordinator, person_id: str) -> None:
@@ -336,6 +348,8 @@ class OrgaiaAwaySensor(OrgaiaEntity, _ByTheMinute):
     """On on the days the person is entered as away in the app (trip, class trip, hospital)."""
 
     _attr_translation_key = "away"
+    # Off until somebody wants it: a new group starts with the few entities a household looks at.
+    _attr_entity_registry_enabled_default = False
     _attr_icon = "mdi:bag-suitcase"
     _unrecorded_attributes = frozenset({"note", "next"})
 
@@ -372,6 +386,8 @@ class OrgaiaCareGapSensor(OrgaiaEntity, _ByTheMinute):
     """
 
     _attr_translation_key = "care_gap"
+    # Off until somebody wants it: a new group starts with the few entities a household looks at.
+    _attr_entity_registry_enabled_default = False
     _attr_icon = "mdi:human-child"
     _unrecorded_attributes = frozenset({"today", "tomorrow", "children"})
 
@@ -400,7 +416,7 @@ class OrgaiaCareGapSensor(OrgaiaEntity, _ByTheMinute):
 
 
 class OrgaiaCanWriteSensor(OrgaiaEntity, BinarySensorEntity):
-    """Whether an admin allowed this Home Assistant to tick off and add, in the app under Manage › Home Assistant."""
+    """Whether an admin allowed this Home Assistant to tick off and add, in the app under Group › Home Assistant."""
 
     _attr_translation_key = "can_write"
     _attr_icon = "mdi:pencil-lock-outline"
@@ -418,6 +434,8 @@ class OrgaiaSchoolHolidaysSensor(OrgaiaEntity, _ByTheMinute):
     """On during the school holidays the group entered."""
 
     _attr_translation_key = "school_holidays"
+    # Off until somebody wants it: a new group starts with the few entities a household looks at.
+    _attr_entity_registry_enabled_default = False
     _attr_icon = "mdi:beach"
     _unrecorded_attributes = frozenset({"name", "next"})
 

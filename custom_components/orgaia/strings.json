@@ -3,26 +3,22 @@
     "step": {
       "user": {
         "title": "Connect an Orgaia group",
-        "description": "In the Orgaia app, open the group, go to **Manage › Home Assistant** and create a link. Paste it here. An admin of the group then confirms Home Assistant in the app.\n\nEverything stays end-to-end encrypted: Home Assistant gets its own key and reads the group like a member. It is not counted as a person.",
+        "description": "In the Orgaia app, open **Group › Home Assistant** and tap \"Open in Home Assistant\". The link is copied by then: paste it here. An admin of the group then confirms Home Assistant in the app.\n\nEverything stays end-to-end encrypted: Home Assistant gets its own key and reads the group like a member. It is not counted as a person.",
         "data": {
-          "link": "Invitation link",
-          "name": "Name in the group"
+          "link": "Invitation link"
         },
         "data_description": {
-          "link": "The link from the app, starting with https://…/join# or orgaia://join?",
-          "name": "How Home Assistant appears to the group's admins."
+          "link": "The link from the app, starting with https://…/join# or orgaia://join?"
         }
       },
       "reauth_confirm": {
         "title": "Connect {group} again",
         "description": "Home Assistant is no longer a member of {group}. Create a new link for Home Assistant in the app and paste it here.",
         "data": {
-          "link": "Invitation link",
-          "name": "Name in the group"
+          "link": "Invitation link"
         },
         "data_description": {
-          "link": "The link from the app, starting with https://…/join# or orgaia://join?",
-          "name": "How Home Assistant appears to the group's admins."
+          "link": "The link from the app, starting with https://…/join# or orgaia://join?"
         }
       },
       "wait": {
@@ -32,22 +28,31 @@
         "title": "Connect {group} again",
         "description": "Joins {group} again with a new link and a new key. Entities and automations stay; the old key leaves the group. Create a new link for Home Assistant in the app and paste it here.",
         "data": {
-          "link": "Invite link",
-          "name": "Name in the group"
+          "link": "Invite link"
+        }
+      },
+      "ready": {
+        "title": "{group} is connected",
+        "description": "One more look, and the day is on the wall.\n\n**Who is who?** People with the same name are matched already. That way Home Assistant knows who ticks something off on their own phone, and notifications reach the right person.\n\n**Dashboard:** today, the shopping and the week as a ready-made page in the sidebar. If you would rather build your own, put the Orgaia card on a dashboard of yours.",
+        "data": {
+          "dashboard": "Show the Orgaia dashboard in the sidebar"
+        },
+        "data_description": {
+          "dashboard": "Today, the shopping and the week on one ready-made page. Can be switched off again at any time."
         }
       }
     },
     "progress": {
-      "wait_for_admin": "The request has been sent. An admin of **{group}** now confirms Home Assistant in the Orgaia app. This window waits up to 10 minutes. Compare the safety number with the one the app shows: **{code}**"
+      "wait_for_admin": "Almost done. Open the Orgaia app: there **{group}** asks whether Home Assistant may connect.\n\nDoes the app show the same as here?\n\n# {code}\n\nIf so, confirm there. This window waits for up to 10 minutes."
     },
     "error": {
       "invalid_link": "This is not an Orgaia invitation link.",
-      "cannot_connect": "The Orgaia service could not be reached.",
+      "cannot_connect": "The Orgaia server could not be reached.",
       "needs_plus": "Home Assistant can only join groups with Orgaia Plus.",
       "too_many": "This group already has the maximum number of connected integrations.",
       "invite_invalid": "The link has expired or was already used. Create a new one in the app.",
       "already_member": "Home Assistant is already a member of this group.",
-      "update_required": "This version of the integration is too old for the Orgaia service. Please update it in HACS.",
+      "update_required": "This version of the integration is too old for the Orgaia server. Please update it in HACS.",
       "unknown": "Something went wrong. Please try again."
     },
     "abort": {
@@ -57,6 +62,9 @@
       "wrong_group": "The link belongs to a different group.",
       "reauth_successful": "The group is connected again.",
       "reconfigure_successful": "Connected again."
+    },
+    "create_entry": {
+      "default": "**{group}** is connected. The group's dashboard is in the sidebar now (if chosen), and the **Orgaia card** can be put on any dashboard.\n\nHome Assistant only reads the group. An admin allows ticking off and adding in the Orgaia app under **Group › Home Assistant**."
     }
   },
   "entity": {
@@ -220,11 +228,11 @@
     },
     "update_required": {
       "title": "Update the Orgaia integration",
-      "description": "The Orgaia service no longer accepts this version of the integration, so **{group}** is not updated. Install the latest version in HACS and restart Home Assistant."
+      "description": "The Orgaia server no longer accepts this version of the integration, so **{group}** is not updated. Install the latest version in HACS and restart Home Assistant."
     },
     "write_not_allowed": {
       "title": "{group}: Home Assistant may not tick off yet",
-      "description": "Something was to be ticked off or added from Home Assistant, but no admin of {group} allowed that yet. In the Orgaia app, open the group, then Manage › Home Assistant, and switch on \"May tick off and add\". This notice goes away by itself once it is allowed."
+      "description": "Something was to be ticked off or added from Home Assistant, but no admin of {group} allowed that yet. In the Orgaia app, open Group › Home Assistant and switch on \"May tick off and add\". This notice goes away by itself once it is allowed."
     }
   },
   "options": {
@@ -246,13 +254,15 @@
           "voice_person": "Articles by voice in the name of",
           "lists": "Lists as to-do lists",
           "person_devices": "A device per person",
-          "completed_days": "Days ticked-off tasks stay"
+          "completed_days": "Days ticked-off tasks stay",
+          "dashboard": "Show the Orgaia dashboard in the sidebar"
         },
         "data_description": {
           "voice_person": "A voice assistant does not know who speaks. Articles it puts on a shopping list are added in the name of this person (\"—\": not at all). It can never tick off.",
           "lists": "None chosen: every task and shopping list and every timetable.",
           "person_devices": "Off: no to-do list, calendar or sensors per person, only for the group. For large groups.",
-          "completed_days": "0 to 60, normally 14."
+          "completed_days": "0 to 60, normally 14.",
+          "dashboard": "Today, the shopping and the week on one ready-made page. Can be switched off again at any time."
         }
       }
     },
@@ -661,7 +671,7 @@
       "message": "There is no task {item} that could be ticked off right now."
     },
     "read_only": {
-      "message": "Home Assistant may only read {group}. An admin can allow ticking off and adding in the Orgaia app under Manage › Home Assistant."
+      "message": "Home Assistant may only read {group}. An admin can allow ticking off and adding in the Orgaia app under Group › Home Assistant."
     },
     "not_a_task": {
       "message": "Only tasks can be ticked off."
@@ -703,7 +713,7 @@
       "message": "{group} is full and takes no changes right now."
     },
     "write_update_required": {
-      "message": "This version of the integration is too old for the Orgaia service. Please update it in HACS."
+      "message": "This version of the integration is too old for the Orgaia server. Please update it in HACS."
     },
     "write_unknown": {
       "message": "Orgaia did not take the change."
