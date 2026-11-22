@@ -87,8 +87,29 @@ def _nth(repeat: dict[str, Any], base: str, n: int) -> str:
     back = _back(repeat)
     anchor = add_days(base, back) if back else base
     day = parse_ymd(anchor).day
-    d = add_months(anchor, n * step * (1 if freq == "month" else 12), day)
+    which = _nth_of(repeat)
+    if which:
+        d = nth_weekday_of_month(add_months(anchor, n * step, 1), weekday(anchor), which)
+    else:
+        d = add_months(anchor, n * step * (1 if freq == "month" else 12), day)
     return add_days(d, -back) if back else d
+
+
+def _nth_of(repeat: dict[str, Any]) -> int:
+    """Which weekday of the month a monthly series is on (1 to 4, 5 = the last), or 0 (``nth`` in the app's Repeat)."""
+    which = repeat.get("nth")
+    if repeat.get("freq") != "month" or isinstance(which, bool) or not isinstance(which, (int, float)):
+        return 0
+    return int(which) if 1 <= which <= 5 else 0
+
+
+def nth_weekday_of_month(first: str, wd: int, which: int) -> str:
+    """The nth such weekday of the month ``first`` (its first day) begins; from the fifth on, the last one."""
+    start = add_days(first, (wd - weekday(first) + 7) % 7)
+    if which <= 4:
+        return add_days(start, (which - 1) * 7)
+    fifth = add_days(start, 28)
+    return fifth if fifth[:7] == first[:7] else add_days(start, 21)
 
 
 def _back(repeat: dict[str, Any]) -> int:
@@ -166,7 +187,8 @@ def occurrence_dates(item: dict[str, Any], start: str, end: str) -> list[str]:
         d = _nth(repeat, base, n)
         if d > end or (until and d > until):
             break
-        if d >= start:
+        # The nth weekday of the first month can lie before the first date.
+        if d >= start and d >= base:
             out.append(d)
         n, guard = n + 1, guard + 1
     return out
