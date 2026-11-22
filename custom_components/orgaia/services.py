@@ -2,7 +2,7 @@
 
 Every one of them needs a person of the group: who ticked off must be known, in the app too. They
 only work once an admin of the group allowed this Home Assistant to write, in the app under
-Manage › Home Assistant. The Orgaia card uses the same services.
+Group › Home Assistant. The Orgaia card uses the same services.
 """
 
 from __future__ import annotations

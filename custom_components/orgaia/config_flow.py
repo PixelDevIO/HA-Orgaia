@@ -32,6 +32,7 @@ from .client.engine import GroupEngine, JoinError
 from .const import (
     COMPLETED_DAYS,
     CONF_COMPLETED_DAYS,
+    CONF_DASHBOARD,
     CONF_DEVICE,
     CONF_JOIN,
     CONF_LINK,
@@ -57,8 +58,35 @@ from .protocol.invite import InviteCode, parse_invite
 _LOGGER = logging.getLogger(__name__)
 
 
-def _schema(name: str = DEFAULT_MEMBER_NAME) -> vol.Schema:
-    return vol.Schema({vol.Required(CONF_LINK): str, vol.Required(CONF_NAME, default=name): str})
+def _schema() -> vol.Schema:
+    """The link is all the setup asks for; Home Assistant is called just that in the group."""
+    return vol.Schema({vol.Required(CONF_LINK): str})
+
+
+def _person_labels(view: Any) -> dict[str, str]:
+    """A field per person, labelled with the name (made unique if two share it)."""
+    labels: dict[str, str] = {}
+    for p in view.active_persons():
+        label, n = p["name"], 2
+        while label in labels:
+            label, n = f"{p['name']} ({n})", n + 1
+        labels[label] = p["id"]
+    return labels
+
+
+def _persons_schema(hass: Any, view: Any, labels: dict[str, str], current: Mapping[str, str]) -> vol.Schema:
+    """Who is who, with the Home Assistant person of the same name suggested."""
+    by_name = {
+        (s.attributes.get("friendly_name") or s.name or "").strip().casefold(): s.entity_id
+        for s in hass.states.async_all("person")
+    }
+    selector = EntitySelector(EntitySelectorConfig(domain="person"))
+    schema: dict[Any, Any] = {}
+    for label, pid in labels.items():
+        name = view.person_by_id[pid]["name"]
+        suggested = current.get(pid) or by_name.get(name.strip().casefold())
+        schema[vol.Optional(label, description={"suggested_value": suggested} if suggested else None)] = selector
+    return vol.Schema(schema)
 
 
 class OrgaiaConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -75,6 +103,9 @@ class OrgaiaConfigFlow(ConfigFlow, domain=DOMAIN):
         self._engine: GroupEngine | None = None
         self._code: InviteCode | None = None
         self._wait: asyncio.Task[str] | None = None
+        self._title = "Orgaia"
+        self._data: dict[str, Any] = {}
+        self._labels: dict[str, str] = {}
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         errors: dict[str, str] = {}
@@ -129,6 +160,7 @@ class OrgaiaConfigFlow(ConfigFlow, domain=DOMAIN):
         code = parse_invite(user_input[CONF_LINK])
         if code is None or not code.server.startswith(("https://", "http://")):
             return "invalid_link"
+        # Older dialogs and scripts may still send a name; the form no longer asks for one.
         name = (user_input.get(CONF_NAME) or "").strip() or DEFAULT_MEMBER_NAME
         engine = GroupEngine(async_get_clientsession(self.hass), GroupEngine.new_data(code.server))
         try:
@@ -222,12 +254,35 @@ class OrgaiaConfigFlow(ConfigFlow, domain=DOMAIN):
             await self._leave(engine)
             return self.async_abort(reason="already_configured")
         title = code.n
+        view = None
         try:
             await engine.sync()
-            title = engine.view().name or title
+            view = engine.view()
+            title = view.name or title
         except (ApiError, aiohttp.ClientError, TimeoutError, JoinError) as err:
             _LOGGER.debug("First sync after joining failed, setup tries again: %s", err)
-        return self.async_create_entry(title=title or "Orgaia", data=data)
+        self._title, self._data = title or "Orgaia", data
+        # Who is who belongs to the setup: without it the card cannot tell who ticked something off.
+        if view is not None and self.hass.states.async_all("person"):
+            self._labels = _person_labels(view)
+        return await self.async_step_ready()
+
+    async def async_step_ready(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Connected. What is left is one look: who is who, and whether the dashboard should stand in the sidebar."""
+        assert self._engine is not None
+        if user_input is not None:
+            persons = {pid: user_input[label] for label, pid in self._labels.items() if user_input.get(label)}
+            options: dict[str, Any] = {CONF_DASHBOARD: bool(user_input.get(CONF_DASHBOARD, True))}
+            if persons:
+                options[CONF_PERSONS] = persons
+            return self.async_create_entry(
+                title=self._title, data=self._data, options=options, description_placeholders={"group": self._title}
+            )
+        fields = dict(_persons_schema(self.hass, self._engine.view(), self._labels, {}).schema) if self._labels else {}
+        fields[vol.Optional(CONF_DASHBOARD, default=True)] = BooleanSelector()
+        return self.async_show_form(
+            step_id="ready", data_schema=vol.Schema(fields), description_placeholders={"group": self._title}
+        )
 
     @staticmethod
     async def _leave(engine: GroupEngine) -> None:
@@ -249,30 +304,14 @@ class OrgaiaOptionsFlow(OptionsFlow):
     async def async_step_persons(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         entry = self.config_entry
         view = entry.runtime_data.data
-        # The form shows a field per person, labelled with the name (made unique if two share it).
-        labels: dict[str, str] = {}
-        for p in view.active_persons():
-            label, n = p["name"], 2
-            while label in labels:
-                label, n = f"{p['name']} ({n})", n + 1
-            labels[label] = p["id"]
+        labels = _person_labels(view)
         if not labels:
             return self.async_abort(reason="no_persons")
         if user_input is not None:
             mapping = {pid: user_input[label] for label, pid in labels.items() if user_input.get(label)}
             return self.async_create_entry(data={**entry.options, CONF_PERSONS: mapping})
         current = entry.options.get(CONF_PERSONS) or {}
-        by_name = {
-            (s.attributes.get("friendly_name") or s.name or "").strip().casefold(): s.entity_id
-            for s in self.hass.states.async_all("person")
-        }
-        selector = EntitySelector(EntitySelectorConfig(domain="person"))
-        schema: dict[Any, Any] = {}
-        for label, pid in labels.items():
-            name = view.person_by_id[pid]["name"]
-            suggested = current.get(pid) or by_name.get(name.strip().casefold())
-            schema[vol.Optional(label, description={"suggested_value": suggested} if suggested else None)] = selector
-        return self.async_show_form(step_id="persons", data_schema=vol.Schema(schema))
+        return self.async_show_form(step_id="persons", data_schema=_persons_schema(self.hass, view, labels, current))
 
     async def async_step_settings(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         entry = self.config_entry
@@ -284,6 +323,7 @@ class OrgaiaOptionsFlow(OptionsFlow):
             options[CONF_LISTS] = list(user_input.get(CONF_LISTS) or [])
             options[CONF_PERSON_DEVICES] = bool(user_input.get(CONF_PERSON_DEVICES, True))
             options[CONF_COMPLETED_DAYS] = int(user_input.get(CONF_COMPLETED_DAYS, COMPLETED_DAYS))
+            options[CONF_DASHBOARD] = bool(user_input.get(CONF_DASHBOARD, False))
             return self.async_create_entry(data=options)
         persons = [SelectOptionDict(value=NOBODY, label="—")] + [
             SelectOptionDict(value=p["id"], label=p["name"]) for p in view.active_persons()
@@ -304,6 +344,7 @@ class OrgaiaOptionsFlow(OptionsFlow):
             vol.Optional(
                 CONF_COMPLETED_DAYS, default=entry.options.get(CONF_COMPLETED_DAYS, COMPLETED_DAYS)
             ): NumberSelector(NumberSelectorConfig(min=0, max=60, step=1, mode=NumberSelectorMode.BOX)),
+            vol.Optional(CONF_DASHBOARD, default=bool(entry.options.get(CONF_DASHBOARD, False))): BooleanSelector(),
         }
         return self.async_show_form(step_id="settings", data_schema=vol.Schema(schema))
 

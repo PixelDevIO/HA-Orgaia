@@ -4,6 +4,10 @@ Your family's **Orgaia** group in Home Assistant: every task and shopping list a
 
 Orgaia is end-to-end encrypted, and stays that way: Home Assistant joins the group with **its own key**, like a member, and decrypts the entries on your own server. The Orgaia service never sees your data in clear text.
 
+![The Orgaia dashboard on a kitchen display: today, the shopping to tick off, the week](docs/kitchen-display.png)
+
+**In three steps:** install the integration → in the app tap **Group › Home Assistant › Open in Home Assistant** and paste the link → confirm in the app. Home Assistant then offers the ready-made **Orgaia dashboard** for the sidebar: today, the shopping and the week.
+
 *Deutsche Kurzbeschreibung weiter unten.*
 
 ## Requirements
@@ -29,9 +33,9 @@ Copy `custom_components/orgaia` into your `config/custom_components/` folder and
 
 [![Add the Orgaia integration](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=orgaia)
 
-1. In the Orgaia app, open the group → **Home Assistant** → **Connect Home Assistant**. Tap **Copy and open in Home Assistant**: the link is copied and your Home Assistant opens on "Add integration: Orgaia".
-2. Or by hand: **Settings → Devices & services → Add integration → Orgaia**. Paste the link and choose the name the group's admins will see.
-3. Home Assistant now waits (up to 10 minutes) while an admin confirms it in the app. Compare the safety number shown in Home Assistant with the one in the app.
+1. In the Orgaia app, open **Group › Home Assistant** and tap **Open in Home Assistant**: the link is copied and your Home Assistant opens on "Add integration: Orgaia". (By hand: **Settings → Devices & services → Add integration → Orgaia**.) Paste the link; nothing else is asked.
+2. Home Assistant now waits (up to 10 minutes) while an admin confirms it in the app. Both show the same four check characters; if they match, confirm. In the same sheet the admin can switch on **"May tick off and add"** (off unless chosen).
+3. Home Assistant shows who is who (people with the same name as a Home Assistant person are matched already) and offers the **Orgaia dashboard** for the sidebar.
 
 Connect several groups by adding the integration again with a link from each group. Every group gets its own key, so the groups never learn of each other.
 
@@ -44,9 +48,11 @@ To connect the integration to the group again with a fresh link (after it was re
 Under **Settings → Devices & services → Orgaia → Configure**:
 
 - **People**: which Home Assistant person each person of the group is (see *People in Home Assistant*).
-- **Settings**: which lists become to-do lists (none chosen: all); whether every person gets a device of their own with to-do list, calendar and sensors (switch off for large groups); how many days ticked-off tasks stay (normally 14); and in whose name a voice assistant puts articles on a shopping list.
+- **Settings**: whether the ready-made Orgaia dashboard stands in the sidebar; which lists become to-do lists (none chosen: all); whether every person gets a device of their own with to-do list, calendar and sensors (switch off for large groups); how many days ticked-off tasks stay (normally 14); and in whose name a voice assistant puts articles on a shopping list.
 
 ## Entities
+
+A newly connected group starts with the entities a household looks at: the to-do lists and calendars, **Today**, **Overdue**, **Shopping waiting** and **Open drives** for the group; to-do list, calendar and **Today** for each person; **School today** and **Work today** for each plan. Everything else in the tables below is there but **switched off**; switch it on under **Settings → Devices & services → Orgaia → Entities**. Groups connected with an earlier version keep what they have. Automations on `orgaia_event` and the blueprints need none of the switched-off entities.
 
 Per group (device named after the group):
 
@@ -264,13 +270,24 @@ actions:
 
 ## Ticking off and adding from Home Assistant
 
-Home Assistant only reads a group until an **admin allows it to write**: in the Orgaia app, open the group → **Manage › Home Assistant** and switch on **"May tick off and add"** for this Home Assistant. It can be switched off again at any time.
+Home Assistant only reads a group until an **admin allows it to write**: in the Orgaia app, open **Group › Home Assistant** and switch on **"May tick off and add"** for this Home Assistant. It can be switched off again at any time.
 
 Who ticked off must be known, also at a display on the wall that belongs to nobody. So every change is made **in the name of a person of the group**, and the app shows that name with the note "via Home Assistant".
 
 - **Standard to-do lists and calendars**: a signed-in user whose Home Assistant person is assigned under **Configure** can tick off in the to-do lists, add tasks and articles ("Bread, 2 eggs" become two articles), and create appointments in the Orgaia calendars (in a person's calendar that person takes part). Other users get a message instead, and nothing is written. Simple repetitions (daily, weekly on weekdays, monthly, yearly, with an end date) are taken over.
 - **Voice assistants** (Assist, "put milk on the shopping list") do not know who is speaking. Only when **Configure → Settings → Articles by voice in the name of** names a person do they add articles, in that person's name. They never tick off.
-- **The Orgaia card** asks who you are, for shared displays.
+- **The Orgaia card** asks who it was, for shared displays.
+
+### Orgaia dashboard
+
+The ready-made dashboard shows **today** (with tomorrow), the **shopping** to tick off and the **week**, in the look of the app. The setup offers to put it into the sidebar; later it is a switch under **Configure → Settings**. It cannot be edited. To arrange things yourself, build a dashboard of your own with the Orgaia card, or start from the same layout in any dashboard's raw configuration:
+
+```yaml
+strategy:
+  type: custom:orgaia
+  entry: 01JABC…   # optional: the group, when more than one is connected
+  style: ha        # optional: Home Assistant's look instead of Tinte
+```
 
 ### Orgaia card
 
@@ -288,7 +305,7 @@ forget_after: 60           # seconds without a tap until the card forgets who it
 ask: always                # ask even when the signed-in user is known
 ```
 
-**First tap who you are, then tick off.** Without a name nothing happens. On a personal phone the card knows who is signed in, when that user's person is assigned under **Configure** (see *People in Home Assistant*); on a shared display everybody taps their name, and after a minute without a tap the card forgets it again. On a shopping list the card adds articles (with a quantity), sorts them by aisle, changes counted quantities with **+ and −**, adds a list's **fixed purchases** ("+ Weekly shop"), releases the list, and offers "I'll do it", "Not after all" and "Shopping done"; while out shopping every article has **"Not got"**. Where everybody ticks off their own part ("each for themselves"), the tick is the chosen person's own.
+**Tick off, then say who it was.** A tap without a name is not an error: the card asks "Who was it?", and the name finishes the tap. On a personal phone the card knows who is signed in, when that user's person is assigned under **Configure** (see *People in Home Assistant*); on a shared display everybody taps their name, and after a minute without a tap the card forgets it again. On a shopping list the card adds articles (with a quantity), sorts them by aisle, changes counted quantities with **+ and −**, adds a list's **fixed purchases** ("+ Weekly shop"), releases the list, and offers "I'll do it", "Not after all" and "Shopping done"; while out shopping every article has **"Not got"**. Where everybody ticks off their own part ("each for themselves"), the tick is the chosen person's own.
 
 Anybody at the display can tap any name: the card keeps track of who did what among people who trust each other; it is no lock.
 
@@ -298,12 +315,12 @@ One card, several views. The editor first asks for the **view** and then offers 
 
 | `view` | Shows | Options |
 | --- | --- | --- |
-| `lists` (default) | all lists, to tick off and add to | `lists`, `show_done`, `add_tasks`, `by_aisle`, `ask`, `forget_after` |
+| `lists` | all lists, to tick off and add to | `lists`, `show_done`, `add_tasks`, `by_aisle`, `ask`, `forget_after` |
 | `shopping` | only the shopping lists | `lists`, `by_aisle` (default on), `ask`, `forget_after` |
 | `tasks` | only the task lists | `lists`, `person` (only what is assigned to them), `show_done`, `add_tasks` |
 | `timetable` | a timetable as a week grid, this week and the next, with the lesson that is on and what to pack today | `plan`, `layout: week \| day`, `show_rooms`, `show_pack` |
 | `roster` | rosters side by side, day by day | `plans`, `days` (1–14), `start: today \| week` |
-| `today` | today at a glance for a wall display: appointments, school with tests and packing, work, what is due and overdue, the shopping | `person`, `show_tomorrow` |
+| `today` (what a new card shows) | today at a glance for a wall display: appointments, school with tests and packing, work, what is due and overdue, the shopping | `person`, `show_tomorrow` |
 | `agenda` | what is coming up, day by day, with who drives and buttons to take a drive | `days` (1–31), `person`, `show_plans`, `show_deadlines`, `show_persons`, `show_drives`, `max`, `ask`, `forget_after` |
 
 ```yaml
@@ -314,23 +331,14 @@ plan: Leonie        # name or id; without it the first timetable
 
 #### Appearance
 
-Every view has an **Appearance** section in the editor; the timetable, roster and appointments also offer colours of their own:
+One choice in the editor: **Like Home Assistant** (the card follows your theme) or **Tinte**, the look of the Orgaia app: paper and ink, fine lines, no round corners.
 
 ```yaml
-accent_color: teal         # today, buttons, ticks; one of Home Assistant's colours or any CSS colour
-background_color: '#102030'
-background_opacity: 40     # per cent; 0 shows the dashboard's background through the card
-text_color: white
-fill: 30                   # timetable, roster: how strong the coloured fields are, per cent
-subject_colors:            # timetable
-  Mathe: red
-  Sport: green
-shift_colors:              # roster
-  Nacht: deep-purple
+style: tinte
 color_by: kind             # appointments: a coloured bar by person or by kind
-kind_colors:               # event, task, school, work, due, shopping
-  work: orange
 ```
+
+The colours of people come from the app. Cards that carry colours of their own from an earlier version (`accent_color`, `background_color`, `background_opacity`, `text_color`, `fill`, `subject_colors`, `shift_colors`, `kind_colors`) keep them; these keys still work in YAML and stay in the editor of such a card.
 
 Put the card on a dashboard several times for several views. The card is listed among the dashboard resources by the integration itself; after an update of the integration the card says so and offers to reload the page.
 
@@ -394,11 +402,15 @@ Alles bleibt Ende-zu-Ende-verschlüsselt: Home Assistant tritt der Gruppe mit ei
 
 **Voraussetzung:** eine Gruppe mit Orgaia Plus und ein Admin, der Home Assistant in der App bestätigt.
 
-**Einrichten:**
+**In drei Schritten:**
 
-1. In der App die Gruppe öffnen → **Home Assistant** → **Home Assistant verbinden** und den Link kopieren.
-2. In Home Assistant: **Einstellungen → Geräte & Dienste → Integration hinzufügen → Orgaia**, Link einfügen.
-3. Ein Admin bestätigt in der App. Die Sicherheitsnummer in Home Assistant und in der App muss gleich sein.
+1. Integration über HACS installieren (Knopf oben) und Home Assistant neu starten.
+2. In der App **Gruppe › Home Assistant › In Home Assistant öffnen** antippen und den Link in Home Assistant einfügen. Mehr wird nicht gefragt.
+3. In der App bestätigen: Dort und in Home Assistant stehen dieselben vier Prüfzeichen. Im selben Blatt lässt sich „Darf abhaken und eintragen“ einschalten (ab Werk aus).
+
+Danach zeigt Home Assistant, wer wer ist (gleiche Namen sind schon zugeordnet), und bietet das fertige **Orgaia-Dashboard** für die Seitenleiste an: Heute, Einkauf zum Abhaken und die Woche, im Stil der App. Es lässt sich unter **Konfigurieren › Einstellungen** wieder abschalten.
+
+**Wenige Entitäten ab Werk:** Eine neu verbundene Gruppe beginnt mit To-do-Listen, Kalendern, „Heute“, „Überfällig“, „Einkauf wartet“ und „Offene Fahrten“, je Person mit To-do-Liste, Kalender und „Heute“, je Plan mit „Schule heute“ und „Arbeit heute“. Alles andere ist vorhanden, aber ausgeschaltet, und wird unter **Geräte & Dienste › Orgaia › Entitäten** eingeschaltet. Bestehende Verbindungen behalten, was sie haben.
 
 Home Assistant zählt nicht als Person; pro Gruppe gehen bis zu 3 Integrationen. Für jede Person der Gruppe gibt es eine eigene To-do-Liste, einen Kalender und Sensoren; unter **Konfigurieren** ordnest du ihr eine Person in Home Assistant zu. Für Automationen gibt es das Ereignis `orgaia_event` (auch als Geräte-Auslöser), zum Beispiel wenn eine Aufgabe erledigt oder überfällig ist oder ein Termin beginnt. Stundenpläne erscheinen als To-do-Liste mit den Pack-Aufgaben von heute, Schulzeit und Arbeitszeit aus Dienstplänen stehen im Kalender der Person. Abonnierte Kalender (Schule, Verein, Müllabfuhr) holt Home Assistant selbst alle 6 Stunden und zeigt sie bei den Personen, für die sie gelten. Ist der Orgaia-Dienst nicht erreichbar, bleibt der letzte Stand sichtbar und der Sensor „Verbindung“ zeigt `offline`. Nach einem Neustart von höchstens 15 Minuten kommen die Ereignisse von zwischendurch nach, mit `late: true`. Dieselbe Markierung bekommt, was sich geändert hat, während der Dienst länger als 15 Minuten nicht erreichbar war. „Überfällig“ umfasst auch Serien- und Pack-Aufgaben nach ihrer Uhrzeit und verpasste Zeitfenster. Home Assistant sollte auf die Zeitzone eingestellt sein, in der ihr lebt.
 
@@ -408,7 +420,7 @@ Home Assistant zählt nicht als Person; pro Gruppe gehen bis zu 3 Integrationen.
 
 **Einkaufslisten:** Die To-do-Entität zeigt in `shopping_state`, ob an der Liste noch geschrieben wird (`draft`), ob sie freigegeben ist (`ready`) oder jemand einkauft (`going`), dazu wer freigegeben hat, bis wann und wer einkauft. Mengen stehen im Titel, später dazugekommene Artikel tragen 🆕.
 
-**Abhaken und eintragen:** Home Assistant liest nur, bis ein Admin in der App unter **Verwalten › Home Assistant** „Darf abhaken und eintragen“ einschaltet. Danach geht alles über die **Orgaia-Karte** (`type: custom:orgaia-card`, sie kommt mit der Integration): **erst antippen, wer man ist, dann abhaken**, Artikel auf die Einkaufsliste setzen, Liste freigeben, „Mache ich“ und „Einkauf fertig“. In der App steht der Name mit dem Zusatz „über Home Assistant“. Nach einer Minute ohne Tippen vergisst die Karte, wer es war; auf dem eigenen Handy kennt sie die angemeldete Person, wenn diese unter **Konfigurieren** zugeordnet ist. Die Karte hat mehrere **Ansichten**, die im Editor gewählt werden: alle Listen, nur Einkauf, nur Aufgaben (auch nur einer Person), **Stundenplan** als Wochenraster, **Dienstplan** und **Termine**; dazu jeweils die passende Quelle (Liste, Plan, Person). Unter **Aussehen** lassen sich Akzent-, Hintergrund- und Textfarbe, die Deckkraft des Hintergrunds sowie eigene Farben je Fach, Schicht oder Art des Eintrags einstellen. Neu sind die Ansicht **Heute** (für ein Wanddisplay, auch mit morgen), im Einkauf **Gänge**, **+ und −** bei Mengen, **„Nicht bekommen“** und **feste Einkäufe**, und in den Terminen, wer hin- und zurückfährt, mit „Ich fahre hin“.
+**Abhaken und eintragen:** Home Assistant liest nur, bis ein Admin in der App unter **Gruppe › Home Assistant** „Darf abhaken und eintragen“ einschaltet. Danach geht alles über die **Orgaia-Karte** (`type: custom:orgaia-card`, sie kommt mit der Integration): **abhaken, dann antippen, wer es war** (ein Tipp ohne Namen ist kein Fehler, die Karte fragt „Wer war’s?“), Artikel auf die Einkaufsliste setzen, Liste freigeben, „Mache ich“ und „Einkauf fertig“. In der App steht der Name mit dem Zusatz „über Home Assistant“. Nach einer Minute ohne Tippen vergisst die Karte, wer es war; auf dem eigenen Handy kennt sie die angemeldete Person, wenn diese unter **Konfigurieren** zugeordnet ist. Die Karte hat mehrere **Ansichten**, die im Editor gewählt werden: alle Listen, nur Einkauf, nur Aufgaben (auch nur einer Person), **Stundenplan** als Wochenraster, **Dienstplan** und **Termine**; dazu jeweils die passende Quelle (Liste, Plan, Person). Unter **Aussehen** gibt es eine Wahl: „Wie Home Assistant“ oder „Tinte“, der Stil der App. Karten mit eigenen Farben aus früheren Versionen behalten sie. Neu sind die Ansicht **Heute** (für ein Wanddisplay, auch mit morgen), im Einkauf **Gänge**, **+ und −** bei Mengen, **„Nicht bekommen“** und **feste Einkäufe**, und in den Terminen, wer hin- und zurückfährt, mit „Ich fahre hin“.
 
 **Standard-To-do-Listen und Kalender:** Ein angemeldeter Benutzer, dessen Person unter **Konfigurieren** zugeordnet ist, kann dort abhaken, Aufgaben und Artikel anlegen und Termine in den Orgaia-Kalendern eintragen. Sprachassistenten wissen nicht, wer spricht: Sie setzen nur Artikel auf die Einkaufsliste, und nur im Namen der Person, die unter **Konfigurieren › Einstellungen** dafür gewählt ist. Abhaken können sie nie.
 

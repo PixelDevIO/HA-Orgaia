@@ -124,3 +124,17 @@ async def test_remove_leaves_the_group(hass: HomeAssistant, service: FakeService
     await hass.config_entries.async_remove(entry.entry_id)
     await hass.async_block_till_done()
     assert service.left
+
+
+def test_a_new_group_starts_with_few_entities() -> None:
+    """What a household looks at is on; the rest is there, switched off, one click away."""
+    from custom_components.orgaia import binary_sensor, calendar, sensor
+
+    off = [
+        sensor.OrgaiaNextTaskSensor, sensor.OrgaiaNextEventSensor, sensor.OrgaiaOccasionsSensor,
+        binary_sensor.OrgaiaBusySensor, binary_sensor.OrgaiaAwaySensor, binary_sensor.OrgaiaShoppingSensor,
+        binary_sensor.OrgaiaAtSchoolSensor, binary_sensor.OrgaiaCareGapSensor, binary_sensor.OrgaiaSchoolHolidaysSensor,
+    ]  # fmt: skip
+    assert all(vars(cls).get("__attr_entity_registry_enabled_default") is False for cls in off)
+    on = [sensor.OrgaiaTodaySensor, sensor.OrgaiaOpenDrivesSensor, sensor.OrgaiaShoppingWaitingSensor, calendar.OrgaiaCalendar]
+    assert all("__attr_entity_registry_enabled_default" not in vars(cls) for cls in on)

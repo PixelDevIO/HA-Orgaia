@@ -66,13 +66,24 @@ expect(lists.includes('nicht bekommen'), 'article not got is marked');
 // Nothing in nobody's name: first a person, then + on the bread.
 await page.evaluate(() => window.card.shadowRoot.querySelector('[data-act="step"][data-step="1"]').click());
 await page.waitForTimeout(30);
-expect((await page.evaluate(() => window.calls.length)) === 0, 'asks who you are before writing');
+expect((await page.evaluate(() => window.calls.length)) === 0, 'nothing is written in nobody\'s name');
+const asked = await page.evaluate(() => window.card.shadowRoot.textContent);
+expect(asked.includes('Wer war’s?') && !(await page.evaluate(() => !!window.card.shadowRoot.querySelector('.error'))), 'asks who it was, without an error');
+// The name finishes the tap that was waiting.
 await page.evaluate(() => window.card.shadowRoot.querySelector('[data-act="who"]').click());
-await page.evaluate(() => window.card.shadowRoot.querySelector('[data-act="step"][data-step="1"]').click());
+await page.waitForTimeout(30);
+expect((await page.evaluate(() => window.calls.map((c) => c.service).join())) === 'set_quantity', 'the waiting tap is done once a name is tapped');
 await page.evaluate(() => window.card.shadowRoot.querySelector('[data-act="set"]').click());
 await page.waitForTimeout(30);
 const calls = await page.evaluate(() => window.calls.map((c) => c.service));
 expect(calls.join() === 'set_quantity,add_fixed_purchase', 'plus and fixed purchase call the services');
+
+// A new card shows today; Tinte is one choice; the ready-made dashboard is built from the same card.
+expect((await page.evaluate(() => customElements.get('orgaia-card').getStubConfig())).view === 'today', 'a new card starts with today');
+await show({ view: 'today', style: 'tinte' });
+expect(await page.evaluate(() => getComputedStyle(window.card.shadowRoot.querySelector('ha-card')).borderRadius === '0px'), 'Tinte has no round corners');
+const dash = await page.evaluate(() => customElements.get('ll-strategy-dashboard-orgaia').generate({ entry: 'abc' }, window.makeHass('de')));
+expect(dash.views[0].sections.length === 3 && dash.views[0].sections.every((s) => s.cards[1].type === 'custom:orgaia-card' && s.cards[1].entry === 'abc' && s.cards[1].style === 'tinte'), 'dashboard strategy: today, shopping, week');
 
 const today = await show({ view: 'today', show_tomorrow: true });
 expect(today.includes('Heute') && today.includes('Morgen') && today.includes('Training'), 'today view shows today and tomorrow');

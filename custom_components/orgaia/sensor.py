@@ -125,6 +125,8 @@ class OrgaiaCountSensor(OrgaiaEntity, SensorEntity):
     ) -> None:
         super().__init__(coordinator, description.key, person_id)
         self.entity_description = description
+        # Of the counts, a new group shows only what is overdue; the others wait to be switched on.
+        self._attr_entity_registry_enabled_default = person_id is None and description.key == "overdue"
 
     def _titles(self) -> list[str]:
         now = local_now()
@@ -303,6 +305,8 @@ class OrgaiaNextTaskSensor(OrgaiaEntity, SensorEntity):
     """The open task of a person that is due next; tasks without a due date or time slot are left out."""
 
     _attr_translation_key = "next_task"
+    # Off until somebody wants it: a new group starts with the few entities a household looks at.
+    _attr_entity_registry_enabled_default = False
     _attr_icon = "mdi:clipboard-text-clock-outline"
 
     def __init__(self, coordinator: OrgaiaCoordinator, person_id: str) -> None:
@@ -328,6 +332,8 @@ class OrgaiaNextTaskSensor(OrgaiaEntity, SensorEntity):
 
 class OrgaiaNextEventSensor(OrgaiaEntity, SensorEntity):
     _attr_translation_key = "next_event"
+    # Off until somebody wants it: a new group starts with the few entities a household looks at.
+    _attr_entity_registry_enabled_default = False
     _attr_device_class = SensorDeviceClass.TIMESTAMP
     _attr_icon = "mdi:calendar-clock"
     _unrecorded_attributes = frozenset({"title", "location"})
@@ -469,6 +475,8 @@ class OrgaiaOccasionsSensor(OrgaiaEntity, SensorEntity):
     """Birthdays and anniversaries of the next 30 days; ``today`` holds those of today with the age."""
 
     _attr_translation_key = "occasions"
+    # Off until somebody wants it: a new group starts with the few entities a household looks at.
+    _attr_entity_registry_enabled_default = False
     _attr_icon = "mdi:cake-variant-outline"
     _attr_state_class = SensorStateClass.MEASUREMENT
     _unrecorded_attributes = frozenset({"today", "upcoming"})
