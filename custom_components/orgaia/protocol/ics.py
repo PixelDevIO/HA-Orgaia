@@ -168,7 +168,7 @@ def _parse_events(text: str) -> list[VEvent]:
             if cur is not None and depth > 0:
                 depth -= 1
             elif cur is not None and value.upper() == "VEVENT":
-                if cur.start is not None and cur.uid is not None:
+                if cur.start is not None:
                     out.append(cur)
                 cur = None
             continue
@@ -215,9 +215,29 @@ def _parse_events(text: str) -> list[VEvent]:
 # --- Time zones --------------------------------------------------------------------------------
 
 
+# Outlook and Exchange name zones their own way; the common ones, as the names the system knows.
+WINDOWS_ZONES = {
+    "w. europe standard time": "Europe/Berlin",
+    "central europe standard time": "Europe/Budapest",
+    "central european standard time": "Europe/Warsaw",
+    "romance standard time": "Europe/Paris",
+    "gmt standard time": "Europe/London",
+    "greenwich standard time": "Atlantic/Reykjavik",
+    "e. europe standard time": "Europe/Chisinau",
+    "fle standard time": "Europe/Helsinki",
+    "gtb standard time": "Europe/Bucharest",
+    "turkey standard time": "Europe/Istanbul",
+    "russian standard time": "Europe/Moscow",
+    "eastern standard time": "America/New_York",
+    "central standard time": "America/Chicago",
+    "mountain standard time": "America/Denver",
+    "pacific standard time": "America/Los_Angeles",
+}
+
+
 def _zone(tz: str) -> ZoneInfo | None:
     try:
-        return ZoneInfo(tz)
+        return ZoneInfo(WINDOWS_ZONES.get(tz.strip().lower(), tz))
     except (ValueError, OSError, KeyError):
         return None
 
@@ -323,11 +343,21 @@ def _month_days(y: int, m0: int, rule: dict[str, str], start_day: int) -> list[d
             out.update(matches)
     if not md and not bd:
         out.add(start_day)
-    return [date(y, m0 + 1, d) for d in sorted(out) if 1 <= d <= length]
+    days = [d for d in sorted(out) if 1 <= d <= length]
+    # BYSETPOS picks from what matched: "the 2nd Thursday" as Outlook writes it, or "the last working day".
+    pos = _nums(rule.get("BYSETPOS"))
+    if pos:
+        picked = {days[n - 1 if n > 0 else len(days) + n] for n in pos if 0 <= (n - 1 if n > 0 else len(days) + n) < len(days)}
+        days = sorted(picked)
+    return [date(y, m0 + 1, d) for d in days]
 
 
-def _expand(ev: VEvent, until_wall: int) -> list[Stamp]:
-    """Start stamps of all occurrences up to ``until_wall``, beginning with the first."""
+def _expand(ev: VEvent, from_wall: int, until_wall: int) -> list[Stamp]:
+    """Start stamps of the occurrences between ``from_wall`` and ``until_wall``.
+
+    Those before are counted (for COUNT) but not kept, so a daily series that began years ago still
+    has its dates of today.
+    """
     rule = ev.rrule
     first = ev.start
     assert first is not None
@@ -374,12 +404,19 @@ def _expand(ev: VEvent, until_wall: int) -> list[Stamp]:
             if key > until_wall or (count is not None and n >= count) or len(out) >= MAX_OCCURRENCES:
                 return False
             n += 1
-            out.append(st)
+            if key >= from_wall:
+                out.append(st)
             return True
+
+        def skip(unit: int) -> int:
+            """Without a number of dates nothing before the window needs counting: begin shortly before it."""
+            if count is not None or from_wall <= start_key:
+                return 0
+            return max(0, (from_wall - start_key) // (unit * interval * DAY_MS) - 1) * interval
 
         going = True
         if freq == "DAILY":
-            i = 0
+            i = skip(1)
             while going and steps < MAX_STEPS:
                 steps += 1
                 day = first_day + timedelta(days=i)
@@ -393,7 +430,7 @@ def _expand(ev: VEvent, until_wall: int) -> list[Stamp]:
             wkst = DAYS.index(rule.get("WKST", "MO")) if rule.get("WKST", "MO") in DAYS else 1
             week_days = sorted([wd for wd, _ in bd] if bd else [_js_day(first_day)], key=lambda wd: (wd - wkst + 7) % 7)
             week_start = first_day - timedelta(days=(_js_day(first_day) - wkst + 7) % 7)
-            w = 0
+            w = skip(7)
             while going and steps < MAX_STEPS:
                 steps += 1
                 for wd in week_days:
@@ -480,12 +517,15 @@ def parse_ics(text: str, start: str, end: str, local: tzinfo) -> list[FeedEvent]
     masters = [e for e in events if e.recurrence_id is None]
     moved = [e for e in events if e.recurrence_id is not None]
     to_key = calendar.timegm(date.fromisoformat(end).timetuple()) * 1000 + DAY_MS - 1000 + 2 * DAY_MS
+    from_key = calendar.timegm(date.fromisoformat(start).timetuple()) * 1000 - 2 * DAY_MS
     out: list[FeedEvent] = []
     for ev in masters:
         if ev.cancelled:
             continue
         overrides = [m for m in moved if m.uid == ev.uid]
-        for st in _expand(ev, to_key):
+        # An entry that began before the window may still reach into it.
+        length = (_wall_key(ev.end) - _wall_key(ev.start)) if ev.end is not None and ev.start is not None else (ev.duration or 0)
+        for st in _expand(ev, from_key - max(0, length), to_key):
             if any(_same_moment(o.recurrence_id, st) for o in overrides if o.recurrence_id):
                 continue
             uid = f"{ev.uid}@{_local_text(st, local)}" if ev.rrule is not None or ev.rdates else str(ev.uid)

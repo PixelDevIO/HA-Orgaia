@@ -8,11 +8,11 @@ import pytest
 
 from custom_components.orgaia.client.api import ApiError
 from custom_components.orgaia.client.engine import STATUS_NEEDS_PLUS, STATUS_OK, STATUS_REMOVED, GroupEngine, JoinError
-from custom_components.orgaia.protocol.crypto import Identity
+from custom_components.orgaia.protocol.crypto import Identity, random_bytes
 from custom_components.orgaia.protocol.invite import parse_invite
 from custom_components.orgaia.protocol.model import Clock, now_ms
 
-from .fake_service import SERVER, SPACE, FakeService, fill_group
+from .fake_service import INVITE, SERVER, SPACE, FakeService, fill_group
 
 
 async def joined(service: FakeService) -> GroupEngine:
@@ -143,3 +143,31 @@ async def test_waits_for_a_group_key_it_has_not_got(service: FakeService) -> Non
     service.epoch, service.key = 2, new_key
     assert await again.sync() is True
     assert "s9" in again.view().item_by_id and again.key_wait is None
+
+
+async def test_withdraws_a_join_nobody_answered(service: FakeService) -> None:
+    engine = GroupEngine(MagicMock(), GroupEngine.new_data(SERVER))
+    await engine.request_join(parse_invite(service.link()), "Home Assistant")
+    assert service.ha_sign
+    await engine.withdraw_join()
+    assert service.ha_sign is None and engine.join is None
+    # Nothing to take back any more: no call, no error.
+    await engine.withdraw_join()
+    assert [c for c in service.calls if c[0] == "DELETE"] == [("DELETE", f"/v1/invites/{INVITE}/join")]
+
+
+async def test_keys_only_from_who_is_in_the_group_now(service: FakeService) -> None:
+    """The admin who invited is taken at their word until the group is known, not for ever after."""
+    fill_group(service, "2026-11-17")
+    engine = await joined(service)
+    await engine.sync()
+    assert engine.epoch == 1
+    # A new key from the same admin, who is on the group's own list of persons: taken.
+    service.epoch, service.key = 2, random_bytes(32)
+    assert await engine.refresh_space() and engine.epoch == 2
+    # The admin was removed from the group since; an envelope in their name no longer counts.
+    service.write("person", "anna", {"removed": True})
+    await engine.sync()
+    service.epoch, service.key = 3, random_bytes(32)
+    await engine.refresh_space()
+    assert engine.epoch == 2 and 3 not in engine.keys

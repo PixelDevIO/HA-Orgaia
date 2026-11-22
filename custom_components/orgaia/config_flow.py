@@ -179,7 +179,20 @@ class OrgaiaConfigFlow(ConfigFlow, domain=DOMAIN):
         return self.async_abort(reason="rejected")
 
     async def async_step_timeout(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        # Nobody answered: the request is taken back, so the same invitation works for another try and
+        # no admin accepts a Home Assistant that has stopped waiting.
+        if self._engine is not None:
+            await self._engine.withdraw_join()
         return self.async_abort(reason="timeout")
+
+    @callback
+    def async_remove(self) -> None:
+        """The dialog was closed while waiting: the request is taken back as well."""
+        engine = self._engine
+        if engine is not None and not engine.space_id and engine.join:
+            if self._wait is not None and not self._wait.done():
+                self._wait.cancel()
+            self.hass.async_create_task(engine.withdraw_join(), eager_start=False)
 
     async def async_step_finish(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         engine, code = self._engine, self._code

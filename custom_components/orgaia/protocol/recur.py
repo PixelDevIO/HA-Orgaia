@@ -84,10 +84,19 @@ def _nth(repeat: dict[str, Any], base: str, n: int) -> str:
         return add_days(base, n * step)
     if freq == "week":
         return add_days(base, n * step * 7)
-    day = parse_ymd(base).day
-    if freq == "month":
-        return add_months(base, n * step, day)
-    return add_months(base, n * step * 12, day)
+    back = _back(repeat)
+    anchor = add_days(base, back) if back else base
+    day = parse_ymd(anchor).day
+    d = add_months(anchor, n * step * (1 if freq == "month" else 12), day)
+    return add_days(d, -back) if back else d
+
+
+def _back(repeat: dict[str, Any]) -> int:
+    """Days a monthly or yearly series lies before the one it follows (``back`` in the app's Repeat)."""
+    back = repeat.get("back")
+    if repeat.get("freq") not in ("month", "year") or not isinstance(back, int) or isinstance(back, bool) or back <= 0:
+        return 0
+    return min(366, back)
 
 
 def _first_index(repeat: dict[str, Any], base: str, start: str) -> int:
@@ -99,7 +108,8 @@ def _first_index(repeat: dict[str, Any], base: str, start: str) -> int:
         return -(-days // step)
     if freq == "week":
         return -(-days // (step * 7))
-    b, f = parse_ymd(base), parse_ymd(start)
+    back = _back(repeat)
+    b, f = parse_ymd(add_days(base, back)), parse_ymd(add_days(start, back))
     months = (f.year - b.year) * 12 + (f.month - b.month)
     per = step if freq == "month" else step * 12
     return max(0, months // per - 1)
@@ -119,6 +129,10 @@ def _on_weekday(repeat: dict[str, Any], base: str, days: list[int], d: str) -> b
     return (days_between(week_start(base), week_start(d)) // 7) % _step(repeat) == 0
 
 
+# Most dates one call works out; far more than any series shown has.
+_GUARD = 20000
+
+
 def occurrence_dates(item: dict[str, Any], start: str, end: str) -> list[str]:
     """All occurrence dates of an item within [start, end]. Non-repeating items yield their base date."""
     base = base_date(item)
@@ -132,14 +146,23 @@ def occurrence_dates(item: dict[str, Any], start: str, end: str) -> list[str]:
     days = _weekdays(repeat)
     if days:
         stop = until if until and until < end else end
-        d, guard = (start if start > base else base), 0
-        while d <= stop and guard < 800:
-            if _on_weekday(repeat, base, days, d):
-                out.append(d)
-            d, guard = add_days(d, 1), guard + 1
+        first = start if start > base else base
+        step = _step(repeat)
+        # Week by week, and only the weeks that are on, so a long gap between dates never runs into the guard.
+        week = week_start(first)
+        off = (days_between(week_start(base), week) // 7) % step
+        if off:
+            week = add_days(week, (step - off) * 7)
+        guard = 0
+        while week <= stop and guard < _GUARD:
+            for wd in days:
+                d = add_days(week, (wd + 6) % 7)
+                if first <= d <= stop:
+                    out.append(d)
+            week, guard = add_days(week, step * 7), guard + 1
         return out
     n, guard = _first_index(repeat, base, start), 0
-    while guard < 800:
+    while guard < _GUARD:
         d = _nth(repeat, base, n)
         if d > end or (until and d > until):
             break
