@@ -99,6 +99,7 @@ class GroupEngine:
         self.stopped_at: int | None = data.get("stoppedAt")
         # Since when changes wait that need a group key this Home Assistant has not got; reading stops there.
         self.key_wait: int | None = data.get("keyWait")
+        self._snapshot_read = False
         self.api = Api(session, self.server, self.identity, self.device_id)
         # The service's time when this machine's clock is far off: a clock a day behind would
         # otherwise make every change of the others look like it came from the future.
@@ -210,6 +211,12 @@ class GroupEngine:
                 self._changed()
         except (aiohttp.ClientError, TimeoutError) as err:
             raise WriteError("offline") from err
+        except ApiError as err:
+            # From reading the group again on the way: the service is busy or away, or wants a newer version.
+            if err.code == "update-required":
+                self.status = STATUS_UPDATE
+                raise WriteError("update_required") from err
+            raise WriteError("offline" if err.status >= 500 or err.status == 429 else "unknown") from err
 
     async def _post(self, ops: list[dict[str, Any]]) -> None:
         path = space_path(self.space_id or "") + "/ops"
@@ -245,6 +252,10 @@ class GroupEngine:
                     if not await self.refresh_space():
                         self._changed()
                     raise WriteError("removed") from err
+                if err.code == "stale-epoch":
+                    # Still another key than the service expects (after it was restored from a backup):
+                    # nothing is full, it just cannot be written right now.
+                    raise WriteError("offline") from err
                 if err.status in (409, 413):
                     raise WriteError("full") from err
                 if err.status >= 500 or err.status == 429:
@@ -284,6 +295,17 @@ class GroupEngine:
             return "accepted" if self.keys else "pending"
         return state if state in ("pending", "rejected", "expired") else "pending"
 
+    async def withdraw_join(self) -> None:
+        """Takes a join request back that nobody answered, so the invitation can be used again and
+        nobody accepts a Home Assistant that is no longer waiting. Services that do not know this yet say 404."""
+        if self.space_id or not self.join:
+            return
+        try:
+            await self.api.req("DELETE", f"/v1/invites/{self.join['invite']}/join")
+        except (ApiError, aiohttp.ClientError, TimeoutError):
+            return
+        self.join = None
+
     async def leave(self) -> None:
         """Leaves the group, for when the integration is removed from Home Assistant."""
         if self.space_id:
@@ -301,21 +323,31 @@ class GroupEngine:
         except CryptoError:
             return False
         admins = {m.get("signPub") for m in info.get("members") or [] if m.get("role") == "admin"}
-        expected = self.join and self.join.get("admin") == sender
+        persons = self.state.get("person") or {}
+        # The admin who invited is taken at their word only until the group itself is known.
+        expected = not persons and bool(self.join) and self.join.get("admin") == sender
         if sender not in admins and not expected:
             return False
         # Once the group is known, keys are only taken from somebody on its own, encrypted list of
         # persons. What the service calls an admin is not enough: whoever runs it could add one.
-        persons = self.state.get("person") or {}
-        pubs = {doc["pub"].get("v") for doc in persons.values() if isinstance(doc.get("pub"), dict)}
+        # Cells are [timestamp, value] pairs.
+        pubs = {
+            cell[1]
+            for doc in persons.values()
+            if isinstance(cell := doc.get("pub"), list) and len(cell) > 1 and not (doc.get("removed") or [None, None])[1]
+        }
         if persons and not expected and sender not in pubs:
             return False
         keys = payload.get("keys") if isinstance(payload, dict) else None
         if not isinstance(keys, dict):
             return False
         for epoch, key in keys.items():
-            if isinstance(key, str):
-                self.keys[int(epoch)] = key
+            try:
+                number = int(epoch)
+            except (TypeError, ValueError):
+                continue
+            if isinstance(key, str) and 0 <= number < 2**31:
+                self.keys[number] = key
         if self.keys:
             self.epoch = max(self.keys)
         return True
@@ -352,6 +384,8 @@ class GroupEngine:
         return apply_op(self.state, op)
 
     async def _load_snapshot(self) -> bool:
+        """Merges the snapshot. ``_snapshot_read`` says afterwards whether it could be read at all."""
+        self._snapshot_read = False
         path = space_path(self.space_id or "")
         snap = await self.api.req("GET", path + "/snapshot")
         if not isinstance(snap, dict):
@@ -366,7 +400,17 @@ class GroupEngine:
             other = open_record(self.space_id or "", from_b64(key), rec)
         except CryptoError:
             return False
+        # A device with a clock far ahead must not win through the snapshot what its single changes are refused.
+        latest = self._now() + MAX_DRIFT_MS
+        if isinstance(other, dict):
+            for table in other.values():
+                for doc in table.values() if isinstance(table, dict) else []:
+                    if not isinstance(doc, dict):
+                        continue
+                    for field in [f for f, cell in doc.items() if isinstance(cell, dict) and isinstance(cell.get("ts"), str) and hlc_wall(cell["ts"]) > latest]:
+                        del doc[field]
         changed = merge_state(self.state, other) if isinstance(other, dict) else False
+        self._snapshot_read = True
         upto = int(snap.get("uptoSeq") or 0)
         if upto > self.cursor:
             self.cursor_id = None
@@ -438,6 +482,15 @@ class GroupEngine:
             floor = int(res.get("floor") or 0)
             if floor > self.cursor:
                 changed = await self._load_snapshot() or changed
+                if not self._snapshot_read:
+                    # What lies before can only be read from the snapshot. Its key may still be on the way:
+                    # reading waits here for a few days instead of passing all of it for good.
+                    if self.key_wait is None:
+                        self.key_wait = self._now()
+                    if self._now() - self.key_wait < KEY_WAIT_MS:
+                        break
+                elif self.key_wait is not None:
+                    self.key_wait = None
                 self.cursor = max(self.cursor, floor)
                 self.cursor_id = None
                 continue

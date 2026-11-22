@@ -105,6 +105,12 @@ class FakeService:
             profile, sender = open_sealed(body["profile"], self.admin, "join:" + INVITE)
             self.ha_sign, self.ha_box, self.ha_name = sender, profile["boxPub"], profile["name"]
             return {"ok": True}
+        if method == "DELETE" and url.path == f"/v1/invites/{INVITE}/join":
+            # Taken back before anybody answered: the invitation is free again.
+            if self.answer != "pending" or not self.ha_sign:
+                raise ApiError(404, "not-found")
+            self.ha_sign = self.ha_box = self.ha_name = None
+            return {"ok": True}
         if method == "GET" and url.path == f"/v1/invites/{INVITE}/status":
             return {"state": self.answer, **({"spaceId": SPACE} if self.answer == "accepted" else {})}
         if method == "GET" and url.path == "/v1/spaces":
@@ -134,7 +140,7 @@ class FakeService:
             if self.block:
                 raise ApiError(*self.block)
             if self.stale:
-                self.stale = False
+                self.stale = self.stale == "always" and "always"
                 raise ApiError(409, "stale-epoch")
             assert body["ops"] and len(body["ops"]) <= 200
             for op in body["ops"]:

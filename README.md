@@ -418,6 +418,8 @@ Home Assistant zählt nicht als Person; pro Gruppe gehen bis zu 3 Integrationen.
 
 **Vorlagen (Blueprints):** überfällige Aufgabe aufs Handy mit „Erledigt“, abends ans Einpacken erinnern, Einkauf freigegeben an wer unterwegs ist, nachträglicher Artikel an den Einkäufer, „Für einen Termin fährt noch niemand“ mit „Ich fahre“, Erinnerung vor Terminen mit Fahrt. Die Import-Knöpfe stehen oben unter *Blueprints*.
 
+**Einrichtung abgebrochen oder abgelaufen:** Bestätigt innerhalb von zehn Minuten niemand, oder wird der Dialog geschlossen, nimmt Home Assistant die Anfrage zurück. Derselbe Link aus der App gilt dann für einen neuen Versuch, und in der App steht keine Anfrage mehr, die ins Leere führt.
+
 **Dienst aus einer Sicherung wiederhergestellt:** Die Integration liest die Gruppe von selbst neu. Nicht entfernen und neu verbinden: Wurde die Gruppe erst nach der Sicherung angelegt, gibt es sie beim Dienst erst wieder, wenn das Handy eines Admins abgeglichen hat. Bis dahin kann der Verbindungssensor einen Fehler zeigen; wer in dieser Zeit entfernt, bekommt „Gruppe nicht gefunden“ und braucht einen neuen Link.
 
 **Neu verbinden:** **⋮ › Neu konfigurieren** verbindet mit einem neuen Link aus der App, ohne Entitäten und Dashboards zu verlieren. In der App kopiert **„Kopieren und in Home Assistant öffnen“** den Link und öffnet direkt „Integration hinzufügen: Orgaia“.

@@ -7,6 +7,7 @@ from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.setup import async_setup_component
 import pytest
 
+from custom_components.orgaia.client.api import ApiError
 from custom_components.orgaia.client.engine import WriteError
 from custom_components.orgaia.const import CARD_URL, CONF_PERSONS, DOMAIN, VERSION
 
@@ -56,6 +57,28 @@ async def test_engine_write_failures(service: FakeService) -> None:
     with pytest.raises(WriteError, match="offline"):
         await engine.write([("item", "t2", {"note": "b"})], "ben")
     assert engine.view().item_by_id["t2"]["note"] == "a"
+    service.down = False
+    # The service still wants another key (after it was restored): that is "not now", not "full".
+    service.stale = "always"
+    with pytest.raises(WriteError, match="offline"):
+        await engine.write([("item", "t2", {"note": "b"})], "ben")
+    service.stale = False
+    # Reading the group again on the way fails: also "not now" instead of an error nobody translates.
+    service.can_write = False
+    service.block = None
+    real = service.req
+
+    async def busy(method, path, body=None):
+        if path == "/v1/spaces":
+            raise ApiError(503, "busy")
+        return await real(method, path, body)
+
+    service.req = busy
+    with pytest.raises(WriteError, match="offline"):
+        await engine.write([("item", "t2", {"note": "b"})], "ben")
+    service.req = real
+    service.can_write = True
+    await engine.refresh_space()
     service.down = False
     service.block = (402, "group-over-limit")
     with pytest.raises(WriteError, match="needs_plus"):
