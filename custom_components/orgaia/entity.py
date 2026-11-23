@@ -6,7 +6,7 @@ from collections.abc import Callable, Iterable
 from typing import Any
 
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -101,6 +101,15 @@ def list_shown(entry: OrgaiaConfigEntry, list_id: str) -> bool:
     """Whether a list becomes a to-do list: all, unless some were chosen in the options."""
     chosen = entry.options.get(CONF_LISTS) or []
     return not chosen or list_id in chosen
+
+
+def find_device(hass: HomeAssistant, entry: OrgaiaConfigEntry, key: str) -> dr.DeviceEntry | None:
+    """The device of this entry with the given key. Home Assistant 2026.10 asks for the entry along with
+    the identifier; older versions only know the identifier."""
+    registry = dr.async_get(hass)
+    if hasattr(registry, "async_get_device_by_identifier"):
+        return registry.async_get_device_by_identifier((DOMAIN, key), entry.entry_id)
+    return registry.async_get_device(identifiers={(DOMAIN, key)})
 
 
 def completed_days(entry: OrgaiaConfigEntry) -> int:

@@ -207,6 +207,8 @@ async def test_card_gets_aisles_sets_drives_and_days(
     assert entries["Gouda"]["missed"] == "ben" and entries["Milch"]["aisle"] == "dairy"
     assert shop["sets"] == [{"id": "w", "name": "Wocheneinkauf", "count": 2}]
     assert [k for k, _ in got["aisles"]][:2] == ["produce", "bakery"]
+    # The server speaks English here; the card still gets the German names for a German user.
+    assert got["aisle_names"]["de"]["bakery"] == "Brot & Backwaren" and got["aisle_names"]["en"]["bakery"] == "Bakery"
     training = next(r for r in got["agenda"] if r["title"] == "Training")
     assert training["drive"] == {"item": "e2", "date": day, "to": None}
     today, tomorrow = got["days"]

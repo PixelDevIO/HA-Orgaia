@@ -233,6 +233,10 @@
     "write_not_allowed": {
       "title": "{group}: Home Assistant may not tick off yet",
       "description": "Something was to be ticked off or added from Home Assistant, but no admin of {group} allowed that yet. In the Orgaia app, open Group › Home Assistant and switch on \"May tick off and add\". This notice goes away by itself once it is allowed."
+    },
+    "dashboard_missing": {
+      "title": "{group}: the Orgaia dashboard is missing",
+      "description": "The ready-made dashboard of **{group}** could not be put into the sidebar, most likely because this version of Home Assistant changed how dashboards work inside. Nothing else is affected: the Orgaia card and all entities go on working. Build a dashboard of your own with the Orgaia card, or switch off \"Show the Orgaia dashboard in the sidebar\" under Configure; then this hint goes away. An update of the integration usually brings the dashboard back."
     }
   },
   "options": {

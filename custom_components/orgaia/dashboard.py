@@ -14,9 +14,10 @@ from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.json import json_bytes, json_fragment
 
-from .const import CONF_DASHBOARD
+from .const import CONF_DASHBOARD, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,11 +33,44 @@ def dashboard_config(entry: ConfigEntry) -> dict[str, Any]:
     return {"strategy": {"type": "custom:orgaia", "entry": entry.entry_id}}
 
 
+def issue_id(entry: ConfigEntry) -> str:
+    return f"dashboard_missing_{entry.entry_id}"
+
+
 @callback
 def show_dashboard(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Puts the group's dashboard into the sidebar, if that was chosen. Says whether it stands."""
+    """Puts the group's dashboard into the sidebar, if that was chosen. Says whether it stands.
+
+    When it was chosen but cannot be put there, a repair hint says so: the card goes on working, only
+    the ready-made page is missing. The hint goes away once the dashboard stands or is no longer wanted.
+    """
     if not entry.options.get(CONF_DASHBOARD):
+        ir.async_delete_issue(hass, DOMAIN, issue_id(entry))
         return False
+    shown = _place(hass, entry)
+    if shown:
+        ir.async_delete_issue(hass, DOMAIN, issue_id(entry))
+    else:
+        ir.async_create_issue(
+            hass,
+            DOMAIN,
+            issue_id(entry),
+            is_fixable=False,
+            severity=ir.IssueSeverity.WARNING,
+            translation_key="dashboard_missing",
+            translation_placeholders={"group": entry.title},
+        )
+    return shown
+
+
+@callback
+def forget_dashboard_issue(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """A group that is removed takes its repair hint along."""
+    ir.async_delete_issue(hass, DOMAIN, issue_id(entry))
+
+
+@callback
+def _place(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     try:
         from homeassistant.components import frontend  # noqa: PLC0415
         from homeassistant.components.lovelace.const import LOVELACE_DATA  # noqa: PLC0415
@@ -44,6 +78,7 @@ def show_dashboard(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         lovelace = hass.data.get(LOVELACE_DATA)
         if lovelace is None or "frontend" not in hass.config.components:
+            _LOGGER.warning("Could not put the Orgaia dashboard into the sidebar: no dashboards in Home Assistant")
             return False
         path = dashboard_path(entry)
         config = dashboard_config(entry)

@@ -4,6 +4,8 @@
  * A dashboard on the wall belongs to nobody, so the card first asks who you are: tap your name, then
  * tick off. The app shows that name with the note "via Home Assistant". After a while without a tap
  * the card forgets who it was, so the next one at the display does not tick off in somebody else's name.
+ * On a shared display (`ask: tap`, as in the ready-made dashboard) the names only come up after a tap,
+ * as "who was it?", and with `share_person` all cards of one group on the page share that name.
  *
  * One card, several views: all lists, only the shopping, only the tasks, today at a glance, a timetable as a week grid,
  * the rosters side by side, or what is coming up. The editor picks the view and where it reads from.
@@ -22,7 +24,6 @@ const TEXT = {
     emptyShop: 'Nothing on the list.',
     addArticle: 'Add an article',
     addTask: 'Add a task',
-    qty: 'Quantity',
     add: 'Add',
     draft: 'Being written',
     ready: 'Released',
@@ -30,8 +31,8 @@ const TEXT = {
     going: '{name} is shopping',
     until: 'by {date}',
     release: 'Release',
-    withdraw: 'Take back',
-    take: "I'll do it",
+    withdraw: 'Not complete after all',
+    take: 'I will do it',
     drop: 'Not after all',
     finish: 'Shopping done',
     isNew: 'new',
@@ -43,6 +44,8 @@ const TEXT = {
     done: 'Done',
     failed: 'That did not work.',
     notYou: 'Not you? Tap your name.',
+    nowAs: 'Ticking off as {name}.',
+    notYouShort: 'Not you?',
     title: 'Title',
     entry: 'Group',
     showDone: 'Show done tasks',
@@ -75,6 +78,9 @@ const TEXT = {
     ask: 'Who are you?',
     askAuto: 'Take the signed-in user when known',
     askAlways: 'Always ask',
+    askTap: 'Ask only after a tap (for a shared display)',
+    sharePerson: "Share the chosen person with the group's other cards on this page",
+    showTodayWord: 'Write "Today" above the day',
     thisWeek: 'This week',
     nextWeek: 'Next week',
     weekAB: 'Week {week}',
@@ -128,13 +134,13 @@ const TEXT = {
     pack: 'Pack',
     onCall: 'On call',
     waitsShopping: 'waits for somebody to do the shopping',
-    notGot: 'not got',
-    notGotBy: 'not got ({name})',
-    markNotGot: 'Not got',
-    unmarkNotGot: 'Open again',
+    notGot: 'not there',
+    notGotBy: 'not there ({name})',
+    markNotGot: 'Not there',
+    unmarkNotGot: 'Found it',
     oneMore: 'One more',
     oneLess: 'One less',
-    fixed: 'Fixed purchases',
+    fixed: 'Regular shops',
     byAisle: 'Sort the shopping by aisle',
     there: 'there: {name}',
     back: 'back: {name}',
@@ -156,15 +162,14 @@ const TEXT = {
     emptyShop: 'Nichts auf der Liste.',
     addArticle: 'Artikel hinzufügen',
     addTask: 'Aufgabe hinzufügen',
-    qty: 'Menge',
     add: 'Hinzufügen',
-    draft: 'Wird geschrieben',
+    draft: 'In Bearbeitung',
     ready: 'Freigegeben',
     readyBy: 'Freigegeben von {name}',
     going: '{name} kauft ein',
     until: 'bis {date}',
     release: 'Freigeben',
-    withdraw: 'Zurücknehmen',
+    withdraw: 'Doch noch nicht fertig',
     take: 'Mache ich',
     drop: 'Doch nicht',
     finish: 'Einkauf fertig',
@@ -177,6 +182,8 @@ const TEXT = {
     done: 'Erledigt',
     failed: 'Das hat nicht geklappt.',
     notYou: 'Nicht du? Tippe deinen Namen an.',
+    nowAs: 'Abhaken als {name}.',
+    notYouShort: 'Nicht du?',
     title: 'Titel',
     entry: 'Gruppe',
     showDone: 'Erledigte Aufgaben zeigen',
@@ -209,6 +216,9 @@ const TEXT = {
     ask: 'Wer bist du?',
     askAuto: 'Angemeldeten Nutzer nehmen, wenn bekannt',
     askAlways: 'Immer fragen',
+    askTap: 'Erst nach einem Tipp fragen (für ein gemeinsames Display)',
+    sharePerson: 'Gewählte Person mit den anderen Karten der Gruppe auf dieser Seite teilen',
+    showTodayWord: '„Heute“ über den Tag schreiben',
     thisWeek: 'Diese Woche',
     nextWeek: 'Nächste Woche',
     weekAB: '{week}-Woche',
@@ -262,10 +272,10 @@ const TEXT = {
     pack: 'Einpacken',
     onCall: 'Bereitschaft',
     waitsShopping: 'wartet auf jemanden, der einkauft',
-    notGot: 'nicht bekommen',
-    notGotBy: 'nicht bekommen ({name})',
-    markNotGot: 'Nicht bekommen',
-    unmarkNotGot: 'Wieder offen',
+    notGot: 'nicht da',
+    notGotBy: 'nicht da ({name})',
+    markNotGot: 'Nicht da',
+    unmarkNotGot: 'Doch da',
     oneMore: 'Eins mehr',
     oneLess: 'Eins weniger',
     fixed: 'Feste Einkäufe',
@@ -283,7 +293,7 @@ const TEXT = {
 };
 
 // The integration this card came with. A browser that still has an older card says so.
-const CARD_VERSION = '0.11.1';
+const CARD_VERSION = '0.12.0';
 
 // The people's colours of the app. All carry white text.
 const COLORS = ['#2F5FD0', '#B4500B', '#7B3FB5', '#0B6F6A', '#B02C63', '#56681A', '#8A5A00', '#3F4B8C'];
@@ -375,6 +385,18 @@ function watch(hass, entry, listener) {
   };
 }
 
+/*
+ * Who is at the display. Each card keeps its own unless told `share_person`: then all cards of the same
+ * group in this window share one, so a name tapped in the shopping counts in the week below as well.
+ */
+const PEOPLE = new Map();
+const newPerson = () => ({ who: null, chosen: false, timer: null, cards: new Set() });
+const sharedPerson = (entry) => {
+  const key = entry || '';
+  if (!PEOPLE.has(key)) PEOPLE.set(key, newPerson());
+  return PEOPLE.get(key);
+};
+
 /** What is known of a group right now, asking for it when nothing is: the editor needs it for its choices. */
 function known(hass, entry) {
   const group = GROUPS.get(entry || '');
@@ -401,6 +423,7 @@ const STYLE = `
   .hint { color: var(--secondary-text-color); font-size: 0.875rem; margin: 0 0 8px; }
   .warn { color: var(--error-color); }
   .hint.asking { color: var(--primary-text-color); font-weight: 500; }
+  .link { font: inherit; color: var(--primary-color); background: none; border: 0; padding: 8px 4px; cursor: pointer; text-decoration: underline; }
   /* Tinte, the look of the app: paper and ink, fine lines, no round corners. */
   ha-card.tinte {
     --primary-color: #111; --text-primary-color: #fff; --primary-text-color: #111; --secondary-text-color: #555;
@@ -423,6 +446,8 @@ const STYLE = `
   }
   .chip[aria-pressed="true"] { background: var(--c); color: #fff; font-weight: 500; }
   .list { border-top: 1px solid var(--divider-color); padding-top: 12px; margin-top: 12px; }
+  /* With nothing above it (no title, no names), no line above the first list either. */
+  .list:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
   .head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
   .state { color: var(--secondary-text-color); font-size: 0.875rem; margin: 0 0 4px; }
   .row { display: flex; align-items: flex-start; gap: 4px; min-height: 44px; }
@@ -460,7 +485,6 @@ const STYLE = `
     border: 1px solid var(--divider-color); background: var(--card-background-color); color: var(--primary-text-color);
   }
   input.title { flex: 3 1 140px; }
-  input.qty { flex: 1 1 70px; }
   details { margin-top: 4px; }
   summary { cursor: pointer; color: var(--secondary-text-color); font-size: 0.875rem; min-height: 32px; }
   .error { color: var(--error-color); font-size: 0.875rem; margin: 8px 0 0; scroll-margin: 80px; }
@@ -535,14 +559,12 @@ class OrgaiaCard extends HTMLElement {
     this.attachShadow({ mode: 'open' });
     this._config = {};
     this._data = null;
-    this._who = null;
+    this._own = newPerson();
     this._week = null;
-    this._chosen = false;
     this._busy = new Set();
     this._drafts = {};
     this._error = '';
     this._unsub = null;
-    this._timer = null;
     this.shadowRoot.addEventListener('click', (ev) => this._onClick(ev));
     this.shadowRoot.addEventListener('submit', (ev) => this._onSubmit(ev));
     this.shadowRoot.addEventListener('input', (ev) => {
@@ -550,6 +572,23 @@ class OrgaiaCard extends HTMLElement {
       if (el && el.dataset && el.dataset.draft) this._drafts[el.dataset.draft] = el.value;
       this._touch();
     });
+  }
+
+  /** Who is at the display: this card's own, or the one its group shares on this page. */
+  get _present() {
+    return this._config.share_person ? sharedPerson(this._config.entry) : this._own;
+  }
+
+  get _who() {
+    return this._present.who;
+  }
+
+  /** Sets who it is, and draws every card that shares it. */
+  _setWho(who, chosen) {
+    const state = this._present;
+    state.who = who;
+    if (chosen != null) state.chosen = chosen;
+    state.cards.forEach((card) => card !== this && card._render());
   }
 
   /** Asking for the group first means the editor that opens next can offer its lists and plans. */
@@ -565,8 +604,13 @@ class OrgaiaCard extends HTMLElement {
 
   setConfig(config) {
     const before = this._config.entry;
+    const state = this._unsub ? this._present : null;
     if (viewOf(config) !== viewOf(this._config)) this._week = null;
     this._config = config || {};
+    if (state && state !== this._present) {
+      state.cards.delete(this);
+      this._present.cards.add(this);
+    }
     if (before !== this._config.entry && this._unsub) {
       this._unsubscribe();
       this._subscribe();
@@ -589,7 +633,7 @@ class OrgaiaCard extends HTMLElement {
 
   disconnectedCallback() {
     this._unsubscribe();
-    clearTimeout(this._timer);
+    if (!this._config.share_person) clearTimeout(this._own.timer);
   }
 
   getCardSize() {
@@ -611,6 +655,7 @@ class OrgaiaCard extends HTMLElement {
   _subscribe() {
     if (this._unsub || !this._hass || !this.isConnected) return;
     this._unsub = watch(this._hass, this._config.entry, (data) => this._onData(data));
+    this._present.cards.add(this);
     // The lesson or shift that is on right now moves with the clock.
     this._clock = setInterval(() => this._tick(), 60000);
   }
@@ -619,6 +664,7 @@ class OrgaiaCard extends HTMLElement {
     const off = this._unsub;
     this._unsub = null;
     clearInterval(this._clock);
+    this._present.cards.delete(this);
     if (off) off();
   }
 
@@ -633,23 +679,26 @@ class OrgaiaCard extends HTMLElement {
     this._data = data;
     this._busy.clear();
     const persons = data.persons || [];
-    if (this._who && !persons.some((p) => p.id === this._who)) this._who = null;
+    const state = this._present;
+    if (state.who && !persons.some((p) => p.id === state.who)) state.who = null;
     // On a personal device Home Assistant knows who is signed in; on a shared display it does not.
-    if (!this._who && !this._chosen && data.me && this._config.ask !== 'always') this._who = data.me;
+    if (!state.who && !state.chosen && data.me && this._config.ask !== 'always') state.who = data.me;
     this._render();
   }
 
   /** Every tap keeps the chosen person a little longer; without one the card forgets them. */
   _touch() {
-    clearTimeout(this._timer);
+    const state = this._present;
+    clearTimeout(state.timer);
     const after = this._config.forget_after == null ? 60 : Number(this._config.forget_after);
-    if (!this._who || !(after > 0)) return;
+    if (!state.who || !(after > 0)) return;
     const me = this._data && this._data.me;
-    if (me && me === this._who && this._config.ask !== 'always') return;
-    this._timer = setTimeout(() => {
-      this._who = null;
-      this._chosen = false;
-      this._render();
+    if (me && me === state.who && this._config.ask !== 'always') return;
+    state.timer = setTimeout(() => {
+      state.who = null;
+      state.chosen = false;
+      state.cards.forEach((card) => card._render());
+      if (!state.cards.has(this)) this._render();
     }, after * 1000);
   }
 
@@ -769,7 +818,10 @@ class OrgaiaCard extends HTMLElement {
     if (shop && open.length && this._config.by_aisle !== false) {
       // In the order one walks through the shop, as the app sorts it.
       const order = (this._data.aisles || []).map(([key]) => key);
-      const names = Object.fromEntries(this._data.aisles || []);
+      // The names in the language of whoever looks, not of the server.
+      const all = this._data.aisle_names || {};
+      const lang = ((this._hass && this._hass.language) || 'en').slice(0, 2);
+      const names = { ...Object.fromEntries(this._data.aisles || []), ...(all[lang] || {}) };
       const groups = new Map();
       for (const e of open) {
         const key = order.includes(e.aisle) ? e.aisle : 'other';
@@ -789,7 +841,6 @@ class OrgaiaCard extends HTMLElement {
       const key = list.id;
       form = `<form data-list="${esc(list.id)}" data-kind="${shop ? 'article' : 'task'}">
         <input class="title" data-draft="${esc(key)}" aria-label="${esc(shop ? t.addArticle : t.addTask)}" placeholder="${esc(shop ? t.addArticle : t.addTask)}" maxlength="200" enterkeyhint="done" autocomplete="off">
-        ${shop ? `<input class="qty" data-draft="${esc(key)}#qty" aria-label="${esc(t.qty)}" placeholder="${esc(t.qty)}" maxlength="40" autocomplete="off">` : ''}
         <button class="btn" type="submit">${esc(t.add)}</button>
       </form>`;
     }
@@ -971,7 +1022,8 @@ class OrgaiaCard extends HTMLElement {
       const date = r.start.slice(0, 10) < data.today ? data.today : r.start.slice(0, 10);
       if (date !== day) {
         day = date;
-        const near = date === data.today ? t.today : date === addDays(data.today, 1) ? t.tomorrow : '';
+        const word = date === data.today ? t.today : date === addDays(data.today, 1) ? t.tomorrow : '';
+        const near = word && word.charAt(0).toUpperCase() + word.slice(1);
         html += `<h3${date === data.today ? ' class="today"' : ''}>${near ? esc(near) + ' · ' : ''}${esc(this._day(date, true))}</h3>`;
       }
       const live = !r.all_day && r.start <= now && (r.end || r.start) > now;
@@ -1057,7 +1109,9 @@ class OrgaiaCard extends HTMLElement {
       }
       const word = i === 0 ? t.today : t.tomorrow;
       const near = word.charAt(0).toUpperCase() + word.slice(1);
-      html += `<h3${i === 0 ? ' class="today"' : ''}>${esc(near)} · ${esc(this._day(d.date, true))}</h3>`;
+      // Under a heading "Today" the card does not say it a second time.
+      const lead = i === 0 && this._config.show_today_word === false ? '' : `${esc(near)} · `;
+      html += `<h3${i === 0 ? ' class="today"' : ''}>${lead}${esc(this._day(d.date, true))}</h3>`;
       html += rows.length ? rows.map((r) => r[1]).join('') : `<p class="hint">${esc(t.nothingToday)}</p>`;
     });
     return `<div class="big">${html}</div>`;
@@ -1070,6 +1124,11 @@ class OrgaiaCard extends HTMLElement {
     const error = this._error ? `<p class="error" role="alert">${esc(this._error)}</p>` : '';
     // A tap without a name is kept: the question is "who was it?", and the name finishes the tap.
     if (this._pending && !this._who) return `<p class="hint asking" id="ask" role="status">${esc(t.whoWas)}</p><div class="who ask" role="group" aria-labelledby="ask">${chips}</div>${error}`;
+    // On a shared display nobody is asked ahead: one quiet line while a name is chosen, otherwise nothing.
+    if (this._config.ask === 'tap') {
+      const p = this._who && this._person(this._who);
+      return (p ? `<p class="hint as">${esc(this._say('nowAs', { name: p.name }))} <button class="link" data-act="notme">${esc(t.notYouShort)}</button></p>` : '') + error;
+    }
     return `<p class="hint" id="ask">${esc(this._who ? t.notYou : t.who)}</p><div class="who" role="group" aria-labelledby="ask">${chips}</div>${error}`;
   }
 
@@ -1183,13 +1242,16 @@ class OrgaiaCard extends HTMLElement {
       const pending = this._pending;
       this._pending = null;
       clearTimeout(this._pendingTimer);
-      this._who = pending ? el.dataset.person : this._who === el.dataset.person ? null : el.dataset.person;
-      this._chosen = true;
+      this._setWho(pending ? el.dataset.person : this._who === el.dataset.person ? null : el.dataset.person, true);
       this._error = '';
       this._touch();
       this._render();
       // The tap that was waiting for a name is done now, in that name.
       if (pending) this._call(pending.service, pending.data, pending.busy, pending.then);
+    } else if (act === 'notme') {
+      clearTimeout(this._present.timer);
+      this._setWho(null, true);
+      this._render();
     } else if (act === 'week') {
       this._week = Number(el.dataset.week);
       this._render();
@@ -1219,15 +1281,14 @@ class OrgaiaCard extends HTMLElement {
     const list = form.dataset.list;
     const title = (this._drafts[list] || '').trim();
     if (!title) return;
-    const qty = (this._drafts[list + '#qty'] || '').trim();
     const added = () => {
       delete this._drafts[list];
-      delete this._drafts[list + '#qty'];
       this._render();
       const input = this.shadowRoot.querySelector(`form[data-list="${CSS.escape(list)}"] input.title`);
       if (input) input.focus();
     };
-    if (form.dataset.kind === 'article') await this._call('add_article', { list, title, ...(qty ? { quantity: qty } : {}) }, undefined, added);
+    // "2 Brot" is understood as it is; + and − on the row change the quantity later.
+    if (form.dataset.kind === 'article') await this._call('add_article', { list, title }, undefined, added);
     else await this._call('add_task', { list, title }, undefined, added);
   }
 }
@@ -1311,16 +1372,16 @@ class OrgaiaCardEditor extends HTMLElement {
       if (view === 'tasks') schema.push(pick('person', data.persons, false));
       if (view !== 'shopping') schema.push(flag('show_done'), flag('add_tasks'));
       if (view !== 'tasks') schema.push(flag('by_aisle'));
-      schema.push(choice('ask', [['auto', t.askAuto], ['always', t.askAlways]]), number('forget_after', 0, 3600));
+      schema.push(choice('ask', [['auto', t.askAuto], ['always', t.askAlways], ['tap', t.askTap]]), flag('share_person'), number('forget_after', 0, 3600));
     } else if (view === 'timetable') {
       schema.push(pick('plan', named(data.timetables), false), choice('layout', [['week', t.layoutWeek], ['day', t.layoutDay]]), flag('show_rooms'), flag('show_pack'));
     } else if (view === 'roster') {
       schema.push(pick('plans', named(data.rosters), true), number('days', 1, 14), choice('start', [['today', t.startToday], ['week', t.startWeek]]));
     } else if (view === 'today') {
-      schema.push(pick('person', data.persons, false), flag('show_tomorrow'));
+      schema.push(pick('person', data.persons, false), flag('show_tomorrow'), flag('show_today_word'));
     } else {
       schema.push(number('days', 1, 31), pick('person', data.persons, false), flag('show_plans'), flag('show_deadlines'), flag('show_persons'), flag('show_drives'), number('max', 0, 100));
-      schema.push(choice('ask', [['auto', t.askAuto], ['always', t.askAlways]]), number('forget_after', 0, 3600));
+      schema.push(choice('ask', [['auto', t.askAuto], ['always', t.askAlways], ['tap', t.askTap]]), flag('share_person'), number('forget_after', 0, 3600));
     }
     const color = (name) => ({ name, selector: { ui_color: {} } });
     const section = (name, title, fields) => ({ type: 'expandable', name, title, flatten: true, schema: fields });
@@ -1381,12 +1442,15 @@ class OrgaiaCardEditor extends HTMLElement {
       fill('show_persons', true);
       fill('show_drives', true);
       fill('ask', 'auto');
+      fill('share_person', false);
       fill('forget_after', 60);
     } else if (view === 'today') {
       fill('show_tomorrow', false);
+      fill('show_today_word', true);
     } else {
       if (view !== 'tasks') fill('by_aisle', true);
       fill('ask', 'auto');
+      fill('share_person', false);
       fill('forget_after', 60);
     }
     if (shown.background_opacity == null) shown.background_opacity = 100;
@@ -1412,7 +1476,7 @@ class OrgaiaCardEditor extends HTMLElement {
       ask: 'ask', forget_after: 'forget', plan: 'plan', layout: 'layout', show_rooms: 'showRooms', show_pack: 'showPack', plans: 'plans',
       style: 'style', accent_color: 'accent', background_color: 'background', background_opacity: 'opacity', text_color: 'textColor', fill: 'fill', color_by: 'colorBy',
       days: 'days', start: 'startAt', show_plans: 'showPlans', show_deadlines: 'showDeadlines', show_persons: 'showPersons', max: 'max',
-      by_aisle: 'byAisle', show_drives: 'showDrives', show_tomorrow: 'showTomorrow',
+      by_aisle: 'byAisle', show_drives: 'showDrives', show_tomorrow: 'showTomorrow', share_person: 'sharePerson', show_today_word: 'showTodayWord',
     }[field.name];
     return t[key] || field.name;
   }
@@ -1441,6 +1505,8 @@ class OrgaiaCardEditor extends HTMLElement {
     if (value.by_aisle === true) delete value.by_aisle;
     if (value.show_drives === true) delete value.show_drives;
     if (value.show_tomorrow === false) delete value.show_tomorrow;
+    if (value.share_person === false) delete value.share_person;
+    if (value.show_today_word === true) delete value.show_today_word;
     const config = { type: this._config.type || 'custom:orgaia-card', ...value };
     this._config = config;
     this.dispatchEvent(new CustomEvent('config-changed', { detail: { config }, bubbles: true, composed: true }));
@@ -1466,11 +1532,18 @@ class OrgaiaCardEditor extends HTMLElement {
  * The ready-made dashboard: today on the left, the shopping to tick off on the right, the week below.
  * The integration puts it into the sidebar when that was chosen in the setup; in a dashboard of one's
  * own it is `strategy: { type: custom:orgaia }`. It is Tinte unless told `style: ha`.
+ * It hangs in the kitchen: one name for the whole page, asked only after a tap, and nothing said twice.
  */
 class OrgaiaDashboardStrategy extends HTMLElement {
   static async generate(config, hass) {
     const t = textsFor(hass);
-    const base = { type: 'custom:orgaia-card', ...(config && config.entry ? { entry: config.entry } : {}), ...(config && config.style === 'ha' ? {} : { style: 'tinte' }) };
+    const base = {
+      type: 'custom:orgaia-card',
+      ...(config && config.entry ? { entry: config.entry } : {}),
+      ...(config && config.style === 'ha' ? {} : { style: 'tinte' }),
+      ask: 'tap',
+      share_person: true,
+    };
     const section = (title, card) => ({ type: 'grid', cards: [{ type: 'heading', heading: title }, { ...base, ...card, title: '' }] });
     return {
       title: (config && config.title) || 'Orgaia',
@@ -1482,7 +1555,7 @@ class OrgaiaDashboardStrategy extends HTMLElement {
           type: 'sections',
           max_columns: 2,
           sections: [
-            section(t.viewToday, { view: 'today', show_tomorrow: true }),
+            section(t.viewToday, { view: 'today', show_tomorrow: true, show_today_word: false }),
             section(t.viewShopping, { view: 'shopping' }),
             { ...section(t.dashWeek, { view: 'agenda', days: 7 }), column_span: 2 },
           ],
