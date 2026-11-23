@@ -9,6 +9,7 @@ card, which asks who it is.
 
 from __future__ import annotations
 
+import dataclasses
 import time
 from typing import Any
 
@@ -83,14 +84,19 @@ def _description(
     return "\n\n".join(parts) or None
 
 
+# When it was ticked off: Home Assistant shows it from 2025.7 on; the oldest supported version has no such field.
+_HAS_COMPLETED = "completed" in {f.name for f in dataclasses.fields(TodoItem)}
+
+
 def _item(e: TodoEntry, description: str | None) -> TodoItem:
+    extra = {"completed": from_ms(e.done_at) if e.done else None} if _HAS_COMPLETED else {}
     return TodoItem(
         summary=f"{e.title} ({e.qty})" if e.qty else e.title,
         uid=e.uid,
         status=TodoItemStatus.COMPLETED if e.done else TodoItemStatus.NEEDS_ACTION,
         due=(to_datetime(e.due) if len(e.due) > 10 else to_date(e.due)) if e.due else None,
         description=description,
-        completed=from_ms(e.done_at) if e.done else None,
+        **extra,
     )
 
 

@@ -20,13 +20,12 @@ import logging
 from typing import Any
 
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
-from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.start import async_at_started
 
-from .const import COMPLETED_DAYS, DOMAIN, EVENT_ORGAIA
+from .const import COMPLETED_DAYS, EVENT_ORGAIA
 from .coordinator import OrgaiaConfigEntry
-from .entity import person_entity, space_key
+from .entity import find_device, person_entity, space_key
 from .protocol.feeds import is_feed_item
 from .protocol.plans import is_plan_item
 from .protocol.recur import add_days
@@ -448,7 +447,7 @@ class EventTracker:
     # --- Firing ------------------------------------------------------------------------------
 
     def _base(self, event_type: str) -> dict[str, Any]:
-        device = dr.async_get(self.hass).async_get_device(identifiers={(DOMAIN, space_key(self.entry))})
+        device = find_device(self.hass, self.entry, space_key(self.entry))
         return {
             "type": event_type,
             "device_id": device.id if device else None,

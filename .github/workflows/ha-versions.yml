@@ -1,0 +1,47 @@
+name: Home Assistant versions
+
+# Once a week, the tests against the newest Home Assistant, its beta (while one is out) and the oldest
+# version the integration promises in hacs.json. Home Assistant changes every month, and the ready-made
+# dashboard leans on parts of it that are no promised interface: a red run here (GitHub mails it) comes
+# before a user's bug report. Run it by hand under Actions before a release, too.
+on:
+  schedule:
+    - cron: "23 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        track: [stable, beta, minimum]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Pick Home Assistant
+        id: pick
+        run: |
+          if [ "${{ matrix.track }}" = minimum ]; then
+            python3 -I .github/scripts/ha_version.py minimum "$(jq -r .homeassistant hacs.json)" | tee -a "$GITHUB_OUTPUT"
+          else
+            python3 -I .github/scripts/ha_version.py "${{ matrix.track }}" | tee -a "$GITHUB_OUTPUT"
+          fi
+      - name: No beta out right now
+        if: steps.pick.outputs.skip == 'true'
+        run: echo "::notice::No Home Assistant beta out right now; nothing to test."
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        if: steps.pick.outputs.skip != 'true'
+        with:
+          python-version: ${{ steps.pick.outputs.python }}
+      - name: Install Home Assistant ${{ steps.pick.outputs.homeassistant }}
+        if: steps.pick.outputs.skip != 'true'
+        run: |
+          extra=""
+          # Home Assistant 2025.6 pins aiodns 3.4, which does not work with pycares 5.
+          if [ "${{ matrix.track }}" = minimum ]; then extra="pycares<5"; fi
+          pip install "pytest-homeassistant-custom-component==${{ steps.pick.outputs.phcc }}" $extra
+      - if: steps.pick.outputs.skip != 'true'
+        run: pytest -q

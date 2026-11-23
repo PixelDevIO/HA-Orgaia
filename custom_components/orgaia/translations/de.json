@@ -233,6 +233,10 @@
     "write_not_allowed": {
       "title": "{group}: Home Assistant darf noch nicht abhaken",
       "description": "Aus Home Assistant sollte etwas abgehakt oder eingetragen werden, aber kein Admin von {group} hat das bisher erlaubt. Öffne in der Orgaia-App Gruppe › Home Assistant und schalte „Darf abhaken und eintragen“ ein. Dieser Hinweis verschwindet von selbst, sobald es erlaubt ist."
+    },
+    "dashboard_missing": {
+      "title": "{group}: Das Orgaia-Dashboard fehlt",
+      "description": "Das fertige Dashboard von **{group}** konnte nicht in die Seitenleiste gestellt werden, vermutlich weil diese Version von Home Assistant Dashboards intern anders baut. Sonst ändert sich nichts: Die Orgaia-Karte und alle Entitäten funktionieren weiter. Baue dir ein eigenes Dashboard mit der Orgaia-Karte, oder schalte unter Konfigurieren „Orgaia-Dashboard in der Seitenleiste zeigen“ aus; dann verschwindet dieser Hinweis. Ein Update der Integration bringt das Dashboard meist zurück."
     }
   },
   "options": {

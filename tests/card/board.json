@@ -1,6 +1,6 @@
 {
- "version": "0.11.1",
- "entry_id": "01M7STCDH28CNCRNYDQD81Y4FN",
+ "version": "0.12.0",
+ "entry_id": "01M83V8TVR8QBTTPK1KJ7GHTG4",
  "title": "Familie",
  "status": "ok",
  "can_write": false,
@@ -52,6 +52,34 @@
    "Other"
   ]
  ],
+ "aisle_names": {
+  "de": {
+   "produce": "Obst & Gemüse",
+   "bakery": "Brot & Backwaren",
+   "dairy": "Milch, Käse & Eier",
+   "meat": "Fleisch, Wurst & Fisch",
+   "frozen": "Tiefkühl",
+   "pantry": "Vorrat",
+   "drinks": "Getränke",
+   "sweets": "Süßes & Knabbern",
+   "drugstore": "Drogerie",
+   "household": "Haushalt",
+   "other": "Sonstiges"
+  },
+  "en": {
+   "produce": "Fruit & veg",
+   "bakery": "Bakery",
+   "dairy": "Dairy & eggs",
+   "meat": "Meat & fish",
+   "frozen": "Frozen",
+   "pantry": "Pantry",
+   "drinks": "Drinks",
+   "sweets": "Sweets & snacks",
+   "drugstore": "Toiletries",
+   "household": "Household",
+   "other": "Other"
+  }
+ },
  "days": [
   {
    "date": "2026-11-17",

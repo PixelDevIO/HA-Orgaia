@@ -246,7 +246,9 @@ def _payload(hass: HomeAssistant, entry: OrgaiaConfigEntry, user_id: str | None)
         "can_write": coordinator.engine.can_write,
         "me": me if me in view.person_by_id and not view.person_by_id[me]["removed"] else None,
         "today": today(),
+        # In the server's language, as before; the card picks the names in the language of whoever looks.
         "aisles": [[key, names[key]] for key in AISLES],
+        "aisle_names": AISLE_NAMES,
         "days": days(view, today(), minute_of_day(), language),
         **board(view, today()),
     }

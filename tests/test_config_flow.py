@@ -105,3 +105,34 @@ async def test_dashboard_in_sidebar(hass: HomeAssistant, service: FakeService) -
     hide_dashboard(hass, entry)
     assert path not in hass.data[LOVELACE_DATA].dashboards and path not in hass.data["frontend_panels"]
     assert not show_dashboard(hass, MockConfigEntry(domain=DOMAIN, title="Verein"))
+
+
+async def test_missing_dashboard_is_a_repair(hass: HomeAssistant, service: FakeService) -> None:
+    """When Home Assistant will not take the dashboard, a repair hint says so, and goes once it stands."""
+    from homeassistant.components.lovelace.const import LOVELACE_DATA
+    from homeassistant.helpers import issue_registry as ir
+    from homeassistant.setup import async_setup_component
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    from custom_components.orgaia.dashboard import forget_dashboard_issue, issue_id, show_dashboard
+
+    assert await async_setup_component(hass, "lovelace", {})
+    hass.config.components.add("frontend")
+    entry = MockConfigEntry(domain=DOMAIN, title="Familie", options={"dashboard": True})
+    issues = ir.async_get(hass)
+    # As if a new Home Assistant kept its dashboards elsewhere.
+    lovelace = hass.data.pop(LOVELACE_DATA)
+    assert not show_dashboard(hass, entry)
+    issue = issues.async_get_issue(DOMAIN, issue_id(entry))
+    assert issue and issue.translation_key == "dashboard_missing"
+    assert issue.translation_placeholders == {"group": "Familie"}
+    hass.data[LOVELACE_DATA] = lovelace
+    assert show_dashboard(hass, entry)
+    assert issues.async_get_issue(DOMAIN, issue_id(entry)) is None
+    # Not wanted (any more): no hint either; a removed group takes it along.
+    hass.data.pop(LOVELACE_DATA)
+    assert not show_dashboard(hass, MockConfigEntry(domain=DOMAIN, title="Verein"))
+    assert not show_dashboard(hass, entry) and issues.async_get_issue(DOMAIN, issue_id(entry))
+    forget_dashboard_issue(hass, entry)
+    assert issues.async_get_issue(DOMAIN, issue_id(entry)) is None
+    hass.data[LOVELACE_DATA] = lovelace

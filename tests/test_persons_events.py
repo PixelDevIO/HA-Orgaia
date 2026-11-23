@@ -23,6 +23,15 @@ from .fake_service import SPACE, FakeService
 from .test_init import setup_group
 
 
+def _device(hass: HomeAssistant, key: str) -> dr.DeviceEntry | None:
+    """A device of the integration by its key, on old and new Home Assistant alike."""
+    registry = dr.async_get(hass)
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    if hasattr(registry, "async_get_device_by_identifier"):
+        return registry.async_get_device_by_identifier((DOMAIN, key), entry.entry_id)
+    return registry.async_get_device(identifiers={(DOMAIN, key)})
+
+
 async def refresh(hass: HomeAssistant, entry) -> None:
     await entry.runtime_data.async_refresh()
     await hass.async_block_till_done()
@@ -96,7 +105,7 @@ async def test_events(hass: HomeAssistant, service: FakeService, freezer) -> Non
     assert by_type["task_assigned"]["assigned_entities"] == ["person.anna"]
     assert by_type["event_created"]["title"] == "Arzt"
     assert by_type["event_changed"]["location"] == "Turnhalle"
-    device = dr.async_get(hass).async_get_device(identifiers={(DOMAIN, SPACE)})
+    device = _device(hass, SPACE)
     assert all(e.data["device_id"] == device.id for e in events)
 
     # Time passes: the chore is late at 19:01, the appointment starts at 23:00.
@@ -115,9 +124,8 @@ async def test_events(hass: HomeAssistant, service: FakeService, freezer) -> Non
 
 async def test_device_triggers(hass: HomeAssistant, service: FakeService, freezer) -> None:
     entry = await setup_group(hass, service, freezer)
-    registry = dr.async_get(hass)
-    group = registry.async_get_device(identifiers={(DOMAIN, SPACE)})
-    person = registry.async_get_device(identifiers={(DOMAIN, f"{SPACE}_anna")})
+    group = _device(hass, SPACE)
+    person = _device(hass, f"{SPACE}_anna")
     triggers = await async_get_device_automations(hass, DeviceAutomationType.TRIGGER, group.id)
     assert {t["type"] for t in triggers if t["domain"] == DOMAIN} == set(EVENT_TYPES)
     person_triggers = await async_get_device_automations(hass, DeviceAutomationType.TRIGGER, person.id)
@@ -234,13 +242,13 @@ async def test_renames_follow(hass: HomeAssistant, service: FakeService, freezer
     await refresh(hass, entry)
 
     registry = dr.async_get(hass)
-    assert registry.async_get_device(identifiers={(DOMAIN, SPACE)}).name == "Fiebigs"
-    assert registry.async_get_device(identifiers={(DOMAIN, f"{SPACE}_ben")}).name == "Benno (Fiebigs)"
+    assert _device(hass, SPACE).name == "Fiebigs"
+    assert _device(hass, f"{SPACE}_ben").name == "Benno (Fiebigs)"
     assert hass.states.get("sensor.ben_familie_open_tasks").attributes["friendly_name"] == "Benno (Fiebigs) Open tasks"
     assert hass.states.get("todo.familie_einkauf").attributes["friendly_name"] == "Fiebigs Wocheneinkauf"
 
     # A name set by hand in Home Assistant stays.
-    ben = registry.async_get_device(identifiers={(DOMAIN, f"{SPACE}_ben")})
+    ben = _device(hass, f"{SPACE}_ben")
     registry.async_update_device(ben.id, name_by_user="Unser Ben")
     service.write("person", "ben", {"name": "Ben"})
     await refresh(hass, entry)

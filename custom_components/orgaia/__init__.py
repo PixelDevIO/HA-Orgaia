@@ -18,7 +18,7 @@ from .board import async_setup_board, group_loaded, notify_boards
 from .client.engine import GroupEngine
 from .const import CARD_URL, CONF_SPACE, DOMAIN, STORAGE_VERSION, VERSION
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator, storage_key
-from .dashboard import hide_dashboard, show_dashboard
+from .dashboard import forget_dashboard_issue, hide_dashboard, show_dashboard
 from .entity import (
     active_person_ids,
     group_device_name,
@@ -67,7 +67,10 @@ async def _register_resource(hass: HomeAssistant, url: str) -> bool:
     """
     lovelace = hass.data.get("lovelace")
     resources = getattr(lovelace, "resources", None)
-    if resources is None or getattr(lovelace, "resource_mode", None) != "storage":
+    # Called `mode` in older Home Assistant versions (2025.6 among them),
+    # when resources and dashboards shared one setting.
+    mode = getattr(lovelace, "resource_mode", None) or getattr(lovelace, "mode", None)
+    if resources is None or mode != "storage":
         return False
     try:
         if not resources.loaded:
@@ -184,6 +187,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: OrgaiaConfigEntry) -> b
 
 async def async_remove_entry(hass: HomeAssistant, entry: OrgaiaConfigEntry) -> None:
     """Leaves the group, so the admins see Home Assistant is gone, then forgets everything."""
+    forget_dashboard_issue(hass, entry)
     store: Store = Store(hass, STORAGE_VERSION, storage_key(entry.entry_id), private=True)
     try:
         engine = await _load_engine(hass, entry, store)

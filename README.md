@@ -280,7 +280,7 @@ Who ticked off must be known, also at a display on the wall that belongs to nobo
 
 ### Orgaia dashboard
 
-The ready-made dashboard shows **today** (with tomorrow), the **shopping** to tick off and the **week**, in the look of the app. The setup offers to put it into the sidebar; later it is a switch under **Configure → Settings**. It cannot be edited. To arrange things yourself, build a dashboard of your own with the Orgaia card, or start from the same layout in any dashboard's raw configuration:
+The ready-made dashboard shows **today** (with tomorrow), the **shopping** to tick off and the **week**, in the look of the app. It is made for a display in the kitchen: nobody is asked "Who are you?" ahead, the names come up only after a tap ("Who was it?"), and the name then counts for all cards on the page until a minute passes without a tap. Should a Home Assistant update ever keep the dashboard from appearing, a repair hint says so; the card and the entities go on working. The setup offers to put it into the sidebar; later it is a switch under **Configure → Settings**. It cannot be edited. To arrange things yourself, build a dashboard of your own with the Orgaia card, or start from the same layout in any dashboard's raw configuration:
 
 ```yaml
 strategy:
@@ -302,10 +302,11 @@ lists: [Haushalt, Einkauf] # names or ids; without it all lists show
 show_done: false           # also list tasks that are ticked off
 add_tasks: false           # a field to add tasks (articles can always be added)
 forget_after: 60           # seconds without a tap until the card forgets who it was; 0 = never
-ask: always                # ask even when the signed-in user is known
+ask: always                # ask even when the signed-in user is known; `tap`: show the names only after a tap
+share_person: false        # true: all cards of this group on the page share the chosen name
 ```
 
-**Tick off, then say who it was.** A tap without a name is not an error: the card asks "Who was it?", and the name finishes the tap. On a personal phone the card knows who is signed in, when that user's person is assigned under **Configure** (see *People in Home Assistant*); on a shared display everybody taps their name, and after a minute without a tap the card forgets it again. On a shopping list the card adds articles (with a quantity), sorts them by aisle, changes counted quantities with **+ and −**, adds a list's **fixed purchases** ("+ Weekly shop"), releases the list, and offers "I'll do it", "Not after all" and "Shopping done"; while out shopping every article has **"Not got"**. Where everybody ticks off their own part ("each for themselves"), the tick is the chosen person's own.
+**Tick off, then say who it was.** A tap without a name is not an error: the card asks "Who was it?", and the name finishes the tap. On a personal phone the card knows who is signed in, when that user's person is assigned under **Configure** (see *People in Home Assistant*); on a shared display everybody taps their name, and after a minute without a tap the card forgets it again. On a shopping list the card adds articles ("2 Brot" or "500 g Kaffee" is understood as it is; the action `orgaia.add_article` still takes a `quantity` for automations), sorts them by aisle, changes counted quantities with **+ and −**, adds a list's **fixed purchases** ("+ Weekly shop"), releases the list, and offers "I will do it", "Not after all" and "Shopping done"; while out shopping every article has **"Not there"**. Aisles are named in the language of whoever looks at the card. Where everybody ticks off their own part ("each for themselves"), the tick is the chosen person's own.
 
 Anybody at the display can tap any name: the card keeps track of who did what among people who trust each other; it is no lock.
 
@@ -315,13 +316,13 @@ One card, several views. The editor first asks for the **view** and then offers 
 
 | `view` | Shows | Options |
 | --- | --- | --- |
-| `lists` | all lists, to tick off and add to | `lists`, `show_done`, `add_tasks`, `by_aisle`, `ask`, `forget_after` |
-| `shopping` | only the shopping lists | `lists`, `by_aisle` (default on), `ask`, `forget_after` |
+| `lists` | all lists, to tick off and add to | `lists`, `show_done`, `add_tasks`, `by_aisle`, `ask`, `share_person`, `forget_after` |
+| `shopping` | only the shopping lists | `lists`, `by_aisle` (default on), `ask`, `share_person`, `forget_after` |
 | `tasks` | only the task lists | `lists`, `person` (only what is assigned to them), `show_done`, `add_tasks` |
 | `timetable` | a timetable as a week grid, this week and the next, with the lesson that is on and what to pack today | `plan`, `layout: week \| day`, `show_rooms`, `show_pack` |
 | `roster` | rosters side by side, day by day | `plans`, `days` (1–14), `start: today \| week` |
-| `today` (what a new card shows) | today at a glance for a wall display: appointments, school with tests and packing, work, what is due and overdue, the shopping | `person`, `show_tomorrow` |
-| `agenda` | what is coming up, day by day, with who drives and buttons to take a drive | `days` (1–31), `person`, `show_plans`, `show_deadlines`, `show_persons`, `show_drives`, `max`, `ask`, `forget_after` |
+| `today` (what a new card shows) | today at a glance for a wall display: appointments, school with tests and packing, work, what is due and overdue, the shopping | `person`, `show_tomorrow`, `show_today_word` (default on; off leaves out "Today ·" under a heading "Today") |
+| `agenda` | what is coming up, day by day, with who drives and buttons to take a drive | `days` (1–31), `person`, `show_plans`, `show_deadlines`, `show_persons`, `show_drives`, `max`, `ask`, `share_person`, `forget_after` |
 
 ```yaml
 type: custom:orgaia-card
@@ -420,7 +421,7 @@ Home Assistant zählt nicht als Person; pro Gruppe gehen bis zu 3 Integrationen.
 
 **Einkaufslisten:** Die To-do-Entität zeigt in `shopping_state`, ob an der Liste noch geschrieben wird (`draft`), ob sie freigegeben ist (`ready`) oder jemand einkauft (`going`), dazu wer freigegeben hat, bis wann und wer einkauft. Mengen stehen im Titel, später dazugekommene Artikel tragen 🆕.
 
-**Abhaken und eintragen:** Home Assistant liest nur, bis ein Admin in der App unter **Gruppe › Home Assistant** „Darf abhaken und eintragen“ einschaltet. Danach geht alles über die **Orgaia-Karte** (`type: custom:orgaia-card`, sie kommt mit der Integration): **abhaken, dann antippen, wer es war** (ein Tipp ohne Namen ist kein Fehler, die Karte fragt „Wer war’s?“), Artikel auf die Einkaufsliste setzen, Liste freigeben, „Mache ich“ und „Einkauf fertig“. In der App steht der Name mit dem Zusatz „über Home Assistant“. Nach einer Minute ohne Tippen vergisst die Karte, wer es war; auf dem eigenen Handy kennt sie die angemeldete Person, wenn diese unter **Konfigurieren** zugeordnet ist. Die Karte hat mehrere **Ansichten**, die im Editor gewählt werden: alle Listen, nur Einkauf, nur Aufgaben (auch nur einer Person), **Stundenplan** als Wochenraster, **Dienstplan** und **Termine**; dazu jeweils die passende Quelle (Liste, Plan, Person). Unter **Aussehen** gibt es eine Wahl: „Wie Home Assistant“ oder „Tinte“, der Stil der App. Karten mit eigenen Farben aus früheren Versionen behalten sie. Neu sind die Ansicht **Heute** (für ein Wanddisplay, auch mit morgen), im Einkauf **Gänge**, **+ und −** bei Mengen, **„Nicht bekommen“** und **feste Einkäufe**, und in den Terminen, wer hin- und zurückfährt, mit „Ich fahre hin“.
+**Abhaken und eintragen:** Home Assistant liest nur, bis ein Admin in der App unter **Gruppe › Home Assistant** „Darf abhaken und eintragen“ einschaltet. Danach geht alles über die **Orgaia-Karte** (`type: custom:orgaia-card`, sie kommt mit der Integration): **abhaken, dann antippen, wer es war** (ein Tipp ohne Namen ist kein Fehler, die Karte fragt „Wer war’s?“), Artikel auf die Einkaufsliste setzen, Liste freigeben, „Mache ich“ und „Einkauf fertig“. In der App steht der Name mit dem Zusatz „über Home Assistant“. Nach einer Minute ohne Tippen vergisst die Karte, wer es war; auf dem eigenen Handy kennt sie die angemeldete Person, wenn diese unter **Konfigurieren** zugeordnet ist. Die Karte hat mehrere **Ansichten**, die im Editor gewählt werden: alle Listen, nur Einkauf, nur Aufgaben (auch nur einer Person), **Stundenplan** als Wochenraster, **Dienstplan** und **Termine**; dazu jeweils die passende Quelle (Liste, Plan, Person). Unter **Aussehen** gibt es eine Wahl: „Wie Home Assistant“ oder „Tinte“, der Stil der App. Karten mit eigenen Farben aus früheren Versionen behalten sie. Neu sind die Ansicht **Heute** (für ein Wanddisplay, auch mit morgen), im Einkauf **Gänge** (in der Sprache der Person, die auf die Karte schaut), **+ und −** bei Mengen, **„Nicht da“** und **feste Einkäufe**, und in den Terminen, wer hin- und zurückfährt, mit „Ich fahre hin“. Mengen schreibt man einfach mit: „2 Brot“; die Aktion `orgaia.add_article` nimmt für Automationen weiter `quantity`. Im fertigen Dashboard fragt die Karte erst nach einem Tipp „Wer war’s?“, und der Name gilt für alle Karten der Seite (Kartenoptionen `ask: tap` und `share_person: true`). Fehlt das Dashboard nach einem Update von Home Assistant, erscheint ein Reparaturhinweis; Karte und Entitäten funktionieren weiter.
 
 **Standard-To-do-Listen und Kalender:** Ein angemeldeter Benutzer, dessen Person unter **Konfigurieren** zugeordnet ist, kann dort abhaken, Aufgaben und Artikel anlegen und Termine in den Orgaia-Kalendern eintragen. Sprachassistenten wissen nicht, wer spricht: Sie setzen nur Artikel auf die Einkaufsliste, und nur im Namen der Person, die unter **Konfigurieren › Einstellungen** dafür gewählt ist. Abhaken können sie nie.
 

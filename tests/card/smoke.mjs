@@ -59,9 +59,16 @@ function expect(ok, what) {
 
 const lists = await show({ view: 'lists' });
 expect(lists.includes('Haushalt') && lists.includes('Einkauf'), 'lists view shows both lists');
-expect(lists.includes('Brot & Backwaren') || lists.includes('Bakery'), 'shopping grouped by aisle');
+// The server speaks English; the aisles follow whoever looks at the card.
+expect(lists.includes('Brot & Backwaren') && !lists.includes('Bakery'), 'shopping grouped by aisle, in the viewer\'s language');
 expect(lists.includes('Wocheneinkauf'), 'fixed purchase offered');
-expect(lists.includes('nicht bekommen'), 'article not got is marked');
+expect(lists.includes('nicht da'), 'article not there is marked');
+expect(lists.includes('In Bearbeitung') && !lists.includes('Wird geschrieben'), 'the list speaks as the app does');
+expect(lists.includes('Wer bist du?'), 'a card of its own still asks who you are, as before');
+// One field for the article: "2 Brot" is understood as it is.
+expect((await page.evaluate(() => window.card.shadowRoot.querySelectorAll('form input').length)) === 1, 'no quantity field beside the article');
+expect((await show({ view: 'shopping' }, 'en')).includes('Bakery'), 'aisles in English for an English user');
+await show({ view: 'lists' });
 
 // Nothing in nobody's name: first a person, then + on the bread.
 await page.evaluate(() => window.card.shadowRoot.querySelector('[data-act="step"][data-step="1"]').click());
@@ -77,6 +84,15 @@ await page.evaluate(() => window.card.shadowRoot.querySelector('[data-act="set"]
 await page.waitForTimeout(30);
 const calls = await page.evaluate(() => window.calls.map((c) => c.service));
 expect(calls.join() === 'set_quantity,add_fixed_purchase', 'plus and fixed purchase call the services');
+await page.evaluate(async () => {
+  const input = window.card.shadowRoot.querySelector('form input.title');
+  input.value = '2 Brot';
+  input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+  window.card.shadowRoot.querySelector('form').requestSubmit();
+  await new Promise((r) => setTimeout(r, 30));
+});
+const article = await page.evaluate(() => window.calls.at(-1));
+expect(article.service === 'add_article' && article.data.title === '2 Brot' && !('quantity' in article.data), 'an article is added as typed');
 
 // A new card shows today; Tinte is one choice; the ready-made dashboard is built from the same card.
 expect((await page.evaluate(() => customElements.get('orgaia-card').getStubConfig())).view === 'today', 'a new card starts with today');
@@ -84,6 +100,42 @@ await show({ view: 'today', style: 'tinte' });
 expect(await page.evaluate(() => getComputedStyle(window.card.shadowRoot.querySelector('ha-card')).borderRadius === '0px'), 'Tinte has no round corners');
 const dash = await page.evaluate(() => customElements.get('ll-strategy-dashboard-orgaia').generate({ entry: 'abc' }, window.makeHass('de')));
 expect(dash.views[0].sections.length === 3 && dash.views[0].sections.every((s) => s.cards[1].type === 'custom:orgaia-card' && s.cards[1].entry === 'abc' && s.cards[1].style === 'tinte'), 'dashboard strategy: today, shopping, week');
+expect(dash.views[0].sections.every((s) => s.cards[1].ask === 'tap' && s.cards[1].share_person === true) && dash.views[0].sections[0].cards[1].show_today_word === false, 'dashboard: one name for the page, asked after a tap, no second "Heute"');
+
+// The ready-made dashboard: several cards of one group, as the strategy makes them.
+await page.evaluate(async (dash) => {
+  window.calls = [];
+  document.body.innerHTML = '';
+  window.cards = dash.views[0].sections.map((s) => {
+    const el = document.createElement('orgaia-card');
+    el.setConfig({ ...s.cards[1], entry: undefined });
+    document.body.appendChild(el);
+    el.hass = window.makeHass('de');
+    return el;
+  });
+  await new Promise((r) => setTimeout(r, 30));
+}, dash);
+const texts = () => page.evaluate(() => window.cards.map((c) => c.shadowRoot.textContent));
+let [dToday, dShop, dWeek] = await texts();
+expect(![dToday, dShop, dWeek].some((t) => t.includes('Wer bist du?')), 'dashboard: nobody is asked ahead');
+expect(!/Heute\s*·/.test(dToday) && dToday.includes('Morgen ·'), 'dashboard: today without a second "Heute"');
+await page.evaluate(() => window.cards[1].shadowRoot.querySelector('[data-act="tick"]').click());
+await page.waitForTimeout(30);
+[dToday, dShop, dWeek] = await texts();
+expect(dShop.includes('Wer war’s?') && !dWeek.includes('Wer war’s?'), 'dashboard: "who was it?" only after the tap, where it was');
+await page.evaluate(() => window.cards[1].shadowRoot.querySelector('[data-act="who"]').click());
+await page.waitForTimeout(30);
+[dToday, dShop, dWeek] = await texts();
+expect((await page.evaluate(() => window.calls.map((c) => c.service).join())) === 'set_done', 'dashboard: the name finishes the tick');
+expect(dShop.includes('Abhaken als Anna') && dWeek.includes('Abhaken als Anna'), 'dashboard: the name counts for the other cards too');
+await page.evaluate(() => window.cards[2].shadowRoot.querySelector('[data-act="drive"]').click());
+await page.waitForTimeout(30);
+const shared = await page.evaluate(() => window.calls.at(-1));
+expect(shared.service === 'take_drive' && shared.data.person === board.persons[0].id, 'dashboard: the week takes a drive without asking again');
+expect(!(await texts())[2].includes('Wer war’s?'), 'dashboard: no second question');
+await page.evaluate(() => window.cards[2].shadowRoot.querySelector('[data-act="notme"]').click());
+await page.waitForTimeout(30);
+expect(!(await texts()).some((t) => t.includes('Abhaken als')), '"not you?" forgets the name on all cards');
 
 const today = await show({ view: 'today', show_tomorrow: true });
 expect(today.includes('Heute') && today.includes('Morgen') && today.includes('Training'), 'today view shows today and tomorrow');
