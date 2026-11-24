@@ -259,14 +259,18 @@
           "lists": "Lists as to-do lists",
           "person_devices": "A device per person",
           "completed_days": "Days ticked-off tasks stay",
-          "dashboard": "Show the Orgaia dashboard in the sidebar"
+          "dashboard": "Show the Orgaia dashboard in the sidebar",
+          "dashboard_style": "Look of the dashboard",
+          "dashboard_sections": "Parts of the dashboard"
         },
         "data_description": {
           "voice_person": "A voice assistant does not know who speaks. Articles it puts on a shopping list are added in the name of this person (\"—\": not at all). It can never tick off.",
           "lists": "None chosen: every task and shopping list and every timetable.",
           "person_devices": "Off: no to-do list, calendar or sensors per person, only for the group. For large groups.",
           "completed_days": "0 to 60, normally 14.",
-          "dashboard": "Today, the shopping and the week on one ready-made page. Can be switched off again at any time."
+          "dashboard": "A ready-made page for the group; below, its look and what it shows. Can be switched off again at any time.",
+          "dashboard_style": "Tinte: the calm Orgaia look. Home Assistant: the colours and cards of your theme.",
+          "dashboard_sections": "Shown in this order. None chosen: today, the shopping and the week."
         }
       }
     },
@@ -774,6 +778,23 @@
         "to": "Taking there",
         "from": "Picking up",
         "both": "Both"
+      }
+    },
+    "dashboard_style": {
+      "options": {
+        "tinte": "Tinte (Orgaia)",
+        "ha": "Like Home Assistant (your theme)"
+      }
+    },
+    "dashboard_sections": {
+      "options": {
+        "today": "Today",
+        "shopping": "Shopping",
+        "tasks": "Tasks",
+        "week": "This week",
+        "agenda": "Appointments (next 4 weeks)",
+        "timetable": "Timetables",
+        "roster": "Rosters"
       }
     }
   }

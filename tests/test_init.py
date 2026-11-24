@@ -136,5 +136,10 @@ def test_a_new_group_starts_with_few_entities() -> None:
         binary_sensor.OrgaiaAtSchoolSensor, binary_sensor.OrgaiaCareGapSensor, binary_sensor.OrgaiaSchoolHolidaysSensor,
     ]  # fmt: skip
     assert all(vars(cls).get("__attr_entity_registry_enabled_default") is False for cls in off)
-    on = [sensor.OrgaiaTodaySensor, sensor.OrgaiaOpenDrivesSensor, sensor.OrgaiaShoppingWaitingSensor, calendar.OrgaiaCalendar]
+    on = [
+        sensor.OrgaiaTodaySensor,
+        sensor.OrgaiaOpenDrivesSensor,
+        sensor.OrgaiaShoppingWaitingSensor,
+        calendar.OrgaiaCalendar,
+    ]
     assert all("__attr_entity_registry_enabled_default" not in vars(cls) for cls in on)

@@ -33,6 +33,8 @@ from .const import (
     COMPLETED_DAYS,
     CONF_COMPLETED_DAYS,
     CONF_DASHBOARD,
+    CONF_DASHBOARD_SECTIONS,
+    CONF_DASHBOARD_STYLE,
     CONF_DEVICE,
     CONF_JOIN,
     CONF_LINK,
@@ -45,6 +47,9 @@ from .const import (
     CONF_SERVER,
     CONF_SPACE,
     CONF_VOICE_PERSON,
+    DASHBOARD_DEFAULT_SECTIONS,
+    DASHBOARD_SECTIONS,
+    DASHBOARD_STYLES,
     DEFAULT_MEMBER_NAME,
     DOMAIN,
     JOIN_POLL_SECONDS,
@@ -324,6 +329,12 @@ class OrgaiaOptionsFlow(OptionsFlow):
             options[CONF_PERSON_DEVICES] = bool(user_input.get(CONF_PERSON_DEVICES, True))
             options[CONF_COMPLETED_DAYS] = int(user_input.get(CONF_COMPLETED_DAYS, COMPLETED_DAYS))
             options[CONF_DASHBOARD] = bool(user_input.get(CONF_DASHBOARD, False))
+            style = user_input.get(CONF_DASHBOARD_STYLE)
+            options[CONF_DASHBOARD_STYLE] = style if style in DASHBOARD_STYLES else DASHBOARD_STYLES[0]
+            chosen = user_input.get(CONF_DASHBOARD_SECTIONS) or []
+            options[CONF_DASHBOARD_SECTIONS] = [s for s in DASHBOARD_SECTIONS if s in chosen] or list(
+                DASHBOARD_DEFAULT_SECTIONS
+            )
             return self.async_create_entry(data=options)
         persons = [SelectOptionDict(value=NOBODY, label="—")] + [
             SelectOptionDict(value=p["id"], label=p["name"]) for p in view.active_persons()
@@ -345,6 +356,24 @@ class OrgaiaOptionsFlow(OptionsFlow):
                 CONF_COMPLETED_DAYS, default=entry.options.get(CONF_COMPLETED_DAYS, COMPLETED_DAYS)
             ): NumberSelector(NumberSelectorConfig(min=0, max=60, step=1, mode=NumberSelectorMode.BOX)),
             vol.Optional(CONF_DASHBOARD, default=bool(entry.options.get(CONF_DASHBOARD, False))): BooleanSelector(),
+            vol.Optional(
+                CONF_DASHBOARD_STYLE, default=entry.options.get(CONF_DASHBOARD_STYLE) or DASHBOARD_STYLES[0]
+            ): SelectSelector(
+                SelectSelectorConfig(
+                    options=DASHBOARD_STYLES, translation_key=CONF_DASHBOARD_STYLE, mode=SelectSelectorMode.LIST
+                )
+            ),
+            vol.Optional(
+                CONF_DASHBOARD_SECTIONS,
+                default=entry.options.get(CONF_DASHBOARD_SECTIONS) or list(DASHBOARD_DEFAULT_SECTIONS),
+            ): SelectSelector(
+                SelectSelectorConfig(
+                    options=DASHBOARD_SECTIONS,
+                    translation_key=CONF_DASHBOARD_SECTIONS,
+                    multiple=True,
+                    mode=SelectSelectorMode.LIST,
+                )
+            ),
         }
         return self.async_show_form(step_id="settings", data_schema=vol.Schema(schema))
 

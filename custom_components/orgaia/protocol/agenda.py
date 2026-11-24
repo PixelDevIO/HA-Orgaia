@@ -136,7 +136,12 @@ def blocks_for_day(view: SpaceView, day: str) -> list[Block]:
             _push_blocks(out, view, item, d, day)
         for occ in view.occs.values():
             # A date that was moved shows only while its own day still belongs to the series.
-            if occ["itemId"] == item["id"] and occ["date"] not in seen and occ.get("start") and occurrence_dates(item, occ["date"], occ["date"]):
+            if (
+                occ["itemId"] == item["id"]
+                and occ["date"] not in seen
+                and occ.get("start")
+                and occurrence_dates(item, occ["date"], occ["date"])
+            ):
                 _push_blocks(out, view, item, occ["date"], day)
     out.sort(key=lambda b: (b.start, b.end))
     return out

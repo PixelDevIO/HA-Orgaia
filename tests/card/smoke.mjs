@@ -101,6 +101,15 @@ expect(await page.evaluate(() => getComputedStyle(window.card.shadowRoot.querySe
 const dash = await page.evaluate(() => customElements.get('ll-strategy-dashboard-orgaia').generate({ entry: 'abc' }, window.makeHass('de')));
 expect(dash.views[0].sections.length === 3 && dash.views[0].sections.every((s) => s.cards[1].type === 'custom:orgaia-card' && s.cards[1].entry === 'abc' && s.cards[1].style === 'tinte'), 'dashboard strategy: today, shopping, week');
 expect(dash.views[0].sections.every((s) => s.cards[1].ask === 'tap' && s.cards[1].share_person === true) && dash.views[0].sections[0].cards[1].show_today_word === false, 'dashboard: one name for the page, asked after a tap, no second "Heute"');
+// The settings choose the look and the parts; each timetable gets a place of its own, the order is fixed.
+const picked = await page.evaluate(async () => {
+  const saved = window.board.timetables;
+  window.board.timetables = [{ id: 't1', name: 'Lena' }, { id: 't2', name: 'Tom' }];
+  const out = await customElements.get('ll-strategy-dashboard-orgaia').generate({ entry: 'xyz', style: 'ha', sections: ['roster', 'timetable', 'agenda', 'bogus'] }, window.makeHass('de'));
+  window.board.timetables = saved;
+  return out.views[0].sections.map((s) => [s.cards[0].heading, s.cards[1].view, s.cards[1].plan || '', 'style' in s.cards[1], s.column_span || 1]);
+});
+expect(JSON.stringify(picked) === JSON.stringify([['Demnächst', 'agenda', '', false, 2], ['Lena', 'timetable', 't1', false, 1], ['Tom', 'timetable', 't2', false, 1], ['Dienstplan', 'roster', '', false, 2]]), `dashboard: chosen parts in the Home Assistant look (${JSON.stringify(picked)})`);
 
 // The ready-made dashboard: several cards of one group, as the strategy makes them.
 await page.evaluate(async (dash) => {

@@ -347,7 +347,9 @@ def _month_days(y: int, m0: int, rule: dict[str, str], start_day: int) -> list[d
     # BYSETPOS picks from what matched: "the 2nd Thursday" as Outlook writes it, or "the last working day".
     pos = _nums(rule.get("BYSETPOS"))
     if pos:
-        picked = {days[n - 1 if n > 0 else len(days) + n] for n in pos if 0 <= (n - 1 if n > 0 else len(days) + n) < len(days)}
+        picked = {
+            days[n - 1 if n > 0 else len(days) + n] for n in pos if 0 <= (n - 1 if n > 0 else len(days) + n) < len(days)
+        }
         days = sorted(picked)
     return [date(y, m0 + 1, d) for d in days]
 
@@ -524,7 +526,11 @@ def parse_ics(text: str, start: str, end: str, local: tzinfo) -> list[FeedEvent]
             continue
         overrides = [m for m in moved if m.uid == ev.uid]
         # An entry that began before the window may still reach into it.
-        length = (_wall_key(ev.end) - _wall_key(ev.start)) if ev.end is not None and ev.start is not None else (ev.duration or 0)
+        length = (
+            (_wall_key(ev.end) - _wall_key(ev.start))
+            if ev.end is not None and ev.start is not None
+            else (ev.duration or 0)
+        )
         for st in _expand(ev, from_key - max(0, length), to_key):
             if any(_same_moment(o.recurrence_id, st) for o in overrides if o.recurrence_id):
                 continue

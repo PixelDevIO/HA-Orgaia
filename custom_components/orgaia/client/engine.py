@@ -334,7 +334,9 @@ class GroupEngine:
         pubs = {
             cell[1]
             for doc in persons.values()
-            if isinstance(cell := doc.get("pub"), list) and len(cell) > 1 and not (doc.get("removed") or [None, None])[1]
+            if isinstance(cell := doc.get("pub"), list)
+            and len(cell) > 1
+            and not (doc.get("removed") or [None, None])[1]
         }
         if persons and not expected and sender not in pubs:
             return False
@@ -407,7 +409,11 @@ class GroupEngine:
                 for doc in table.values() if isinstance(table, dict) else []:
                     if not isinstance(doc, dict):
                         continue
-                    for field in [f for f, cell in doc.items() if isinstance(cell, dict) and isinstance(cell.get("ts"), str) and hlc_wall(cell["ts"]) > latest]:
+                    for field in [
+                        f
+                        for f, cell in doc.items()
+                        if isinstance(cell, dict) and isinstance(cell.get("ts"), str) and hlc_wall(cell["ts"]) > latest
+                    ]:
                         del doc[field]
         changed = merge_state(self.state, other) if isinstance(other, dict) else False
         self._snapshot_read = True
