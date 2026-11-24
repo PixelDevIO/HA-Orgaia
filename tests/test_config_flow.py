@@ -14,9 +14,7 @@ from .fake_service import SPACE, FakeService, fill_group
 async def _start(hass: HomeAssistant, service: FakeService, link: str | None = None):
     result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": config_entries.SOURCE_USER})
     assert result["type"] is FlowResultType.FORM
-    return await hass.config_entries.flow.async_configure(
-        result["flow_id"], {"link": link or service.link()}
-    )
+    return await hass.config_entries.flow.async_configure(result["flow_id"], {"link": link or service.link()})
 
 
 async def test_full_setup(hass: HomeAssistant, service: FakeService) -> None:
@@ -34,7 +32,9 @@ async def test_full_setup(hass: HomeAssistant, service: FakeService) -> None:
     fields = {str(k): k for k in result["data_schema"].schema}
     assert {"Anna", "Ben", "dashboard"} == set(fields)
     assert fields["Anna"].description == {"suggested_value": "person.anna"}
-    result = await hass.config_entries.flow.async_configure(result["flow_id"], {"Anna": "person.anna", "dashboard": True})
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"Anna": "person.anna", "dashboard": True}
+    )
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == "Familie"
     assert result["result"].unique_id == SPACE
@@ -99,12 +99,40 @@ async def test_dashboard_in_sidebar(hass: HomeAssistant, service: FakeService) -
     assert show_dashboard(hass, entry)
     path = dashboard_path(entry)
     board = hass.data[LOVELACE_DATA].dashboards[path]
-    assert await board.async_load(False) == {"strategy": {"type": "custom:orgaia", "entry": entry.entry_id}}
+    assert await board.async_load(False) == {
+        "strategy": {
+            "type": "custom:orgaia",
+            "entry": entry.entry_id,
+            "style": "tinte",
+            "sections": ["today", "shopping", "week"],
+        }
+    }
     assert (await board.async_get_info())["mode"] == "yaml"
     assert hass.data["frontend_panels"][path].sidebar_title == "Familie"
     hide_dashboard(hass, entry)
     assert path not in hass.data[LOVELACE_DATA].dashboards and path not in hass.data["frontend_panels"]
     assert not show_dashboard(hass, MockConfigEntry(domain=DOMAIN, title="Verein"))
+
+
+def test_dashboard_look_and_parts() -> None:
+    """The look and the parts chosen in the settings reach the strategy; unknown ones do not, the order is fixed."""
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    from custom_components.orgaia.dashboard import dashboard_config
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        options={"dashboard": True, "dashboard_style": "ha", "dashboard_sections": ["roster", "bogus", "today"]},
+    )
+    assert dashboard_config(entry)["strategy"] == {
+        "type": "custom:orgaia",
+        "entry": entry.entry_id,
+        "style": "ha",
+        "sections": ["today", "roster"],
+    }
+    entry = MockConfigEntry(domain=DOMAIN, options={"dashboard_style": "odd", "dashboard_sections": ["bogus"]})
+    strategy = dashboard_config(entry)["strategy"]
+    assert strategy["style"] == "tinte" and strategy["sections"] == ["today", "shopping", "week"]
 
 
 async def test_missing_dashboard_is_a_repair(hass: HomeAssistant, service: FakeService) -> None:

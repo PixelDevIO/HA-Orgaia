@@ -4,7 +4,7 @@ from __future__ import annotations
 
 DOMAIN = "orgaia"
 NAME = "Orgaia"
-VERSION = "0.12.0"
+VERSION = "0.13.0"
 
 CONF_LINK = "link"
 CONF_NAME = "name"
@@ -39,6 +39,12 @@ CONF_COMPLETED_DAYS = "completed_days"
 # Options: whether the ready-made dashboard of the group stands in the sidebar. New setups offer it;
 # groups connected before are asked in the settings, so that nothing appears by itself after an update.
 CONF_DASHBOARD = "dashboard"
+# Options: how that dashboard looks (Tinte or the Home Assistant theme) and which parts it shows, in this order.
+CONF_DASHBOARD_STYLE = "dashboard_style"
+DASHBOARD_STYLES = ["tinte", "ha"]
+CONF_DASHBOARD_SECTIONS = "dashboard_sections"
+DASHBOARD_SECTIONS = ["today", "shopping", "tasks", "week", "agenda", "timetable", "roster"]
+DASHBOARD_DEFAULT_SECTIONS = ["today", "shopping", "week"]
 
 # Fired on the event bus for automations; also offered as device triggers on the group's device.
 EVENT_ORGAIA = "orgaia_event"

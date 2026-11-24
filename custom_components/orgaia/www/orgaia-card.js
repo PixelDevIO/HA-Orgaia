@@ -126,6 +126,7 @@ const TEXT = {
     kindShopping: 'Shopping',
     viewToday: 'Today',
     dashWeek: 'This week',
+    dashComing: 'Coming up',
     showTomorrow: 'Show tomorrow too',
     nothingToday: 'Nothing planned.',
     overdueN: '{n} overdue',
@@ -264,6 +265,7 @@ const TEXT = {
     kindShopping: 'Einkauf',
     viewToday: 'Heute',
     dashWeek: 'Diese Woche',
+    dashComing: 'Demnächst',
     showTomorrow: 'Auch morgen zeigen',
     nothingToday: 'Nichts geplant.',
     overdueN: '{n} überfällig',
@@ -293,7 +295,7 @@ const TEXT = {
 };
 
 // The integration this card came with. A browser that still has an older card says so.
-const CARD_VERSION = '0.12.0';
+const CARD_VERSION = '0.13.0';
 
 // The people's colours of the app. All carry white text.
 const COLORS = ['#2F5FD0', '#B4500B', '#7B3FB5', '#0B6F6A', '#B02C63', '#56681A', '#8A5A00', '#3F4B8C'];
@@ -1531,20 +1533,47 @@ class OrgaiaCardEditor extends HTMLElement {
 /*
  * The ready-made dashboard: today on the left, the shopping to tick off on the right, the week below.
  * The integration puts it into the sidebar when that was chosen in the setup; in a dashboard of one's
- * own it is `strategy: { type: custom:orgaia }`. It is Tinte unless told `style: ha`.
+ * own it is `strategy: { type: custom:orgaia }`. It is Tinte unless told `style: ha`, and shows the
+ * `sections` it is given (today, shopping and the week when none are), always in the same order.
  * It hangs in the kitchen: one name for the whole page, asked only after a tap, and nothing said twice.
  */
+const DASH_SECTIONS = ['today', 'shopping', 'tasks', 'week', 'agenda', 'timetable', 'roster'];
+const DASH_DEFAULT = ['today', 'shopping', 'week'];
+
 class OrgaiaDashboardStrategy extends HTMLElement {
   static async generate(config, hass) {
     const t = textsFor(hass);
+    const entry = config && config.entry;
     const base = {
       type: 'custom:orgaia-card',
-      ...(config && config.entry ? { entry: config.entry } : {}),
+      ...(entry ? { entry } : {}),
       ...(config && config.style === 'ha' ? {} : { style: 'tinte' }),
       ask: 'tap',
       share_person: true,
     };
     const section = (title, card) => ({ type: 'grid', cards: [{ type: 'heading', heading: title }, { ...base, ...card, title: '' }] });
+    const wide = (s) => ({ ...s, column_span: 2 });
+    const asked = Array.isArray(config && config.sections) ? config.sections.filter((s) => DASH_SECTIONS.includes(s)) : [];
+    const shown = DASH_SECTIONS.filter((s) => (asked.length ? asked : DASH_DEFAULT).includes(s));
+    // Every timetable gets a place of its own, side by side; without the group at hand, one that shows the first.
+    let timetables = [];
+    if (shown.includes('timetable')) {
+      const data = await known(hass, entry);
+      timetables = (data && data.timetables) || [];
+    }
+    const make = {
+      today: () => [section(t.viewToday, { view: 'today', show_tomorrow: true, show_today_word: false })],
+      shopping: () => [section(t.viewShopping, { view: 'shopping' })],
+      tasks: () => [section(t.viewTasks, { view: 'tasks' })],
+      week: () => [wide(section(t.dashWeek, { view: 'agenda', days: 7 }))],
+      // Further ahead: only what is planned, the school and work days stand in their own plans.
+      agenda: () => [wide(section(t.dashComing, { view: 'agenda', days: 31, show_plans: false }))],
+      timetable: () =>
+        timetables.length
+          ? timetables.map((p) => section(p.name || t.viewTimetable, { view: 'timetable', plan: p.id }))
+          : [section(t.viewTimetable, { view: 'timetable' })],
+      roster: () => [wide(section(t.viewRoster, { view: 'roster', days: 7 }))],
+    };
     return {
       title: (config && config.title) || 'Orgaia',
       views: [
@@ -1554,11 +1583,7 @@ class OrgaiaDashboardStrategy extends HTMLElement {
           icon: 'mdi:calendar-check',
           type: 'sections',
           max_columns: 2,
-          sections: [
-            section(t.viewToday, { view: 'today', show_tomorrow: true, show_today_word: false }),
-            section(t.viewShopping, { view: 'shopping' }),
-            { ...section(t.dashWeek, { view: 'agenda', days: 7 }), column_span: 2 },
-          ],
+          sections: shown.flatMap((s) => make[s]()),
         },
       ],
     };

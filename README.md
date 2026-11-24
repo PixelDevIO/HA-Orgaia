@@ -48,7 +48,7 @@ To connect the integration to the group again with a fresh link (after it was re
 Under **Settings → Devices & services → Orgaia → Configure**:
 
 - **People**: which Home Assistant person each person of the group is (see *People in Home Assistant*).
-- **Settings**: whether the ready-made Orgaia dashboard stands in the sidebar; which lists become to-do lists (none chosen: all); whether every person gets a device of their own with to-do list, calendar and sensors (switch off for large groups); how many days ticked-off tasks stay (normally 14); and in whose name a voice assistant puts articles on a shopping list.
+- **Settings**: whether the ready-made Orgaia dashboard stands in the sidebar, how it looks and which parts it shows; which lists become to-do lists (none chosen: all); whether every person gets a device of their own with to-do list, calendar and sensors (switch off for large groups); how many days ticked-off tasks stay (normally 14); and in whose name a voice assistant puts articles on a shopping list.
 
 ## Entities
 
@@ -280,13 +280,19 @@ Who ticked off must be known, also at a display on the wall that belongs to nobo
 
 ### Orgaia dashboard
 
-The ready-made dashboard shows **today** (with tomorrow), the **shopping** to tick off and the **week**, in the look of the app. It is made for a display in the kitchen: nobody is asked "Who are you?" ahead, the names come up only after a tap ("Who was it?"), and the name then counts for all cards on the page until a minute passes without a tap. Should a Home Assistant update ever keep the dashboard from appearing, a repair hint says so; the card and the entities go on working. The setup offers to put it into the sidebar; later it is a switch under **Configure → Settings**. It cannot be edited. To arrange things yourself, build a dashboard of your own with the Orgaia card, or start from the same layout in any dashboard's raw configuration:
+The ready-made dashboard shows **today** (with tomorrow), the **shopping** to tick off and the **week**, in the look of the app. It is made for a display in the kitchen: nobody is asked "Who are you?" ahead, the names come up only after a tap ("Who was it?"), and the name then counts for all cards on the page until a minute passes without a tap. Should a Home Assistant update ever keep the dashboard from appearing, a repair hint says so; the card and the entities go on working. The setup offers to put it into the sidebar; later it is a switch under **Configure → Settings**, together with two choices for it:
+
+- **Look of the dashboard**: *Tinte*, the calm look of the app, or *like Home Assistant*, with the colours and cards of your theme.
+- **Parts of the dashboard**: any of *Today*, *Shopping*, *Tasks*, *This week*, *Appointments* (the next four weeks, without school and work days), *Timetables* (one next to the other) and *Rosters*. They always appear in this order; none chosen means today, the shopping and the week.
+
+The page itself cannot be edited. To arrange things yourself, build a dashboard of your own with the Orgaia card, or start from the same layout in any dashboard's raw configuration:
 
 ```yaml
 strategy:
   type: custom:orgaia
   entry: 01JABC…   # optional: the group, when more than one is connected
   style: ha        # optional: Home Assistant's look instead of Tinte
+  sections: [today, shopping, week]   # optional: also tasks, agenda, timetable, roster
 ```
 
 ### Orgaia card
@@ -409,7 +415,7 @@ Alles bleibt Ende-zu-Ende-verschlüsselt: Home Assistant tritt der Gruppe mit ei
 2. In der App **Gruppe › Home Assistant › In Home Assistant öffnen** antippen und den Link in Home Assistant einfügen. Mehr wird nicht gefragt.
 3. In der App bestätigen: Dort und in Home Assistant stehen dieselben vier Prüfzeichen. Im selben Blatt lässt sich „Darf abhaken und eintragen“ einschalten (ab Werk aus).
 
-Danach zeigt Home Assistant, wer wer ist (gleiche Namen sind schon zugeordnet), und bietet das fertige **Orgaia-Dashboard** für die Seitenleiste an: Heute, Einkauf zum Abhaken und die Woche, im Stil der App. Es lässt sich unter **Konfigurieren › Einstellungen** wieder abschalten.
+Danach zeigt Home Assistant, wer wer ist (gleiche Namen sind schon zugeordnet), und bietet das fertige **Orgaia-Dashboard** für die Seitenleiste an: Heute, Einkauf zum Abhaken und die Woche, im Stil der App. Unter **Konfigurieren › Einstellungen** lässt es sich wieder abschalten, und dort wählst du auch sein **Aussehen** (Tinte oder wie Home Assistant mit deinem Theme) und die **Bereiche**: Heute, Einkauf, Aufgaben, Diese Woche, Termine (nächste 4 Wochen), Stundenpläne und Dienstpläne.
 
 **Wenige Entitäten ab Werk:** Eine neu verbundene Gruppe beginnt mit To-do-Listen, Kalendern, „Heute“, „Überfällig“, „Einkauf wartet“ und „Offene Fahrten“, je Person mit To-do-Liste, Kalender und „Heute“, je Plan mit „Schule heute“ und „Arbeit heute“. Alles andere ist vorhanden, aber ausgeschaltet, und wird unter **Geräte & Dienste › Orgaia › Entitäten** eingeschaltet. Bestehende Verbindungen behalten, was sie haben.
 

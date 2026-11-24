@@ -1,9 +1,10 @@
 """The ready-made dashboard: today, the shopping and the week of a group, one tap away in the sidebar.
 
 Home Assistant keeps its dashboards in a registry of its own that an integration cannot add to, so this
-one is served the way a YAML dashboard is: a fixed configuration that only names the strategy
-(`custom:orgaia`, part of the card file). It cannot be edited; whoever wants to arrange things
-differently builds a dashboard of their own with the Orgaia card. All of it is a convenience: when
+one is served the way a YAML dashboard is: a fixed configuration that names the strategy
+(`custom:orgaia`, part of the card file) with the look and the parts chosen in the integration's
+settings. It cannot be edited in the dashboard itself; whoever wants to arrange things differently
+builds a dashboard of their own with the Orgaia card. All of it is a convenience: when
 Home Assistant changes underneath, the integration goes on without the dashboard.
 """
 
@@ -17,7 +18,14 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.json import json_bytes, json_fragment
 
-from .const import CONF_DASHBOARD, DOMAIN
+from .const import (
+    CONF_DASHBOARD,
+    CONF_DASHBOARD_SECTIONS,
+    CONF_DASHBOARD_STYLE,
+    DASHBOARD_DEFAULT_SECTIONS,
+    DASHBOARD_SECTIONS,
+    DOMAIN,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -30,7 +38,11 @@ def dashboard_path(entry: ConfigEntry) -> str:
 
 
 def dashboard_config(entry: ConfigEntry) -> dict[str, Any]:
-    return {"strategy": {"type": "custom:orgaia", "entry": entry.entry_id}}
+    """The strategy with what was chosen in the settings: the look and the parts, in a fixed order."""
+    chosen = entry.options.get(CONF_DASHBOARD_SECTIONS) or DASHBOARD_DEFAULT_SECTIONS
+    sections = [s for s in DASHBOARD_SECTIONS if s in chosen] or DASHBOARD_DEFAULT_SECTIONS
+    style = "ha" if entry.options.get(CONF_DASHBOARD_STYLE) == "ha" else "tinte"
+    return {"strategy": {"type": "custom:orgaia", "entry": entry.entry_id, "style": style, "sections": sections}}
 
 
 def issue_id(entry: ConfigEntry) -> str:
@@ -100,7 +112,9 @@ def _place(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 return json_fragment(json_bytes(config))
 
         lovelace.dashboards[path] = OrgaiaDashboard(
-            hass, path, {"mode": "yaml", "title": entry.title, "icon": ICON, "show_in_sidebar": True, "require_admin": False}
+            hass,
+            path,
+            {"mode": "yaml", "title": entry.title, "icon": ICON, "show_in_sidebar": True, "require_admin": False},
         )
         frontend.async_register_built_in_panel(
             hass,

@@ -79,6 +79,32 @@ async def test_person_mapping(hass: HomeAssistant, service: FakeService, freezer
     assert hass.states.get("sensor.anna_familie_open_tasks").attributes["person_entity"] == "person.anna"
 
 
+async def test_dashboard_settings(hass: HomeAssistant, service: FakeService, freezer) -> None:
+    """The settings choose the dashboard's look and parts; older groups start with Tinte and today, shopping, week."""
+    entry = await setup_group(hass, service, freezer)
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"next_step_id": "settings"})
+    assert result["type"] == "form"
+    fields = {str(k): k for k in result["data_schema"].schema}
+    assert fields["dashboard_style"].default() == "tinte"
+    assert fields["dashboard_sections"].default() == ["today", "shopping", "week"]
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {"dashboard": True, "dashboard_style": "ha", "dashboard_sections": ["timetable", "today", "agenda"]},
+    )
+    assert result["type"] == "create_entry"
+    await hass.async_block_till_done()
+    assert entry.options["dashboard_style"] == "ha"
+    assert entry.options["dashboard_sections"] == ["today", "agenda", "timetable"]
+
+    # Nothing ticked: the dashboard keeps its usual parts rather than standing empty.
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"next_step_id": "settings"})
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"dashboard_sections": []})
+    await hass.async_block_till_done()
+    assert entry.options["dashboard_sections"] == ["today", "shopping", "week"]
+
+
 async def test_events(hass: HomeAssistant, service: FakeService, freezer) -> None:
     hass.states.async_set("person.anna", "home", {"friendly_name": "Anna"})
     entry = await setup_group(hass, service, freezer)

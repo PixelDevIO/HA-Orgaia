@@ -259,14 +259,18 @@
           "lists": "Listen als To-do-Listen",
           "person_devices": "Ein Gerät je Person",
           "completed_days": "Tage, die Erledigtes sichtbar bleibt",
-          "dashboard": "Orgaia-Dashboard in der Seitenleiste zeigen"
+          "dashboard": "Orgaia-Dashboard in der Seitenleiste zeigen",
+          "dashboard_style": "Aussehen des Dashboards",
+          "dashboard_sections": "Bereiche des Dashboards"
         },
         "data_description": {
           "voice_person": "Ein Sprachassistent weiß nicht, wer spricht. Artikel, die er auf eine Einkaufsliste setzt, kommen im Namen dieser Person dazu („—“: gar nicht). Abhaken kann er nie.",
           "lists": "Keine gewählt: alle Aufgaben- und Einkaufslisten und Stundenpläne.",
           "person_devices": "Aus: keine To-do-Liste, kein Kalender und keine Sensoren je Person, nur für die Gruppe. Für große Gruppen.",
           "completed_days": "0 bis 60, normal 14.",
-          "dashboard": "Heute, Einkauf und die Woche auf einer fertigen Seite. Lässt sich jederzeit wieder abschalten."
+          "dashboard": "Eine fertige Seite für die Gruppe; darunter, wie sie aussieht und was sie zeigt. Lässt sich jederzeit wieder abschalten.",
+          "dashboard_style": "Tinte: der ruhige Orgaia-Look. Home Assistant: Farben und Karten deines Themes.",
+          "dashboard_sections": "Erscheinen in dieser Reihenfolge. Nichts gewählt: Heute, Einkauf und die Woche."
         }
       }
     },
@@ -774,6 +778,23 @@
         "to": "Hinbringen",
         "from": "Abholen",
         "both": "Beides"
+      }
+    },
+    "dashboard_style": {
+      "options": {
+        "tinte": "Tinte (Orgaia)",
+        "ha": "Wie Home Assistant (dein Theme)"
+      }
+    },
+    "dashboard_sections": {
+      "options": {
+        "today": "Heute",
+        "shopping": "Einkauf",
+        "tasks": "Aufgaben",
+        "week": "Diese Woche",
+        "agenda": "Termine (nächste 4 Wochen)",
+        "timetable": "Stundenpläne",
+        "roster": "Dienstpläne"
       }
     }
   }
