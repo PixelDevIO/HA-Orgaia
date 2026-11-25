@@ -13,7 +13,7 @@
       },
       "reauth_confirm": {
         "title": "Connect {group} again",
-        "description": "Home Assistant is no longer a member of {group}. Create a new link for Home Assistant in the app and paste it here.",
+        "description": "Home Assistant is no longer a member of {group}. Create a new link for Home Assistant in the app and paste it here. If the group was deleted, remove this entry instead and add the new group with “Add integration”.",
         "data": {
           "link": "Invitation link"
         },
@@ -59,7 +59,7 @@
       "already_configured": "This group is already connected.",
       "rejected": "The admin declined the request.",
       "timeout": "Nobody confirmed the request in time. Create a new link and try again.",
-      "wrong_group": "The link belongs to a different group.",
+      "wrong_group": "The link belongs to a different group. To connect another group, add it with “Add integration”; remove an entry whose group was deleted.",
       "reauth_successful": "The group is connected again.",
       "reconfigure_successful": "Connected again."
     },

@@ -168,5 +168,9 @@ await page.evaluate(() => (window.board = { ...window.board, version: '0.0.1' })
 const old = await show({ view: 'lists', entry: 'other' });
 expect(old.includes('Lade die Seite neu'), 'an outdated card asks to reload');
 
+await page.evaluate(() => (window.board = { entry_id: 'gone', status: 'gone' }));
+const gone = await show({ view: 'timetable', entry: 'gone' });
+expect(gone.includes('nicht mehr mit Home Assistant verbunden'), 'a group that is gone says so');
+
 expect(!errors.length, 'no errors in the browser' + (errors.length ? ': ' + errors.join(' | ') : ''));
 process.exit(process.exitCode || 0);

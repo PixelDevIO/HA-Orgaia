@@ -49,8 +49,11 @@ class Api:
         if token:
             headers["authorization"] = f"Bearer {token}"
         data = json.dumps(body, separators=(",", ":"), ensure_ascii=False).encode() if body is not None else None
+        # Without a body aiohttp would still announce one (application/octet-stream), and the service
+        # refuses that with 415: leaving a group never went through.
+        skip = () if body is not None else ("Content-Type",)
         async with self._session.request(
-            method, self.base + path, data=data, headers=headers, timeout=REQUEST_TIMEOUT
+            method, self.base + path, data=data, headers=headers, timeout=REQUEST_TIMEOUT, skip_auto_headers=skip
         ) as res:
             text = await res.text()
             try:
