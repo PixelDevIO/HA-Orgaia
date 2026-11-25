@@ -8,9 +8,11 @@ from __future__ import annotations
 from typing import Any
 
 from homeassistant.components import websocket_api
+from homeassistant.config_entries import SOURCE_REAUTH, ConfigEntryState
 from homeassistant.core import HomeAssistant, callback
 import voluptuous as vol
 
+from .client.engine import STATUS_REMOVED
 from .const import COMPLETED_DAYS, CONF_PERSONS, DOMAIN, VERSION
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator
 from .protocol.agenda import Occurrence
@@ -285,10 +287,16 @@ def ws_board(hass: HomeAssistant, connection: websocket_api.ActiveConnection, ms
 
     @callback
     def send() -> None:
-        entries = loaded_entries(hass)
-        entry = next((e for e in entries if not wanted or e.entry_id == wanted), None)
-        # A group that is being loaded again is back in a moment: the card keeps what it shows.
-        data = _payload(hass, entry, user_id) if entry else {"entry_id": wanted, "status": "not_loaded"}
+        entries = [e for e in loaded_entries(hass) if not wanted or e.entry_id == wanted]
+        entry = next((e for e in entries if e.runtime_data.status != STATUS_REMOVED), None)
+        if entry:
+            data = _payload(hass, entry, user_id)
+        elif entries or _gone(hass, wanted):
+            # Removed, or no longer in the group: the card lets go of what it shows.
+            data = {"entry_id": wanted, "status": "gone"}
+        else:
+            # A group that is being loaded again is back in a moment: the card keeps what it shows.
+            data = {"entry_id": wanted, "status": "not_loaded"}
         connection.send_message(websocket_api.event_message(msg["id"], data))
 
     boards: set[Any] = hass.data.setdefault(BOARDS, set())
@@ -296,6 +304,23 @@ def ws_board(hass: HomeAssistant, connection: websocket_api.ActiveConnection, ms
     connection.subscriptions[msg["id"]] = lambda: boards.discard(send)
     connection.send_result(msg["id"])
     send()
+
+
+def _gone(hass: HomeAssistant, wanted: str | None) -> bool:
+    """Whether the group a card asks for will not come back by itself.
+
+    That is when its entry was removed (or there is none at all), or when Home Assistant is out of the
+    group and waits for a new link. Anything else, a restart or a reload, is over in a moment.
+    """
+    entries = hass.config_entries.async_entries(DOMAIN)
+    if wanted:
+        entries = [e for e in entries if e.entry_id == wanted]
+    if not entries:
+        return True
+    return all(
+        e.state is ConfigEntryState.SETUP_ERROR and any(e.async_get_active_flows(hass, {SOURCE_REAUTH}))
+        for e in entries
+    )
 
 
 @callback

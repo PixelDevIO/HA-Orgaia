@@ -19,6 +19,7 @@ const TEXT = {
     whoWas: 'Who was it? Tap your name and it is done.',
     readOnly: 'Display only. An admin can allow ticking off and adding in the Orgaia app under Group › Home Assistant.',
     notLoaded: 'The group is not connected right now.',
+    gone: 'This group is no longer connected to Home Assistant. Remove the card or choose another group.',
     offline: 'Orgaia is not reachable. This is the last state.',
     empty: 'Nothing open.',
     emptyShop: 'Nothing on the list.',
@@ -158,6 +159,7 @@ const TEXT = {
     whoWas: 'Wer war’s? Tippe deinen Namen an, dann ist es erledigt.',
     readOnly: 'Nur Anzeige. Ein Admin kann Abhaken und Eintragen in der Orgaia-App unter Gruppe › Home Assistant erlauben.',
     notLoaded: 'Die Gruppe ist gerade nicht verbunden.',
+    gone: 'Diese Gruppe ist nicht mehr mit Home Assistant verbunden. Entferne die Karte oder wähle eine andere Gruppe.',
     offline: 'Orgaia ist nicht erreichbar. Das ist der letzte Stand.',
     empty: 'Nichts offen.',
     emptyShop: 'Nichts auf der Liste.',
@@ -295,7 +297,7 @@ const TEXT = {
 };
 
 // The integration this card came with. A browser that still has an older card says so.
-const CARD_VERSION = '0.13.0';
+const CARD_VERSION = '0.13.1';
 
 // The people's colours of the app. All carry white text.
 const COLORS = ['#2F5FD0', '#B4500B', '#7B3FB5', '#0B6F6A', '#B02C63', '#56681A', '#8A5A00', '#3F4B8C'];
@@ -1171,7 +1173,7 @@ class OrgaiaCard extends HTMLElement {
       html += `<p class="hint warn">${esc(t.reload)} <button class="btn small" data-act="reload">${esc(t.reloadNow)}</button></p>`;
     }
     if (!data || !data.lists) {
-      html += `<p class="hint">${esc(data ? t.notLoaded : '…')}</p>`;
+      html += `<p class="hint">${esc(!data ? '…' : data.status === 'gone' ? t.gone : t.notLoaded)}</p>`;
     } else if (['today', 'timetable', 'roster', 'agenda'].includes(viewOf(this._config))) {
       if (data.status === 'offline') html += `<p class="hint warn">${esc(t.offline)}</p>`;
       html += this[`_${viewOf(this._config)}`]();

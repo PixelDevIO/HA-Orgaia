@@ -227,3 +227,39 @@ async def test_card_is_a_dashboard_resource(hass: HomeAssistant, service: FakeSe
     await setup_group(hass, service, freezer)
     urls = sorted(r["url"] for r in resources.async_items())
     assert urls == ["/local/other-card.js", f"{CARD_URL}?v={VERSION}"]
+
+    # The last group is removed: the card leaves the resources with it; nothing else is touched.
+    (entry,) = hass.config_entries.async_entries(DOMAIN)
+    await hass.config_entries.async_remove(entry.entry_id)
+    await hass.async_block_till_done()
+    assert [r["url"] for r in resources.async_items()] == ["/local/other-card.js"]
+
+
+async def test_card_lets_go_of_a_group_that_is_gone(
+    hass: HomeAssistant, hass_ws_client, hass_admin_user, service: FakeService, freezer
+) -> None:
+    """A removed group does not stay on the display until the page is loaded again."""
+    entry = await setup_group(hass, service, freezer)
+    refresh = await hass.auth.async_create_refresh_token(hass_admin_user, "https://example.com/app")
+    client = await hass_ws_client(hass, hass.auth.async_create_access_token(refresh))
+    await client.send_json_auto_id({"type": "orgaia/board/subscribe", "entry_id": entry.entry_id})
+    assert (await client.receive_json())["success"]
+    assert (await client.receive_json())["event"]["status"] == "ok"
+
+    # Home Assistant was taken out of the group (or the group deleted): the card is told it is gone.
+    service.removed = True
+    await entry.runtime_data.async_refresh()
+    await hass.async_block_till_done()
+    seen = []
+    while not seen or seen[-1] != "gone":
+        board = (await client.receive_json())["event"]
+        seen.append(board["status"])
+    assert "lists" not in board
+
+    # The entry is removed: still gone, not "loading".
+    await hass.config_entries.async_remove(entry.entry_id)
+    await hass.async_block_till_done()
+    late = await hass_ws_client(hass, hass.auth.async_create_access_token(refresh))
+    await late.send_json_auto_id({"type": "orgaia/board/subscribe", "entry_id": entry.entry_id})
+    assert (await late.receive_json())["success"]
+    assert (await late.receive_json())["event"]["status"] == "gone"

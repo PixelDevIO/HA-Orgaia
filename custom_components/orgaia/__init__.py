@@ -90,6 +90,23 @@ async def _register_resource(hass: HomeAssistant, url: str) -> bool:
     return True
 
 
+async def _unregister_resource(hass: HomeAssistant) -> None:
+    """Takes the card out of the dashboard resources again. A new group puts it back on setup."""
+    lovelace = hass.data.get("lovelace")
+    resources = getattr(lovelace, "resources", None)
+    mode = getattr(lovelace, "resource_mode", None) or getattr(lovelace, "mode", None)
+    if resources is None or mode != "storage":
+        return
+    try:
+        if not resources.loaded:
+            await resources.async_load()
+            resources.loaded = True
+        for r in [r for r in resources.async_items() if str(r.get("url", "")).split("?")[0] == CARD_URL]:
+            await resources.async_delete_item(r["id"])
+    except Exception:  # noqa: BLE001 - removing the integration must work regardless
+        _LOGGER.debug("Could not take the Orgaia card out of the dashboard resources", exc_info=True)
+
+
 async def _load_engine(hass: HomeAssistant, entry: OrgaiaConfigEntry, store: Store) -> GroupEngine:
     """The engine from what was saved last, or from the setup data on the first start."""
     saved = await store.async_load()
@@ -101,6 +118,8 @@ async def _load_engine(hass: HomeAssistant, entry: OrgaiaConfigEntry, store: Sto
 
 async def async_setup_entry(hass: HomeAssistant, entry: OrgaiaConfigEntry) -> bool:
     store: Store = Store(hass, STORAGE_VERSION, storage_key(entry.entry_id), private=True)
+    # Back among the resources if the last group was removed and a new one connected without a restart.
+    await _register_resource(hass, f"{CARD_URL}?v={VERSION}")
     engine = await _load_engine(hass, entry, store)
     coordinator = OrgaiaCoordinator(hass, entry, engine, store)
     await coordinator.feeds.load()
@@ -196,3 +215,7 @@ async def async_remove_entry(hass: HomeAssistant, entry: OrgaiaConfigEntry) -> N
         _LOGGER.warning("Could not leave the Orgaia group; an admin can remove Home Assistant in the app: %s", err)
     await store.async_remove()
     await Store(hass, STORAGE_VERSION, f"{storage_key(entry.entry_id)}.feeds", private=True).async_remove()
+    if not any(e.entry_id != entry.entry_id for e in hass.config_entries.async_entries(DOMAIN)):
+        # The last group is gone: the card leaves the dashboard resources as well, instead of being
+        # asked for at every page load once the integration is uninstalled.
+        await _unregister_resource(hass)

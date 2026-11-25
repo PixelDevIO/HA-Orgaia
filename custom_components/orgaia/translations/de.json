@@ -13,7 +13,7 @@
       },
       "reauth_confirm": {
         "title": "{group} neu verbinden",
-        "description": "Home Assistant ist nicht mehr Mitglied von {group}. Erstelle in der App einen neuen Link für Home Assistant und füge ihn hier ein.",
+        "description": "Home Assistant ist nicht mehr Mitglied von {group}. Erstelle in der App einen neuen Link für Home Assistant und füge ihn hier ein. Wurde die Gruppe gelöscht, entferne stattdessen diesen Eintrag und füge die neue Gruppe über „Integration hinzufügen“ hinzu.",
         "data": {
           "link": "Einladungslink"
         },
@@ -59,7 +59,7 @@
       "already_configured": "Diese Gruppe ist schon verbunden.",
       "rejected": "Der Admin hat die Anfrage abgelehnt.",
       "timeout": "Niemand hat die Anfrage rechtzeitig bestätigt. Erstelle einen neuen Link und versuche es noch einmal.",
-      "wrong_group": "Der Link gehört zu einer anderen Gruppe.",
+      "wrong_group": "Der Link gehört zu einer anderen Gruppe. Eine weitere Gruppe verbindest du über „Integration hinzufügen“; einen Eintrag, dessen Gruppe gelöscht wurde, entfernst du.",
       "reauth_successful": "Die Gruppe ist wieder verbunden.",
       "reconfigure_successful": "Wieder verbunden."
     },
