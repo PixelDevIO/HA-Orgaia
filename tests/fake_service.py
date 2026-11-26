@@ -36,6 +36,8 @@ class FakeService:
         self.ha_name: str | None = None
         self.answer = "pending"  # what the admin decided: pending, accepted, rejected
         self.removed = False
+        # In the trash after an admin deleted the group: listed only to callers that ask with ?deleted=1.
+        self.deleted: dict[str, Any] | None = None
         self.left = False
         self.block: tuple[int, str] | None = None
         # The service or the internet is gone: every call fails as a connection error does.
@@ -116,10 +118,13 @@ class FakeService:
         if method == "GET" and url.path == "/v1/spaces":
             if self.removed or self.answer != "accepted":
                 return []
+            if self.deleted and parse_qs(url.query).get("deleted") != ["1"]:
+                return []
             envelope = seal_for(
                 self.ha_box, self.admin, "envelope:" + SPACE, {"keys": {str(self.epoch): to_b64(self.key)}}
             )
-            return [{"id": SPACE, "members": self._members(), "plan": {"tier": "plus"}, "envelope": envelope}]
+            info = {"id": SPACE, "members": self._members(), "plan": {"tier": "plus"}, "envelope": envelope}
+            return [{**info, **({"deleted": self.deleted} if self.deleted else {})}]
         if method == "GET" and url.path == f"/v1/spaces/{SPACE}/ops":
             if self.removed:
                 raise ApiError(403, "not-member")
@@ -137,6 +142,8 @@ class FakeService:
                 raise ApiError(403, "removed")
             if not self.can_write:
                 raise ApiError(403, "integration-read-only")
+            if self.deleted:
+                raise ApiError(409, "group-deleted")
             if self.block:
                 raise ApiError(*self.block)
             if self.stale:

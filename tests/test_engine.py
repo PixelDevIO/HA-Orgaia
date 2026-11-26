@@ -7,7 +7,15 @@ from unittest.mock import MagicMock
 import pytest
 
 from custom_components.orgaia.client.api import ApiError
-from custom_components.orgaia.client.engine import STATUS_NEEDS_PLUS, STATUS_OK, STATUS_REMOVED, GroupEngine, JoinError
+from custom_components.orgaia.client.engine import (
+    STATUS_DELETED,
+    STATUS_NEEDS_PLUS,
+    STATUS_OK,
+    STATUS_REMOVED,
+    GroupEngine,
+    JoinError,
+    WriteError,
+)
 from custom_components.orgaia.protocol.crypto import Identity, random_bytes
 from custom_components.orgaia.protocol.invite import parse_invite
 from custom_components.orgaia.protocol.model import Clock, now_ms
@@ -81,6 +89,39 @@ async def test_plus_ended_and_removed(service: FakeService) -> None:
     assert engine.status == STATUS_OK
     service.removed = True
     assert await engine.sync() is True
+    assert engine.status == STATUS_REMOVED
+
+
+async def test_deleted_group_waits_and_comes_back(service: FakeService) -> None:
+    fill_group(service, "2026-11-26")
+    service.can_write = True
+    engine = await joined(service)
+    await engine.sync()
+    items = len(engine.state.get("item", {}))
+    # Deleted in the app: still listed (in the trash), shown as it was, nothing can be changed.
+    service.deleted = {"at": 1, "purgeAt": 2, "by": service.admin.sign_pub, "takeover": []}
+    assert await engine.on_event({"t": "members", "spaceId": SPACE}) is True
+    await engine.sync()
+    assert engine.status == STATUS_DELETED
+    assert engine.deleted and engine.deleted["purgeAt"] == 2
+    assert len(engine.state.get("item", {})) == items
+    with pytest.raises(WriteError) as err:
+        await engine.write([("item", "x", {"title": "Brot"})], "anna")
+    assert err.value.reason == "group_deleted"
+    # Survives a restart of Home Assistant.
+    again = GroupEngine(MagicMock(), engine.to_dict())
+    assert again.deleted == engine.deleted
+    # Restored in the app: everything carries on.
+    service.deleted = None
+    assert await engine.on_event({"t": "members", "spaceId": SPACE}) is True
+    await engine.sync()
+    assert engine.status == STATUS_OK
+    assert engine.deleted is None
+    # Deleted for good after the week: the same as being removed.
+    service.deleted = {"at": 1, "purgeAt": 2, "by": None, "takeover": []}
+    await engine.refresh_space()
+    service.removed = True
+    assert await engine.refresh_space() is False
     assert engine.status == STATUS_REMOVED
 
 

@@ -42,6 +42,8 @@ STATUS_NEEDS_PLUS = "needs_plus"
 STATUS_UPDATE = "update_required"
 STATUS_REMOVED = "removed"
 STATUS_OFFLINE = "offline"
+# The group was deleted and waits a week in the trash: shown as it was, nothing can be changed.
+STATUS_DELETED = "deleted"
 
 
 # How long reading waits at a change whose group key has not reached this Home Assistant.
@@ -57,7 +59,8 @@ class JoinError(Exception):
 
 
 class WriteError(Exception):
-    """A change could not be made: ``read_only``, ``offline``, ``needs_plus``, ``removed``, ``full`` or ``unknown``."""
+    """A change could not be made: ``read_only``, ``offline``, ``needs_plus``, ``removed``, ``full``,
+    ``group_deleted`` or ``unknown``."""
 
     def __init__(self, reason: str) -> None:
         super().__init__(reason)
@@ -91,6 +94,8 @@ class GroupEngine:
         self.cursor_id: str | None = data.get("cursorId")
         self.members: list[dict[str, Any]] = data.get("members") or []
         self.plan: dict[str, Any] | None = data.get("plan")
+        # Set while the group is in the trash: ``at``, ``purgeAt`` (ms) and who deleted it.
+        self.deleted: dict[str, Any] | None = data.get("deleted")
         self.state: State = data.get("state") or empty_state()
         self.status: str = data.get("status") or STATUS_OK
         # When the group was last read from the service (ms since 1970).
@@ -130,6 +135,7 @@ class GroupEngine:
             "cursorId": self.cursor_id,
             "members": self.members,
             "plan": self.plan,
+            "deleted": self.deleted,
             "state": self.state,
             "status": self.status,
             "syncedAt": self.synced_at,
@@ -184,6 +190,8 @@ class GroupEngine:
             return
         if not self.space_id:
             raise WriteError("removed")
+        if self.deleted:
+            raise WriteError("group_deleted")
         try:
             if not self.can_write or not self.keys.get(self.epoch):
                 # Allowed a moment ago, perhaps: ask before saying no.
@@ -216,6 +224,9 @@ class GroupEngine:
             if err.code == "update-required":
                 self.status = STATUS_UPDATE
                 raise WriteError("update_required") from err
+            if err.code == "group-deleted":
+                await self.refresh_space()
+                raise WriteError("group_deleted") from err
             raise WriteError("offline" if err.status >= 500 or err.status == 429 else "unknown") from err
 
     async def _post(self, ops: list[dict[str, Any]]) -> None:
@@ -356,13 +367,21 @@ class GroupEngine:
 
     async def refresh_space(self) -> bool:
         """Reads members, plan and keys. Returns False when Home Assistant is no longer in the group."""
-        infos = await self.api.req("GET", "/v1/spaces")
+        # With groups in the trash: such a group is still there for a week and may come back.
+        infos = await self.api.req("GET", "/v1/spaces?deleted=1")
         info = next((s for s in infos or [] if s.get("id") == self.space_id), None)
         if info is None:
             self.status = STATUS_REMOVED
+            self.deleted = None
             return False
         self.members = info.get("members") or []
         self.plan = info.get("plan")
+        deleted = info.get("deleted")
+        self.deleted = deleted if isinstance(deleted, dict) else None
+        if self.deleted:
+            self.status = STATUS_DELETED
+        elif self.status == STATUS_DELETED:
+            self.status = STATUS_OK
         self._adopt_envelope(info)
         return True
 
@@ -447,7 +466,7 @@ class GroupEngine:
                 # Found out while reading: Home Assistant is no longer in the group.
                 self._changed()
                 return True
-            self.status = STATUS_OK
+            self.status = STATUS_DELETED if self.deleted else STATUS_OK
             self.synced_at = self._now()
             if changed:
                 self._changed()

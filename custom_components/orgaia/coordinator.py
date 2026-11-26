@@ -17,9 +17,11 @@ from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util import dt as dt_util
 
 from .client.api import ApiError
 from .client.engine import (
+    STATUS_DELETED,
     STATUS_NEEDS_PLUS,
     STATUS_OFFLINE,
     STATUS_OK,
@@ -158,7 +160,7 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
             and not self._wanted
             and self._read_at is not None
             and time.monotonic() - self._read_at < LIVE_INTERVAL
-            and self.engine.status == STATUS_OK
+            and self.engine.status in (STATUS_OK, STATUS_DELETED)
         ):
             # Nothing was announced: the quarter-hourly look only moves on what depends on the time of day.
             return self.build_view()
@@ -233,6 +235,22 @@ class OrgaiaCoordinator(DataUpdateCoordinator[SpaceView]):
                 )
             else:
                 ir.async_delete_issue(self.hass, DOMAIN, issue_id)
+        # Deleted in the app: a week in the trash, then gone. Home Assistant says until when.
+        issue_id = f"group_deleted_{self.config_entry.entry_id}"
+        deleted = self.engine.deleted
+        if self.engine.status == STATUS_DELETED and deleted:
+            purge = dt_util.as_local(dt_util.utc_from_timestamp(int(deleted.get("purgeAt") or 0) / 1000))
+            ir.async_create_issue(
+                self.hass,
+                DOMAIN,
+                issue_id,
+                is_fixable=False,
+                severity=ir.IssueSeverity.WARNING,
+                translation_key="group_deleted",
+                translation_placeholders={"group": self.config_entry.title, "date": purge.strftime("%d.%m.%Y")},
+            )
+        else:
+            ir.async_delete_issue(self.hass, DOMAIN, issue_id)
         issue_id = f"write_not_allowed_{self.config_entry.entry_id}"
         if self.engine.can_write:
             self.write_refused = False
