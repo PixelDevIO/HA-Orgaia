@@ -69,7 +69,7 @@ async def test_engine_write_failures(service: FakeService) -> None:
     real = service.req
 
     async def busy(method, path, body=None):
-        if path == "/v1/spaces":
+        if path.split("?")[0] == "/v1/spaces":
             raise ApiError(503, "busy")
         return await real(method, path, body)
 

@@ -21,6 +21,7 @@ const TEXT = {
     notLoaded: 'The group is not connected right now.',
     gone: 'This group is no longer connected to Home Assistant. Remove the card or choose another group.',
     offline: 'Orgaia is not reachable. This is the last state.',
+    deleted: 'This group was deleted. Until it is restored in the app (at most 7 days) this is the last state and nothing can be changed.',
     empty: 'Nothing open.',
     emptyShop: 'Nothing on the list.',
     addArticle: 'Add an article',
@@ -161,6 +162,7 @@ const TEXT = {
     notLoaded: 'Die Gruppe ist gerade nicht verbunden.',
     gone: 'Diese Gruppe ist nicht mehr mit Home Assistant verbunden. Entferne die Karte oder wähle eine andere Gruppe.',
     offline: 'Orgaia ist nicht erreichbar. Das ist der letzte Stand.',
+    deleted: 'Diese Gruppe wurde gelöscht. Bis sie in der App wiederhergestellt wird (höchstens 7 Tage), ist das der letzte Stand und nichts lässt sich ändern.',
     empty: 'Nichts offen.',
     emptyShop: 'Nichts auf der Liste.',
     addArticle: 'Artikel hinzufügen',
@@ -297,7 +299,7 @@ const TEXT = {
 };
 
 // The integration this card came with. A browser that still has an older card says so.
-const CARD_VERSION = '0.13.1';
+const CARD_VERSION = '0.14.0';
 
 // The people's colours of the app. All carry white text.
 const COLORS = ['#2F5FD0', '#B4500B', '#7B3FB5', '#0B6F6A', '#B02C63', '#56681A', '#8A5A00', '#3F4B8C'];
@@ -1176,10 +1178,13 @@ class OrgaiaCard extends HTMLElement {
       html += `<p class="hint">${esc(!data ? '…' : data.status === 'gone' ? t.gone : t.notLoaded)}</p>`;
     } else if (['today', 'timetable', 'roster', 'agenda'].includes(viewOf(this._config))) {
       if (data.status === 'offline') html += `<p class="hint warn">${esc(t.offline)}</p>`;
+      if (data.status === 'deleted') html += `<p class="hint warn">${esc(t.deleted)}</p>`;
       html += this[`_${viewOf(this._config)}`]();
     } else {
       if (data.status === 'offline') html += `<p class="hint warn">${esc(t.offline)}</p>`;
-      if (!data.can_write) {
+      if (data.status === 'deleted') {
+        html += `<p class="hint warn">${esc(t.deleted)}</p>`;
+      } else if (!data.can_write) {
         html += `<p class="hint">${esc(t.readOnly)}</p>`;
       } else {
         // Right under the names: that is where the eye is after a tap that did not work.

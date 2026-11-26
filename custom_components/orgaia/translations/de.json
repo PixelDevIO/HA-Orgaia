@@ -150,7 +150,8 @@
           "offline": "Offline",
           "needs_plus": "Plus nötig",
           "update_required": "Update nötig",
-          "removed": "Aus der Gruppe entfernt"
+          "removed": "Aus der Gruppe entfernt",
+          "deleted": "Gruppe gelöscht (wiederherstellbar)"
         }
       },
       "next_task": {
@@ -237,6 +238,10 @@
     "dashboard_missing": {
       "title": "{group}: Das Orgaia-Dashboard fehlt",
       "description": "Das fertige Dashboard von **{group}** konnte nicht in die Seitenleiste gestellt werden, vermutlich weil diese Version von Home Assistant Dashboards intern anders baut. Sonst ändert sich nichts: Die Orgaia-Karte und alle Entitäten funktionieren weiter. Baue dir ein eigenes Dashboard mit der Orgaia-Karte, oder schalte unter Konfigurieren „Orgaia-Dashboard in der Seitenleiste zeigen“ aus; dann verschwindet dieser Hinweis. Ein Update der Integration bringt das Dashboard meist zurück."
+    },
+    "group_deleted": {
+      "title": "{group} wurde gelöscht",
+      "description": "Jemand hat **{group}** in der Orgaia-App gelöscht. Bis {date} lässt sie sich dort noch wiederherstellen; so lange zeigt Home Assistant den letzten Stand und ändert nichts. Wird sie wiederhergestellt, geht alles von selbst weiter. Danach ist die Gruppe endgültig weg und Home Assistant bittet dich, wieder eine Gruppe zu verbinden."
     }
   },
   "options": {
@@ -755,6 +760,9 @@
     },
     "no_list_for_events": {
       "message": "Die Gruppe hat noch keine Aufgabenliste, in die neue Termine kommen könnten. Lege zuerst in der App eine an."
+    },
+    "write_group_deleted": {
+      "message": "{group} wurde in der Orgaia-App gelöscht. Solange sie nicht wiederhergestellt ist, lässt sich darin nichts ändern."
     }
   },
   "selector": {

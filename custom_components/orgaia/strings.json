@@ -150,7 +150,8 @@
           "offline": "Offline",
           "needs_plus": "Plus required",
           "update_required": "Update required",
-          "removed": "Removed from group"
+          "removed": "Removed from group",
+          "deleted": "Group deleted (can be restored)"
         }
       },
       "next_task": {
@@ -237,6 +238,10 @@
     "dashboard_missing": {
       "title": "{group}: the Orgaia dashboard is missing",
       "description": "The ready-made dashboard of **{group}** could not be put into the sidebar, most likely because this version of Home Assistant changed how dashboards work inside. Nothing else is affected: the Orgaia card and all entities go on working. Build a dashboard of your own with the Orgaia card, or switch off \"Show the Orgaia dashboard in the sidebar\" under Configure; then this hint goes away. An update of the integration usually brings the dashboard back."
+    },
+    "group_deleted": {
+      "title": "{group} was deleted",
+      "description": "Someone deleted **{group}** in the Orgaia app. Until {date} it can still be restored there; until then Home Assistant shows the last state and changes nothing. If it is restored, everything carries on by itself. After that the group is gone for good and Home Assistant asks you to connect a group again."
     }
   },
   "options": {
@@ -755,6 +760,9 @@
     },
     "no_list_for_events": {
       "message": "The group has no task list yet that new appointments could go into. Create one in the app first."
+    },
+    "write_group_deleted": {
+      "message": "{group} was deleted in the Orgaia app. Nothing can be changed in it unless it is restored."
     }
   },
   "selector": {

@@ -13,7 +13,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .calendar import DONE_MARK, LOOKAHEAD_DAYS, events_between
-from .client.engine import STATUS_NEEDS_PLUS, STATUS_OFFLINE, STATUS_OK, STATUS_REMOVED, STATUS_UPDATE
+from .client.engine import STATUS_DELETED, STATUS_NEEDS_PLUS, STATUS_OFFLINE, STATUS_OK, STATUS_REMOVED, STATUS_UPDATE
 from .const import MAX_TITLES
 from .coordinator import OrgaiaConfigEntry, OrgaiaCoordinator
 from .entity import OrgaiaEntity, OrgaiaPlanEntity, person_entity, person_ids_for, plan_list_ids, track_dynamic
@@ -378,7 +378,7 @@ class OrgaiaConnectionSensor(OrgaiaEntity, SensorEntity):
     _attr_translation_key = "connection"
     _attr_device_class = SensorDeviceClass.ENUM
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_options = [STATUS_OK, STATUS_OFFLINE, STATUS_NEEDS_PLUS, STATUS_UPDATE, STATUS_REMOVED]
+    _attr_options = [STATUS_OK, STATUS_OFFLINE, STATUS_NEEDS_PLUS, STATUS_UPDATE, STATUS_REMOVED, STATUS_DELETED]
     _unrecorded_attributes = frozenset({"last_sync"})
 
     def __init__(self, coordinator: OrgaiaCoordinator) -> None:
@@ -399,7 +399,13 @@ class OrgaiaConnectionSensor(OrgaiaEntity, SensorEntity):
     def extra_state_attributes(self) -> dict[str, Any]:
         """When the group was last read: what a wall display shows while offline is as of then."""
         synced = from_ms(self.coordinator.engine.synced_at)
-        return {"last_sync": synced.isoformat() if synced else None}
+        deleted = self.coordinator.engine.deleted
+        purge = from_ms(deleted.get("purgeAt")) if deleted else None
+        # A deleted group can come back until then; after that it is gone for good.
+        return {
+            "last_sync": synced.isoformat() if synced else None,
+            "deleted_until": purge.isoformat() if purge else None,
+        }
 
 
 class OrgaiaTodaySensor(OrgaiaEntity, SensorEntity):
